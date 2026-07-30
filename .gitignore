@@ -1,0 +1,41 @@
+# Node modules
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Bun lockfile is committed (DO NOT IGNORE)
+# bun.lock - committed for Bun users
+
+# No build outputs (TypeScript source only, noEmit mode)
+# No dist/ or build/ directories needed
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+# Keep .env.example in repo
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.vscode/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
