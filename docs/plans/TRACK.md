@@ -16,7 +16,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/09-hardeni
 
 ### Phase 01 — Scaffold
 
-[ ] `plans/plane-mcp/01-scaffold.md` — package.json, tsconfig, bunfig.toml, pinned deps, CI, src/index.ts stub, types/ dir, src/logger.ts
+[x] `plans/plane-mcp/01-scaffold.md` — package.json, tsconfig, bunfig.toml, pinned deps, CI, src/index.ts stub, types/ dir, src/logger.ts
 
 ### Phase 02 — Transport
 

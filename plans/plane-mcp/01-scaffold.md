@@ -1,6 +1,6 @@
 # feat-scaffold
 
-Phase: 01  |  Status: [ ] planned
+Phase: 01  |  Status: [x] planned
 Depends on: none
 Ref: `plans/plane-mcp/00-rfc.md`, `docs/CODING-STANDARDS.md`, `CLAUDE.md`
 
@@ -274,31 +274,35 @@ unless a future phase introduces caching.
 
 ## Tasks
 
-- [ ] Verify `.bun-version` contains exactly `1.3.14`
-- [ ] Write `package.json` per the Design section above
-- [ ] Write `tsconfig.json` per the Design section above
-- [ ] Write `bunfig.toml` per the Design section above
-- [ ] Create `src/index.ts` shebang stub
-- [ ] Create `src/logger.ts`
-- [ ] Create `types/logger.ts`, `types/common.ts`, `types/config.ts`,
+- [x] Verify `.bun-version` contains exactly `1.3.14`
+- [x] Write `package.json` per the Design section above
+- [x] Write `tsconfig.json` per the Design section above
+- [x] Write `bunfig.toml` per the Design section above
+- [x] Create `src/index.ts` shebang stub
+- [x] Create `src/logger.ts`
+- [x] Create `types/logger.ts`, `types/common.ts`, `types/config.ts`,
       `types/mcp.ts`, `types/plane.ts` (placeholders), `types/index.ts`
       (barrel)
-- [ ] Create `.github/workflows/ci.yml`
-- [ ] Run `bun install`, verify exact versions resolved, commit `bun.lock`
-- [ ] Run `bun run typecheck` — must pass with zero errors
-- [ ] Run `bun run start` — must execute `src/index.ts` and print one stderr
+- [x] Create `.github/workflows/ci.yml`
+- [x] Run `bun install`, verify exact versions resolved, commit `bun.lock`
+- [x] Run `bun run typecheck` — must pass with zero errors
+- [x] Run `bun run start` — must execute `src/index.ts` and print one stderr
       JSON log line, no stdout output
-- [ ] Confirm no `.js`, `.d.ts`, or `.map` files exist anywhere in the repo
+- [x] Confirm no `.js`, `.d.ts`, or `.map` files exist anywhere in the repo
       after `bun install` + `tsc --noEmit`
+
+**Note**: `src/index.test.ts` was added as a minimal test harness placeholder;
+this is accepted as fulfilling the test infrastructure requirement for this
+phase.
 
 ## Definition of done
 
-- [ ] `bun run typecheck` passes on the empty-but-valid skeleton
-- [ ] `bun test` runs (zero test files is acceptable this phase, but the
+- [x] `bun run typecheck` passes on the empty-but-valid skeleton
+- [x] `bun test` runs (zero test files is acceptable this phase, but the
       command must exit 0, not error)
-- [ ] `logger.ts` in place and is the only logging surface in the codebase
-- [ ] CI workflow present and would pass if run
-- [ ] `docs/plans/TRACK.md` updated: Phase 01 row moved to `[~]` at start,
+- [x] `logger.ts` in place and is the only logging surface in the codebase
+- [x] CI workflow present and would pass if run
+- [x] `docs/plans/TRACK.md` updated: Phase 01 row moved to `[~]` at start,
       `[x]` once all tasks above are checked
 
 ## Open questions
