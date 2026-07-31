@@ -1,7 +1,7 @@
 # feat-hardening
 
-Phase: 09  |  Status: [ ] planned
-Depends on: 08-sprints
+Phase: 10  |  Status: [ ] planned
+Depends on: 09-sprints
 Ref: `plans/plane-mcp/00-rfc.md`, all prior phase files
 
 ## Goal
@@ -49,7 +49,7 @@ tools present" invariants hold.
    | `PLANE_API_KEY` | Yes | — |
    | `PLANE_WORKSPACE_SLUG` | Yes | — |
    | `PLANE_BASE_URL` | No | `https://api.plane.so` |
-   | `PORT` | No | value from Phase 02's `loadPort()` default |
+   | `PORT` | No | value from Phase 03's `loadPort()` default |
 
    Note where to generate `PLANE_API_KEY` (Plane → Profile Settings →
    Personal Access Tokens, or Workspace Settings → Access Tokens for a bot
@@ -77,17 +77,18 @@ tools present" invariants hold.
    }
    ```
 6. **Tool inventory** — the full list of 25 tools, grouped by resource
-   (mirror the grouping used across Phases 04-08), each with a one-line
+   (mirror the grouping used across Phases 05-09), each with a one-line
    description.
-7. **Development** — `bun run typecheck`, `bun test`, note on the `noEmit`
-   TypeScript setup and why no `dist/` exists.
+7. **Development** — `bun run typecheck`, `bun test`, `bun run format`/
+   `bun run lint` (Phase 02), and a note on the `noEmit` TypeScript setup
+   and why no `dist/` exists.
 
 ### `docs/ARCHITECTURE.md` — required sections
 
 1. **System diagram** — reuse/adapt the ASCII diagram from
    `plans/plane-mcp/00-rfc.md`'s Proposed Design section, updated to reflect
    whatever the implementation actually settled on for the
-   `createMcpHonoApp` stateless wiring (Phase 02's Open Questions may have
+   `createMcpHonoApp` stateless wiring (Phase 03's Open Questions may have
    resolved differently than the RFC's sketch — reconcile here).
 2. **Layering** — a table or short section per layer: transport (`src/
    index.ts`, `src/server.ts`), config (`src/config.ts`), Plane client
@@ -123,14 +124,16 @@ tools present" invariants hold.
 - [ ] `grep -rl` (or equivalent) across the repo for any `.js`, `.d.ts`,
       `.map` file outside `node_modules` — must return nothing.
 - [ ] Cross-check the tool list registered across `src/server.ts` (which by
-      now calls all 9 `register*Tools` functions from Phases 04-08) against
+      now calls all 9 `register*Tools` functions from Phases 05-09) against
       the 25-tool list in `00-rfc.md` — every tool present exactly once, no
       `ping` remnant, no accidental duplicate registration.
 - [ ] `bun run typecheck` — zero errors.
+- [ ] `bun run format:check` and `bun run lint` — both zero errors (Phase
+      02's formatting/lint gate must still hold at the end of the project).
 - [ ] `bun test` — all suites green, and spot-check that test count roughly
       matches "every tool has at least a success-path and an error-path
       test" (25 tools x >=2 tests each, plus `PlaneClient`/`normalize`
-      tests from Phase 03 — a rough floor, not an exact number to hit).
+      tests from Phase 04 — a rough floor, not an exact number to hit).
 - [ ] Manually boot the server, run through the spec report §10 example
       workflows end-to-end against a real (or sandboxed) Plane workspace at
       least once each:
@@ -162,14 +165,15 @@ tools present" invariants hold.
       lifecycle, field normalization, explicit non-goals
 - [ ] Zero `.js`/`.d.ts`/`.map` files anywhere outside `node_modules`
 - [ ] All 25 tools confirmed present, none missing, none duplicated
-- [ ] `bun run typecheck` and `bun test` both green
+- [ ] `bun run typecheck`, `bun run format:check`, `bun run lint`, and
+      `bun test` all green
 - [ ] `docs/plans/TRACK.md` fully updated, no `TBD` placeholders remain
 - [ ] `CLAUDE.md` routing table updated to remove stale `TBD` entries
 
 ## Open questions
 
 - None expected at this stage — this phase is a closing/verification pass
-  over decisions already locked in Phases 00-08. If the final review
+  over decisions already locked in Phases 00-09. If the final review
   surfaces a genuine gap (e.g. a tool whose behavior doesn't match its
   phase file), fix the code/tests to match the phase file, or — if the
   phase file itself was wrong — correct that phase file and note the

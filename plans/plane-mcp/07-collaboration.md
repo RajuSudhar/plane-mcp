@@ -1,7 +1,7 @@
 # feat-collaboration
 
-Phase: 06  |  Status: [ ] planned
-Depends on: 05-work-items
+Phase: 07  |  Status: [ ] planned
+Depends on: 06-work-items
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.10, §6.6, §6.8
 
 ## Goal
@@ -226,7 +226,7 @@ export function registerRelationTools(server: McpServer, client: PlaneClient): v
 - [ ] All 7 tools (4 comment + 3 relation) registered and callable
 - [ ] `relation_type` enum validated — invalid value never reaches
       `PlaneClient`
-- [ ] `docs/plans/TRACK.md` updated: Phase 06 row `[~]` at start, `[x]` at
+- [ ] `docs/plans/TRACK.md` updated: Phase 07 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

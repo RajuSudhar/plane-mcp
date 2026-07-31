@@ -30,10 +30,11 @@ every later phase has a fixed foundation to build on.
 
 ## Out of scope
 
-- Any HTTP server, transport, or MCP registration (Phase 02).
-- `PlaneClient` or any Plane API call (Phase 03).
-- Any tool implementation (Phases 04-08).
-- README.md / ARCHITECTURE.md content (Phase 09 — a stub `README.md` may
+- Formatter/linter setup, pre-commit hook (Phase 02).
+- Any HTTP server, transport, or MCP registration (Phase 03).
+- `PlaneClient` or any Plane API call (Phase 04).
+- Any tool implementation (Phases 05-09).
+- README.md / ARCHITECTURE.md content (Phase 10 — a stub `README.md` may
   exist from repo init but is not authored here).
 
 ## Design
@@ -96,7 +97,7 @@ plane-mcp/
 **IMPORTANT**: every version above is an exact pin (no `^`, no `~`), per
 `docs/CODING-STANDARDS.md` § Dependency Management. `@modelcontextprotocol/
 hono` and `hono` versions must be re-verified against what actually resolves
-at install time in Phase 02 — if the published version differs from `2.0.0`/
+at install time in Phase 03 — if the published version differs from `2.0.0`/
 `4.6.14`, update this table and `package.json` together, exact-pinned, before
 proceeding. `@modelcontextprotocol/server` is locked at `2.0.0` per the RFC
 and must not be substituted with `@modelcontextprotocol/sdk` (v1 — explicitly
@@ -189,7 +190,7 @@ log('info', 'plane-mcp scaffold: entrypoint stub, no server started yet', {
 });
 ```
 
-This is intentionally inert. Phase 02 replaces the body with the actual
+This is intentionally inert. Phase 03 replaces the body with the actual
 `Bun.serve` + Hono wiring; this phase only proves the file is executable
 (`bun run start`) and type-checks.
 

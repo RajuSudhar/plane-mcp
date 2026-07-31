@@ -1,7 +1,7 @@
 # feat-transport
 
-Phase: 02  |  Status: [ ] planned
-Depends on: 01-scaffold
+Phase: 03  |  Status: [ ] planned
+Depends on: 02-tooling
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §1, §5.1, §5.3
 
 ## Goal
@@ -20,16 +20,16 @@ a single temporary `ping` tool.
   + registers tools every call — no module-level singleton).
 - `src/index.ts` — replaces the Phase 01 stub: wires `Bun.serve`,
   `createMcpHonoApp`, `/health` route, `/mcp` route.
-- One temporary `ping` tool (removed in Phase 04 once the real
+- One temporary `ping` tool (removed in Phase 05 once the real
   tool-registration pattern lands) that returns `pong`.
 - Manual verification steps (curl-based) documented in Tasks.
 
 ## Out of scope
 
-- `PlaneClient` (Phase 03) — `AuthContext` is assembled and validated for
+- `PlaneClient` (Phase 04) — `AuthContext` is assembled and validated for
   shape only; no live call to Plane's `/users/me/` yet.
-- Real tool implementations (Phases 04-08) — `ping` is disposable scaffolding.
-- Zod schema conventions for real tools (Phase 04 defines the pattern; `ping`
+- Real tool implementations (Phases 05-09) — `ping` is disposable scaffolding.
+- Zod schema conventions for real tools (Phase 05 defines the pattern; `ping`
   may use a trivial inline schema).
 - OAuth, SSE, stdio — all explicitly out of scope per `00-rfc.md`.
 
@@ -116,7 +116,7 @@ export function createServer(_auth: AuthContext): McpServer {
   server.registerTool(
     'ping',
     {
-      description: 'Temporary boot-verification tool. Removed once real tools land in Phase 04.',
+      description: 'Temporary boot-verification tool. Removed once real tools land in Phase 05.',
       inputSchema: z.object({}),
     },
     async () => ({
@@ -129,7 +129,7 @@ export function createServer(_auth: AuthContext): McpServer {
 ```
 
 `_auth` is accepted (not used yet) so the factory's signature already matches
-what every later phase's tool registration will need — Phase 04 replaces the
+what every later phase's tool registration will need — Phase 05 replaces the
 `ping` registration with calls to each resource's `register*Tools(server,
 auth)` function, and this factory becomes the single place that wires them
 all together.
@@ -210,7 +210,7 @@ locally-hosted server bound to 127.0.0.1", not `0.0.0.0`.
 - [ ] `/health` responds `200` independent of `/mcp` state
 - [ ] No `apiKey` value appears in any stderr log line during startup or a
       `ping` call (manually inspect logs)
-- [ ] `docs/plans/TRACK.md` updated: Phase 02 row `[~]` at start, `[x]` at
+- [ ] `docs/plans/TRACK.md` updated: Phase 03 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

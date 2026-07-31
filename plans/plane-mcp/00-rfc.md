@@ -22,7 +22,7 @@ We need a greenfield, Bun/TypeScript MCP server that:
   collaboration, and sprint/module planning.
 - Runs as a single local process bound to `127.0.0.1`, authenticated via a
   Personal/Workspace Access Token, no OAuth infrastructure.
-- Is implementable and reviewable in 9 bounded phases with zero design
+- Is implementable and reviewable in 10 bounded phases with zero design
   decisions deferred to implementation time.
 
 ## Goals
@@ -117,7 +117,7 @@ validates `args` via a `zod` v4 schema passed directly as `inputSchema` to
 `registerTool`, calls `PlaneClient` methods, normalizes field-name asymmetry
 (read-shape `state_id`/`assignee_ids`/`target_date` vs write-shape
 `state`/`assignees`/`target_date`; note create/update body uses `target_date`
-too — see Phase 05 Design for the exact mapping table), and returns
+too — see Phase 06 Design for the exact mapping table), and returns
 `{ content: [{ type: 'text', text }], structuredContent? }`. Tool functions
 never touch `process.env`, never construct their own `PlaneClient`, and never
 import a transport type.
@@ -153,7 +153,7 @@ locally-hosted HTTP server so it can be reused across multiple client
 processes and inspected independently of any one client's subprocess
 lifecycle; (2) stdio ties the server's lifetime to the parent client process,
 complicating the "one temporary `ping` tool to prove boot" verification step
-in Phase 02; (3) streamable HTTP is the current MCP-spec-blessed transport
+in Phase 03; (3) streamable HTTP is the current MCP-spec-blessed transport
 (spec report §1) and the one the locked decisions specify. stdio is not ruled
 out forever, but adding it is a distinct future RFC, not a phase in this plan.
 
@@ -170,7 +170,7 @@ usage frequency (per spec report §10's example workflows, the ~25 selected
 tools cover every listed workflow); (3) narrower scope is easier to keep at
 100% test coverage, which is a stated Definition-of-Done bar for every phase.
 Expanding scope later is additive (new phase files), not a rewrite, because
-the tool-registration pattern (Phase 04) and `PlaneClient` (Phase 03) are
+the tool-registration pattern (Phase 05) and `PlaneClient` (Phase 04) are
 resource-agnostic.
 
 ### MCP SDK v1 (`@modelcontextprotocol/sdk`) — rejected
@@ -186,7 +186,7 @@ lower-level `StreamableHTTPServerTransport`; (2) v2's stateless mode
 whereas v1 stateless HTTP required more manual transport lifecycle
 management; (3) staying off v1 avoids a migration once v2 is the maintained
 line. Downside accepted: v2 is newer and less battle-tested than v1 — mitigated
-by pinning the exact version and by Phase 02's explicit boot-verification
+by pinning the exact version and by Phase 03's explicit boot-verification
 Definition of Done (server starts, `/mcp` responds to `initialize`, `ping`
 returns `pong`) before any tool logic is built on top.
 
@@ -194,10 +194,10 @@ returns `pong`) before any tool logic is built on top.
 
 | Risk | Mitigation |
 | --- | --- |
-| Stateless-per-request `McpServer` construction has a known reuse bug if servers/transports are cached across requests | Phase 02 explicitly constructs a fresh `McpServer` + transport per request; this is a Definition-of-Done item, not an optimization to defer |
-| Field-name asymmetry (`state`/`state_id`, `assignees`/`assignee_ids`, `target_date`/`due_date`) is easy to get backwards in either direction | Centralize normalization in `src/plane/normalize.ts` (Phase 03) with unit tests per direction (Phase 05); no tool hand-rolls its own mapping |
-| 429 responses silently swallowed by naive retry logic | `PlaneClient` retry logic is unit-tested to assert it surfaces a tool error after backoff/retry exhaustion, never returns a partial/empty success (Phase 03 DoD) |
-| `zod` v4 API surface for `inputSchema` (passing `z.object` directly vs `.shape`) may differ from `zod` v3 patterns in most existing examples | Verify against `@modelcontextprotocol/server` v2's expected `inputSchema` shape during Phase 04's first vertical slice before repeating the pattern across Phases 05-08 |
+| Stateless-per-request `McpServer` construction has a known reuse bug if servers/transports are cached across requests | Phase 03 explicitly constructs a fresh `McpServer` + transport per request; this is a Definition-of-Done item, not an optimization to defer |
+| Field-name asymmetry (`state`/`state_id`, `assignees`/`assignee_ids`, `target_date`/`due_date`) is easy to get backwards in either direction | Centralize normalization in `src/plane/normalize.ts` (Phase 04) with unit tests per direction (Phase 06); no tool hand-rolls its own mapping |
+| 429 responses silently swallowed by naive retry logic | `PlaneClient` retry logic is unit-tested to assert it surfaces a tool error after backoff/retry exhaustion, never returns a partial/empty success (Phase 04 DoD) |
+| `zod` v4 API surface for `inputSchema` (passing `z.object` directly vs `.shape`) may differ from `zod` v3 patterns in most existing examples | Verify against `@modelcontextprotocol/server` v2's expected `inputSchema` shape during Phase 05's first vertical slice before repeating the pattern across Phases 06-09 |
 | Cursor pagination format (`value:offset:is_prev`) is opaque; a tool could be tempted to parse/construct it | Tools pass `cursor` through as an opaquestring; only Plane constructs/interprets it — enforced by not exposing any cursor-math helper in `PlaneClient` |
 | `@modelcontextprotocol/server` v2 / `@modelcontextprotocol/hono` are newer packages; pinned exact versions may need bumping if a breaking patch ships | Exact-pin per `docs/CODING-STANDARDS.md`; any version bump is a reviewed dependency change, not an incidental upgrade |
 | Rate limit is workspace/key-wide (60 req/min per spec report §2.5); concurrent tool calls from one agent session could burn the budget fast | Out of scope to build a client-side limiter in this plan; 429 surfacing (not swallowing) is the agreed-on mitigation — a limiter can be a future hardening item if observed in practice |
@@ -207,14 +207,15 @@ returns `pong`) before any tool logic is built on top.
 | Phase | File | Goal |
 | --- | --- | --- |
 | 01 | `01-scaffold.md` | Bun/TypeScript project skeleton, pinned deps, CI, empty-but-valid typecheck pass |
-| 02 | `02-transport.md` | Stateless streamable-HTTP server on `/mcp`, health endpoint, `AuthContext` loader, temporary `ping` tool |
-| 03 | `03-plane-client.md` | `PlaneClient` class: headers, pagination passthrough, 429 handling, typed errors, normalization helpers |
-| 04 | `04-tools-foundation.md` | Tool-registration pattern, zod v4 schemas, first vertical slice (`get_me`, `list_projects`, `retrieve_project`) |
-| 05 | `05-work-items.md` | Work item CRUD + search + identifier lookup, field normalization |
-| 06 | `06-collaboration.md` | Comments CRUD, relations CRUD |
-| 07 | `07-workflow.md` | States, labels, project/workspace members |
-| 08 | `08-sprints.md` | Cycles + modules, including work-item join/unjoin tools |
-| 09 | `09-hardening.md` | README, ARCHITECTURE.md, final review pass, verify no `.js` emitted, full tool inventory check |
+| 02 | `02-tooling.md` | Formatting/linting baseline: Prettier as the single formatter for `.ts`/`.json`/`.md` (per-language overrides), ESLint flat config + typescript-eslint + `eslint-config-prettier` for `.ts` correctness, committed pre-commit hook wired via `core.hooksPath`, CI gating, one-time full-repo baseline reformat |
+| 03 | `03-transport.md` | Stateless streamable-HTTP server on `/mcp`, health endpoint, `AuthContext` loader, temporary `ping` tool |
+| 04 | `04-plane-client.md` | `PlaneClient` class: headers, pagination passthrough, 429 handling, typed errors, normalization helpers |
+| 05 | `05-tools-foundation.md` | Tool-registration pattern, zod v4 schemas, first vertical slice (`get_me`, `list_projects`, `retrieve_project`) |
+| 06 | `06-work-items.md` | Work item CRUD + search + identifier lookup, field normalization |
+| 07 | `07-collaboration.md` | Comments CRUD, relations CRUD |
+| 08 | `08-workflow.md` | States, labels, project/workspace members |
+| 09 | `09-sprints.md` | Cycles + modules, including work-item join/unjoin tools |
+| 10 | `10-hardening.md` | README, ARCHITECTURE.md, final review pass, verify no `.js` emitted, full tool inventory check |
 
 Each phase file follows the `docs/plans/README.md` plan.md template (Phase,
 Status, Depends on, Ref, Goal, In/Out of scope, Design, Tasks, Definition of

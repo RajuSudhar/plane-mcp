@@ -1,7 +1,7 @@
 # feat-workflow
 
-Phase: 07  |  Status: [ ] planned
-Depends on: 06-collaboration
+Phase: 08  |  Status: [ ] planned
+Depends on: 07-collaboration
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.2, §3.4, §3.6, §6.12, §6.13, §6.2, §6.3
 
 ## Goal
@@ -78,11 +78,11 @@ const getWorkspaceMembersSchema = z.object({});
 **IMPORTANT**: `group` is validated as a closed enum
 (`backlog|unstarted|started|completed|cancelled`, spec report §7.4) — this
 is the same vocabulary `list_work_items`' `state_groups` filter uses
-(Phase 05); do not diverge the two enum definitions. If a shared constant is
+(Phase 06); do not diverge the two enum definitions. If a shared constant is
 preferable to redeclaring the `z.enum` array in two files, add a small
 shared schema module (e.g. `src/tools/shared-schemas.ts`) in this phase and
-have Phase 05's `work-items.ts` import it too — this is an allowed
-refactor of Phase 05 code as long as behavior is unchanged (no interface
+have Phase 06's `work-items.ts` import it too — this is an allowed
+refactor of Phase 06 code as long as behavior is unchanged (no interface
 or endpoint change, purely a schema-source dedup).
 
 ### `src/tools/states.ts`
@@ -204,7 +204,7 @@ export function registerMemberTools(server: McpServer, client: PlaneClient): voi
 
 - [ ] All 6 tools registered and callable
 - [ ] `group` enum and `color` hex-format validated at the zod layer
-- [ ] `docs/plans/TRACK.md` updated: Phase 07 row `[~]` at start, `[x]` at
+- [ ] `docs/plans/TRACK.md` updated: Phase 08 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

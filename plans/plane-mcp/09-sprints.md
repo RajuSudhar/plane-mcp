@@ -1,7 +1,7 @@
 # feat-sprints
 
-Phase: 08  |  Status: [ ] planned
-Depends on: 07-workflow
+Phase: 09  |  Status: [ ] planned
+Depends on: 08-workflow
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.11, §3.12, §6.14, §6.15
 
 ## Goal
@@ -234,7 +234,7 @@ export function registerModuleTools(server: McpServer, client: PlaneClient): voi
 - [ ] All 8 tools (4 cycle + 4 module) registered and callable
 - [ ] m2m add-body shape (`{ work_item_ids: [...] }`) and remove-path shape
       (single `work_item_id` in the URL) both explicitly asserted in tests
-- [ ] `docs/plans/TRACK.md` updated: Phase 08 row `[~]` at start, `[x]` at
+- [ ] `docs/plans/TRACK.md` updated: Phase 09 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

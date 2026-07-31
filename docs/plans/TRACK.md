@@ -1,6 +1,6 @@
 # TRACK — Plane MCP
 
-Last updated: 2026-07-28
+Last updated: 2026-07-31
 
 ## Status legend
 
@@ -8,7 +8,7 @@ Last updated: 2026-07-28
 
 ## Phases
 
-Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/09-hardening.md`.
+Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardening.md`.
 
 ### Phase 00 — RFC
 
@@ -18,37 +18,41 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/09-hardeni
 
 [x] `plans/plane-mcp/01-scaffold.md` — package.json, tsconfig, bunfig.toml, pinned deps, CI, src/index.ts stub, types/ dir, src/logger.ts
 
-### Phase 02 — Transport
+### Phase 02 — Tooling
 
-[ ] `plans/plane-mcp/02-transport.md` — stateless streamable-HTTP server on /mcp, health endpoint, AuthContext loader, McpServer factory, temporary ping tool
+[ ] `plans/plane-mcp/02-tooling.md` — Prettier as the single formatter for `.ts`/`.json`/`.md` (with per-language overrides), ESLint flat config (`eslint.config.ts`) + typescript-eslint + `eslint-config-prettier`, committed `.githooks/pre-commit` wired via `core.hooksPath`, CI gating (`format:check` + `lint`), one-time full-repo baseline reformat
 
-### Phase 03 — Plane Client
+### Phase 03 — Transport
 
-[ ] `plans/plane-mcp/03-plane-client.md` — PlaneClient class, pagination passthrough, 429 handling, typed errors, field-normalization helpers
+[ ] `plans/plane-mcp/03-transport.md` — stateless streamable-HTTP server on /mcp, health endpoint, AuthContext loader, McpServer factory, temporary ping tool
 
-### Phase 04 — Tools Foundation
+### Phase 04 — Plane Client
 
-[ ] `plans/plane-mcp/04-tools-foundation.md` — tool-registration pattern, zod v4 schemas, first vertical slice (get_me, list_projects, retrieve_project)
+[ ] `plans/plane-mcp/04-plane-client.md` — PlaneClient class, pagination passthrough, 429 handling, typed errors, field-normalization helpers
 
-### Phase 05 — Work Items
+### Phase 05 — Tools Foundation
 
-[ ] `plans/plane-mcp/05-work-items.md` — list/retrieve/retrieve_by_identifier/create/update/delete/search work items, field normalization
+[ ] `plans/plane-mcp/05-tools-foundation.md` — tool-registration pattern, zod v4 schemas, first vertical slice (get_me, list_projects, retrieve_project)
 
-### Phase 06 — Collaboration
+### Phase 06 — Work Items
 
-[ ] `plans/plane-mcp/06-collaboration.md` — comments CRUD, relations CRUD (relation_type enum)
+[ ] `plans/plane-mcp/06-work-items.md` — list/retrieve/retrieve_by_identifier/create/update/delete/search work items, field normalization
 
-### Phase 07 — Workflow
+### Phase 07 — Collaboration
 
-[ ] `plans/plane-mcp/07-workflow.md` — states, labels, project/workspace members
+[ ] `plans/plane-mcp/07-collaboration.md` — comments CRUD, relations CRUD (relation_type enum)
 
-### Phase 08 — Sprints
+### Phase 08 — Workflow
 
-[ ] `plans/plane-mcp/08-sprints.md` — cycles + modules, work-item join/unjoin tools
+[ ] `plans/plane-mcp/08-workflow.md` — states, labels, project/workspace members
 
-### Phase 09 — Hardening
+### Phase 09 — Sprints
 
-[ ] `plans/plane-mcp/09-hardening.md` — README.md, docs/ARCHITECTURE.md, final review, zero-.js verification, full tool inventory check
+[ ] `plans/plane-mcp/09-sprints.md` — cycles + modules, work-item join/unjoin tools
+
+### Phase 10 — Hardening
+
+[ ] `plans/plane-mcp/10-hardening.md` — README.md, docs/ARCHITECTURE.md, final review, zero-.js verification, full tool inventory check
 
 ## Done
 
@@ -63,7 +67,9 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/09-hardeni
   - `.gitignore` (Bun-appropriate, commits bun.lock)
   - `.bun-version` (pinned to 1.3.14)
 - RFC authored: `plans/plane-mcp/00-rfc.md` (architecture, alternatives, risks, phase sketch)
-- Full phase plan authored: `plans/plane-mcp/01-scaffold.md` through `plans/plane-mcp/09-hardening.md`
+- Full phase plan authored: `plans/plane-mcp/01-scaffold.md` through `plans/plane-mcp/10-hardening.md` (11 files: RFC + 10 phases)
+- Phase 01 (scaffold) implemented and committed
+- Tooling phase inserted as the new Phase 02 (formatting/linting baseline via Prettier + ESLint); every downstream phase (former 02-09) renumbered to 03-10; all internal cross-references and `Depends on:` chains updated to match
 
 ## Decisions / deviations
 
@@ -72,7 +78,8 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/09-hardeni
 3. **Tool Scope**: exactly ~25 core ticket-workflow tools (users/projects/work items/comments/relations/states/labels/members/cycles/modules) — full catalog in `plans/plane-mcp/00-rfc.md`
 4. **Rejected alternatives**: stdio-only transport, full 100+ tool scope (mirroring the official Python server), MCP SDK v1 (`@modelcontextprotocol/sdk`) — rationale in `plans/plane-mcp/00-rfc.md` Alternatives section
 5. **Architecture laws**: tools are pure functions `(authContext, args) -> result`; one `PlaneClient` class is the sole Plane API boundary; `list_*` tools return the raw pagination envelope (no auto-paging); 429s surfaced as tool errors, never swallowed; field-name asymmetry (`state`/`state_id`, `assignees`/`assignee_ids`, `target_date`/`due_date`) normalized centrally in `src/plane/normalize.ts`
+6. **Tooling stack (Phase 02)**: Prettier is the single formatter for every file type (`.ts`, `.json`, `.md`) with per-language overrides — no Biome. ESLint (flat config, `eslint.config.ts`) + `typescript-eslint` owns correctness/linting for `.ts` only; `eslint-config-prettier` loaded last so ESLint and Prettier never fight over formatting rules. A committed, zero-dependency `.githooks/pre-commit` script (wired via `git config core.hooksPath .githooks`) runs Prettier then ESLint before every commit; `--no-verify` is never used. Phase 02 runs immediately after scaffold, before any feature code, so the one-time full-repo baseline reformat never collides with a later feature commit.
 
 ## Blockers / decisions pending
 
-- None — RFC and full phase plan (00-09) are written. Next action is starting Phase 01 (`plans/plane-mcp/01-scaffold.md`) per `docs/plans/README.md`'s rule: never start a feat without opening its plan.md.
+- None — RFC and full phase plan (00, 01, 02 tooling, 03-10) are written. Phase 01 (scaffold) is implemented. Next action is starting Phase 02 (`plans/plane-mcp/02-tooling.md`) per `docs/plans/README.md`'s rule: never start a feat without opening its plan.md.

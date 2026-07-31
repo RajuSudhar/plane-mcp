@@ -1,14 +1,14 @@
 # feat-tools-foundation
 
-Phase: 04  |  Status: [ ] planned
-Depends on: 03-plane-client
+Phase: 05  |  Status: [ ] planned
+Depends on: 04-plane-client
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §5.1, §5.6, §5.7, §6.1, §6.2, §6.3
 
 ## Goal
 
 Establish the tool-registration pattern (pure-function wrapper, error
 mapping, zod v4 schemas) and prove it with the first vertical slice:
-`get_me`, `list_projects`, `retrieve_project`. Remove the Phase 02 `ping`
+`get_me`, `list_projects`, `retrieve_project`. Remove the Phase 03 `ping`
 tool.
 
 ## In scope
@@ -24,24 +24,24 @@ tool.
   `registerUserTools(server, planeClient)` / `registerProjectTools(server,
   planeClient)`.
 - Update `src/index.ts` — construct one `PlaneClient` per created `McpServer`
-  (see stateless note in Phase 02 — each request's fresh server gets a fresh
+  (see stateless note in Phase 03 — each request's fresh server gets a fresh
   client built from the shared `AuthContext`; the client itself is cheap to
   construct, holds no connection state).
 - Unit tests for all three tools against a mocked `PlaneClient`.
 
 ## Out of scope
 
-- Work item tools (Phase 05).
-- Comments/relations (Phase 06).
-- States/labels/members (Phase 07).
-- Cycles/modules (Phase 08).
+- Work item tools (Phase 06).
+- Comments/relations (Phase 07).
+- States/labels/members (Phase 08).
+- Cycles/modules (Phase 09).
 
 ## Design
 
 ### Tool-registration pattern rationale
 
 Per `00-rfc.md`, tools are pure functions `(authContext, args) -> result`.
-`PlaneClient` is constructed from `authContext` once per request (Phase 02
+`PlaneClient` is constructed from `authContext` once per request (Phase 03
 already establishes fresh-server-per-request; this phase adds
 fresh-client-per-request built from that same `authContext`). The wrapper in
 `register.ts` exists so:
@@ -154,7 +154,7 @@ is a workaround hack and must **not** be used — instead add a dedicated
 non-workspace-scoped path builder. Correct version:
 
 ```typescript
-// src/plane/client.ts addition (Phase 04 amends Phase 03's client.ts):
+// src/plane/client.ts addition (Phase 05 amends Phase 04's client.ts):
 apiPath(sub: string): string {
   return `/api/v1/${sub.replace(/^\//, '')}`;
 }
@@ -166,7 +166,7 @@ const me = await c.get(c.apiPath('users/me/'));
 ```
 
 Add `apiPath` to `PlaneClient` as part of this phase's tasks (a small,
-additive change to the Phase 03 file) rather than routing every
+additive change to the Phase 04 file) rather than routing every
 non-workspace-scoped call through string hacks on `workspacePath`.
 
 ### `src/tools/projects.ts`
@@ -226,7 +226,7 @@ export function registerProjectTools(server: McpServer, client: PlaneClient): vo
 time — if the installed version expects the raw shape object
 (`schema.shape`) instead of the `ZodObject` instance, adjust every tool file
 consistently in this phase (it is a repeated pattern, fix it once here
-before Phases 05-08 copy it forward).
+before Phases 06-09 copy it forward).
 
 ### `src/server.ts` (updated — replaces `ping`)
 
@@ -248,7 +248,7 @@ export function createServer(auth: AuthContext): McpServer {
 }
 ```
 
-The Phase 02 `ping` registration is deleted entirely, not left dormant.
+The Phase 03 `ping` registration is deleted entirely, not left dormant.
 
 ## Tasks
 
@@ -262,7 +262,7 @@ The Phase 02 `ping` registration is deleted entirely, not left dormant.
       functions
 - [ ] Write `src/tools/users.test.ts` and `src/tools/projects.test.ts` against
       a mocked `PlaneClient` (mock at the `client.get`/`client.post` method
-      level, not `fetch` — that layer is already covered in Phase 03)
+      level, not `fetch` — that layer is already covered in Phase 04)
 - [ ] Run `bun test` — all green
 - [ ] Run `bun run typecheck` — passes
 - [ ] Manually re-verify `/mcp` `initialize` still works and `ping` is gone
@@ -277,7 +277,7 @@ The Phase 02 `ping` registration is deleted entirely, not left dormant.
 - [ ] `list_projects` test asserts `cursor`/`per_page` are passed through to
       `client.get` untouched (no auto-paging logic introduced)
 - [ ] `ping` tool fully removed from the codebase
-- [ ] `docs/plans/TRACK.md` updated: Phase 04 row `[~]` at start, `[x]` at
+- [ ] `docs/plans/TRACK.md` updated: Phase 05 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

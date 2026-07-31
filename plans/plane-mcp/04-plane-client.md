@@ -1,7 +1,7 @@
 # feat-plane-client
 
-Phase: 03  |  Status: [ ] planned
-Depends on: 02-transport
+Phase: 04  |  Status: [ ] planned
+Depends on: 03-transport
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §2, §7.1, §7.9, §9.5
 
 ## Goal
@@ -17,7 +17,7 @@ work-item read/write asymmetry.
 - `src/plane/errors.ts` — `PlaneApiError` typed error.
 - `src/plane/normalize.ts` — work-item field normalization helpers
   (`toWorkItemWriteBody`, `fromWorkItemReadShape` or equivalent — exact
-  function names decided here, used everywhere from Phase 05 onward).
+  function names decided here, used everywhere from Phase 06 onward).
 - `types/plane.ts` — real wire-shape types (`WorkItem`, `Project`, `Cycle`,
   `Module`, `State`, `Label`, `Comment`, `Relation`, `Member`,
   `PaginationEnvelope<T>`) replacing the Phase 01 placeholder.
@@ -25,10 +25,10 @@ work-item read/write asymmetry.
 
 ## Out of scope
 
-- Any tool registration or zod schema (Phase 04+).
+- Any tool registration or zod schema (Phase 05+).
 - Resource-specific request builders beyond the generic `get`/`post`/
   `patch`/`delete` methods — e.g. no `client.listWorkItems(...)` method here;
-  that composition happens in `src/tools/work-items.ts` (Phase 05) using the
+  that composition happens in `src/tools/work-items.ts` (Phase 06) using the
   generic methods below.
 - OAuth bearer credential path (non-goal per `00-rfc.md`).
 
@@ -335,14 +335,14 @@ export class PlaneClient {
 
 **CRITICAL — 429 never swallowed**: after `MAX_RETRIES` backoff attempts, the
 method throws `PlaneRateLimitError` rather than returning a default/empty
-value. Every tool (Phase 04+) lets this propagate up to the tool-wrapper
-error mapper (Phase 04 Design), which converts it into an `isError` tool
+value. Every tool (Phase 05+) lets this propagate up to the tool-wrapper
+error mapper (Phase 05 Design), which converts it into an `isError` tool
 result — the model sees the rate limit, it is never hidden as a false
 "success with no results".
 
 **CRITICAL — no auto-paging**: `PlaneClient` has no `listAll`/`iterate`
 helper. `cursor` and `per_page` are passed straight through as query params
-by the calling tool (Phase 05); `PlaneClient.get<T>` returns whatever
+by the calling tool (Phase 06); `PlaneClient.get<T>` returns whatever
 envelope Plane sends, untouched.
 
 **Note on `workspacePath`**: every workspace-scoped call goes through this
@@ -401,7 +401,7 @@ function: `WorkItem` (read shape) is returned to the model as-is — the tool
 output surfaces `state_id`/`assignee_ids`/`target_date` directly, since
 that's the shape Plane's GET endpoints already return and the shape
 `retrieve_work_item`/`list_work_items` promise. Only the write direction
-needs translation. Phase 05 tools import `toWorkItemWriteBody` for
+needs translation. Phase 06 tools import `toWorkItemWriteBody` for
 `create_work_item`/`update_work_item` and pass `WorkItem` straight through
 for reads.
 
@@ -483,7 +483,7 @@ far-future reset timestamp in tests (it will make the suite hang up to the
 - [ ] `toWorkItemWriteBody` unit-tested for at least one field of each kind
       (renamed field, passthrough field, omitted-when-undefined field) — add
       these cases to `client.test.ts` or a sibling `normalize.test.ts`
-- [ ] `docs/plans/TRACK.md` updated: Phase 03 row `[~]` at start, `[x]` at
+- [ ] `docs/plans/TRACK.md` updated: Phase 04 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

@@ -1,7 +1,7 @@
 # feat-work-items
 
-Phase: 05  |  Status: [ ] planned
-Depends on: 04-tools-foundation
+Phase: 06  |  Status: [ ] planned
+Depends on: 05-tools-foundation
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.5, §5.5, §6.4, §7.1
 
 ## Goal
@@ -16,7 +16,7 @@ pagination), `retrieve_work_item`, `retrieve_work_item_by_identifier`,
 - `src/tools/work-items.ts` — all seven work-item tools.
 - Zod schemas for each, matching the filter/argument surface in spec report
   §6.4.
-- Use of `toWorkItemWriteBody` (Phase 03) for `create_work_item` and
+- Use of `toWorkItemWriteBody` (Phase 04) for `create_work_item` and
   `update_work_item`.
 - Unit tests for all seven tools against a mocked `PlaneClient`, including
   the `ENG-42`-style identifier path.
@@ -24,14 +24,14 @@ pagination), `retrieve_work_item`, `retrieve_work_item_by_identifier`,
 
 ## Out of scope
 
-- Comments, relations (Phase 06).
-- States, labels (Phase 07) — `list_work_items`' `state_ids`/`label_ids`
+- Comments, relations (Phase 07).
+- States, labels (Phase 08) — `list_work_items`' `state_ids`/`label_ids`
   filters accept raw UUID strings from the caller; this phase does not
   resolve human-readable state/label names to UUIDs (the model is expected
   to call `list_states`/`list_labels` itself, per spec report §10 workflow
   examples).
 - Work item comments/relations/activities/worklogs/attachments/links (all
-  out of RFC scope except comments+relations, which are Phase 06).
+  out of RFC scope except comments+relations, which are Phase 07).
 
 ## Design
 
@@ -141,7 +141,7 @@ const searchWorkItemsSchema = z.object({
 **Note on tool-arg naming vs write-body naming**: tool args use the
 read-shape-friendly names (`state_id`, `assignee_ids`, `due_date`) — matching
 what the model sees when it reads back a `WorkItem` — while
-`toWorkItemWriteBody` (Phase 03) translates these into the write-shape body
+`toWorkItemWriteBody` (Phase 04) translates these into the write-shape body
 Plane expects (`state`, `assignees`, `target_date`) at the point of the
 actual POST/PATCH call. This is the one and only place normalization
 happens; `list_work_items`' `state_ids`/`label_ids` filters are query
@@ -333,7 +333,7 @@ explicitly so it isn't missed during implementation.
 - [ ] Field normalization verified by explicit assertions on the request
       body sent to `client.post`/`client.patch`, not just "response looks
       right"
-- [ ] `docs/plans/TRACK.md` updated: Phase 05 row `[~]` at start, `[x]` at
+- [ ] `docs/plans/TRACK.md` updated: Phase 06 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions
