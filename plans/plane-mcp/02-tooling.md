@@ -1,17 +1,17 @@
 # feat-tooling
 
-Phase: 02  |  Status: [ ] planned
+Phase: 02 | Status: [x] done
 Depends on: 01-scaffold
 Ref: `plans/plane-mcp/00-rfc.md`, `docs/CODING-STANDARDS.md`, `CLAUDE.md`
 
 ## Goal
 
 Establish the formatting/linting baseline — Prettier as the single formatter
-for every file type (`.ts`, `.json`, `.md`), ESLint (flat config) +
-typescript-eslint for `.ts` correctness, a zero-dependency committed
-pre-commit hook, and CI gating — then reformat the entire existing tree
-against it in this same commit, so no future feature phase ever produces a
-retroactive "format the whole repo" commit that pollutes git history.
+for every file type (`.ts`, `.json`, `.md`), oxlint for `.ts` correctness, a
+zero-dependency committed pre-commit hook, and CI gating — then reformat the
+entire existing tree against it in this same commit, so no future feature
+phase ever produces a retroactive "format the whole repo" commit that
+pollutes git history.
 
 **Locked decisions (do not re-litigate — see orchestrator's resolved
 decisions)**:
@@ -19,27 +19,28 @@ decisions)**:
 - **Prettier is the single formatter for all file types.** No Biome. One
   formatter config (with per-language `overrides`) covers `.ts`, `.json`,
   and `.md` alike.
-- **ESLint owns `.ts` correctness only**, via flat config
-  (`eslint.config.ts`) + `typescript-eslint`, with `eslint-config-prettier`
-  loaded last so ESLint never fights Prettier over formatting rules. ESLint
-  does not lint `.json` or `.md`.
+- **oxlint owns `.ts` correctness only**, via `.oxlintrc.json`. oxlint is a
+  self-contained Rust binary with zero TypeScript-compiler coupling — it
+  parses TypeScript syntactically, it does not invoke `tsc` or load any
+  `typescript` package APIs, so the repo's TypeScript 7 pin has no effect on
+  it. oxlint does not lint `.json` or `.md`.
 - **Pre-commit hook** is a committed, zero-dependency shell script at
   `.githooks/pre-commit`, wired via `git config core.hooksPath .githooks`.
-  It runs Prettier across the whole repo, then ESLint, before every commit.
+  It runs Prettier across the whole repo, then oxlint, before every commit.
   `--no-verify` is never used anywhere in this repo (hard rule).
 
 ## In scope
 
-- Exact-pinned devDeps: `prettier`, `eslint`, `typescript-eslint`,
-  `@eslint/js`, `eslint-config-prettier` (added via `bun add --exact --dev`,
-  versions resolved at implementation time — see Open questions).
+- Exact-pinned devDeps: `prettier` and `oxlint` (added via
+  `bun add --exact --dev`, versions resolved at implementation time — see
+  Open questions). Phase 02 adds exactly these two tools total — no ESLint
+  stack, no `jiti`.
 - `.prettierrc` (or `prettier.config.ts`) — base formatting options matching
   `docs/CODING-STANDARDS.md`'s Formatting Standards, plus an `overrides`
   block giving correct per-language settings for `*.md` and `*.json`.
 - `.prettierignore` — `node_modules`, `bun.lock`.
-- `eslint.config.ts` (flat config) — `@eslint/js` recommended +
-  `typescript-eslint` recommended, the three hard-rule enforcements below,
-  `eslint-config-prettier` last, an `ignores` block, scoped to `.ts` only.
+- `.oxlintrc.json` — the three hard-rule enforcements below, scoped to `.ts`
+  by oxlint's own default file targeting.
 - `package.json` scripts: `format`, `format:check`, `lint`, `lint:fix`,
   `check` — resolving the `TBD` script names in `CLAUDE.md`.
 - `.githooks/pre-commit` — committed shell script, zero dependencies, wired
@@ -58,12 +59,13 @@ decisions)**:
 - Any tool implementation (Phases 05-09).
 - Writing new tests — the only requirement is that the existing Phase 01
   test command (`bun test`) keeps exiting 0 after formatting/lint changes.
-- Type-aware ESLint rules (rules that require `parserOptions.project` and a
-  full type-check pass). The three hard-rule enforcements in this phase
-  (`consistent-type-definitions`, `no-explicit-any`,
-  `consistent-type-imports`) are all syntactic, non-type-aware rules — no
-  `languageOptions.parserOptions.project` wiring is required to enforce
-  them. Type-aware linting is a future phase's decision if ever needed.
+- Type-aware linting (rules that require a full type-check pass against the
+  TypeScript compiler). oxlint does not do type-aware linting at all — it is
+  a purely syntactic Rust-based linter. The three hard-rule enforcements in
+  this phase (`typescript/consistent-type-definitions`,
+  `typescript/no-explicit-any`, `typescript/consistent-type-imports`) are all
+  syntactic checks and require no compiler integration. Type-aware linting
+  (via a separate tool, if ever needed) is a future phase's decision.
 
 ## Design
 
@@ -75,43 +77,35 @@ decisions)**:
     "@types/bun": "1.3.14",
     "typescript": "7.0.2",
     "prettier": "<RESOLVE_EXACT_AT_IMPLEMENTATION>",
-    "eslint": "<RESOLVE_EXACT_AT_IMPLEMENTATION>",
-    "typescript-eslint": "<RESOLVE_EXACT_AT_IMPLEMENTATION>",
-    "@eslint/js": "<RESOLVE_EXACT_AT_IMPLEMENTATION>",
-    "eslint-config-prettier": "<RESOLVE_EXACT_AT_IMPLEMENTATION>"
+    "oxlint": "<RESOLVE_EXACT_AT_IMPLEMENTATION>"
   }
 }
 ```
 
 **IMPORTANT**: every `<RESOLVE_EXACT_AT_IMPLEMENTATION>` placeholder is not a
-version to type literally. Run
-`bun add --exact --dev prettier eslint typescript-eslint @eslint/js eslint-config-prettier`,
-let Bun resolve the actual latest stable versions (per `bunfig.toml`'s
+version to type literally. Run `bun add --exact --dev prettier oxlint`, let
+Bun resolve the actual latest stable versions (per `bunfig.toml`'s
 `[install] exact = true`, Bun writes them in without a range), then copy
 whatever exact versions land in `package.json` into this file's Design
 section before marking this phase done — per `docs/CODING-STANDARDS.md` §
 Dependency Management, verify every package against the compromised-package
 list before adding.
 
-**CRITICAL — TypeScript 7 compatibility gate**: this repo pins
-`typescript@7.0.2` (Phase 01). `typescript-eslint` (and its
-`@typescript-eslint/*` sub-packages, pulled in transitively) declare a
-`typescript` peerDependency range. If the version of `typescript-eslint`
-that resolves at implementation time does not yet list TypeScript 7 in its
-supported peer range:
-
-1. Do **not** silently downgrade `typescript` back to a 5.x/6.x line to
-   satisfy the peer range — that would violate the Phase 01 scaffold
-   decision and `CLAUDE.md`'s pinned-runtime rule.
-2. Do **not** silently install a mismatched `typescript-eslint` version and
-   ignore the peer-dependency warning.
-3. Instead: report the incompatibility (exact `typescript-eslint` version
-   tried, its declared peer range, the installed `typescript` version)
-   before proceeding, and treat the resolution (wait for a compatible
-   `typescript-eslint` release, use a documented prerelease/canary tag that
-   explicitly claims TS7 support, or escalate for a scoped decision) as a
-   blocking open question for this phase, not a thing to paper over with a
-   silent substitution.
+**Design note — why oxlint replaced the ESLint/typescript-eslint stack**:
+this repo pins `typescript@7.0.2` (Phase 01). `typescript-eslint` has no
+supported TypeScript 7 release path — the upstream tracking issue for TS7
+support was closed as "not planned," blocked on the TS7.1 stable compiler
+API, which is still months out at the time of this decision. That leaves
+`typescript-eslint` permanently unable to parse this repo's TypeScript
+version, which is a hard blocker, not a cosmetic peer-range warning to wait
+out. oxlint was adopted instead: it is a single self-contained Rust binary
+that parses TypeScript syntax directly, with zero dependency on the
+`typescript` package or the `tsc` compiler APIs — TS7 (or any future
+TypeScript version) cannot break it the way it broke `typescript-eslint`,
+because oxlint never calls into the TypeScript compiler at all. A
+Biome-based linter was the considered fallback if oxlint had not covered
+the three hard-rule lint checks this repo requires; it wasn't needed since
+oxlint covers all three natively.
 
 ### `.prettierrc`
 
@@ -181,62 +175,47 @@ dependency-lockfile handling — `bun.lock` is a generated, machine-written
 file and must never be reformatted (Prettier reformatting it could produce
 a diff that looks like a lockfile change but isn't one Bun actually wrote).
 
-### `eslint.config.ts`
+### `.oxlintrc.json`
 
-```typescript
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import eslintConfigPrettier from 'eslint-config-prettier';
-
-export default tseslint.config(
-  {
-    ignores: ['node_modules', 'bun.lock', '**/*.md', '**/*.json'],
-  },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  {
-    files: ['**/*.ts'],
-    rules: {
-      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/consistent-type-imports': 'error',
-    },
-  },
-  eslintConfigPrettier,
-);
+```json
+{
+  "rules": {
+    "typescript/consistent-type-definitions": ["error", "type"],
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": "error"
+  }
+}
 ```
 
 **Rule-by-rule mapping to the project's hard rules**
 (`docs/CODING-STANDARDS.md` / `CLAUDE.md`):
 
-| ESLint rule | Hard rule enforced |
-| --- | --- |
-| `@typescript-eslint/consistent-type-definitions: ["error", "type"]` | "`type` only, never `interface`" |
-| `@typescript-eslint/no-explicit-any: "error"` | "No `any`" |
-| `@typescript-eslint/consistent-type-imports: "error"` | Type-only imports (matches the Import Organization convention: "Type imports (separate)") |
+| oxlint rule                                                 | Hard rule enforced                                                                        |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `typescript/consistent-type-definitions: ["error", "type"]` | "`type` only, never `interface`"                                                          |
+| `typescript/no-explicit-any: "error"`                       | "No `any`"                                                                                |
+| `typescript/consistent-type-imports: "error"`               | Type-only imports (matches the Import Organization convention: "Type imports (separate)") |
 
-**CRITICAL — `eslint-config-prettier` must be the last entry** in the
-config array. `tseslint.config(...)` flattens its arguments in order and
-later entries override earlier ones for the same rule key;
-`eslint-config-prettier` turns off every core-ESLint and
-`@typescript-eslint` formatting-related rule so ESLint never reports (or
-auto-fixes) something Prettier already owns. If any config item is added
-after `eslintConfigPrettier` in a future phase, that is a bug — formatting
-rules could silently re-enable.
+These three rules are the entire enforcement surface this phase requires:
+type-over-interface, no `any`, and type-only imports. No other rule
+categories (style, formatting, import-order, etc.) are enabled — oxlint owns
+correctness only, Prettier owns formatting, and there is no overlap between
+the two to disable or coordinate. Unlike the previous ESLint stack, there is
+no `eslint-config-prettier`-equivalent step needed here: oxlint ships no
+formatting rules in the first place, so there is nothing for it to fight
+Prettier over.
 
-**Ignores**: `node_modules`, `bun.lock`, `**/*.md`, `**/*.json` — ESLint
-targets `.ts` only in this repo; Markdown and JSON have no lint step (they
-are formatted-only, by Prettier). `.githooks/pre-commit` is a `.sh` file and
-is naturally untouched by either tool without needing an explicit ignore
-entry.
+**Scope**: oxlint lints `.ts` files only. Markdown remains exclusively
+Prettier-formatted (`*.md` is not a lint target — oxlint has no Markdown
+rule set, and none is configured here). JSON is likewise formatting-only via
+Prettier, never linted.
 
 **Note on `interface` exceptions**: `consistent-type-definitions` set to
 `"type"` will flag any `interface` declaration, including the two narrow
 exceptions `docs/CODING-STANDARDS.md` allows (class-extends,
 declaration-merging). If a future phase hits one of those two legitimate
-cases, use a scoped
-`// eslint-disable-next-line @typescript-eslint/consistent-type-definitions`
-comment with a one-line reason, rather than loosening the rule globally.
+cases, use a scoped oxlint disable comment for that line with a one-line
+reason, rather than loosening the rule globally.
 
 ### `package.json` scripts (resolves `CLAUDE.md`'s `TBD` names)
 
@@ -249,8 +228,8 @@ comment with a one-line reason, rather than loosening the rule globally.
     "start": "bun run src/index.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "check": "bun run format:check && bun run lint",
     "prepare": "git config core.hooksPath .githooks"
   }
@@ -266,10 +245,9 @@ comment with a one-line reason, rather than loosening the rule globally.
   file type via `.prettierrc`'s `overrides`, not via separate CLI calls.
 - `format:check` — `prettier --check .` is the non-mutating equivalent:
   exits non-zero if any file would be reformatted, writes nothing.
-- `lint` — `eslint .` reports lint errors (scoped to `.ts` via
-  `eslint.config.ts`'s own file matching/ignores), exits non-zero on any,
-  mutates nothing.
-- `lint:fix` — `eslint . --fix` applies ESLint's safe auto-fixes.
+- `lint` — `oxlint` reports lint errors per `.oxlintrc.json` (scoped to
+  `.ts` by oxlint's own defaults), exits non-zero on any, mutates nothing.
+- `lint:fix` — `oxlint --fix` applies oxlint's safe auto-fixes.
 - `check` — the combined gate for this phase's scope: formatting must be
   clean AND linting must pass. `typecheck`/`test` remain separate existing
   scripts (Phase 01) and are not folded into `check` — CI (below) runs all
@@ -293,7 +271,7 @@ bun run format
 echo "[pre-commit] Re-staging any files the formatter touched..."
 git add -u
 
-echo "[pre-commit] Linting (eslint)..."
+echo "[pre-commit] Linting (oxlint)..."
 bun run lint
 
 echo "[pre-commit] OK"
@@ -347,7 +325,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.14"
+          bun-version: '1.3.14'
       - run: bun install --frozen-lockfile
       - run: bun run format:check
       - run: bun run lint
@@ -359,7 +337,8 @@ jobs:
 formatting or lint failure is reported first and fails fast, before paying
 for a full type-check + test run. This ordering is a deliberate choice for
 this phase, not incidental — keep it if a later phase edits this workflow
-file again.
+file again. `bun run lint` now invokes oxlint, but the step name and
+position in the workflow are unchanged.
 
 ### Baseline reformat (explicit task, not a side effect)
 
@@ -382,21 +361,18 @@ whitespace/wrapping, never their content or meaning.
 
 ## Tasks
 
-- [ ] `bun add --exact --dev prettier eslint typescript-eslint @eslint/js eslint-config-prettier`;
-      verify each package against the compromised-package list; record the
-      resolved exact versions in this file's Design section
-- [ ] Verify the resolved `typescript-eslint` version's peer-dependency
-      range actually supports the installed `typescript@7.0.2` — if it does
-      not, stop and resolve per the CRITICAL note in Design (report before
-      substituting) rather than silently downgrading TypeScript or ignoring
-      the peer warning
+- [ ] `bun add --exact --dev prettier oxlint`; verify each package against
+      the compromised-package list; record the resolved exact versions in
+      this file's Design section
+- [ ] Confirm `bun run lint` (oxlint) runs to completion against the TS7
+      sources with no config-loading error and no compiler-coupling issue
 - [ ] Write `.prettierrc` per Design
 - [ ] Write `.prettierignore` per Design
-- [ ] Write `eslint.config.ts` per Design
+- [ ] Write `.oxlintrc.json` per Design
 - [ ] Add `format`/`format:check`/`lint`/`lint:fix`/`check`/`prepare`
       scripts to `package.json` per Design (exact command strings)
 - [ ] Write `.githooks/pre-commit` per Design; `chmod +x
-      .githooks/pre-commit`
+.githooks/pre-commit`
 - [ ] Run `git config core.hooksPath .githooks` locally and confirm
       `git config --get core.hooksPath` reports `.githooks`
 - [ ] Update `.github/workflows/ci.yml`: insert `bun run format:check` and
@@ -427,7 +403,9 @@ whitespace/wrapping, never their content or meaning.
 
 - [ ] `bun run format:check` reports zero changes needed across the entire
       repository
-- [ ] `bun run lint` passes with zero errors
+- [ ] `bun run lint` (oxlint) passes with zero errors against the TS7
+      sources
+- [ ] `bun install` produces no unexpected peer/resolution warnings
 - [ ] `bun run typecheck` passes (unaffected by formatting/lint changes)
 - [ ] `bun test` passes (unaffected by formatting/lint changes)
 - [ ] `.githooks/pre-commit` is present, executable, and actually blocks a
@@ -443,27 +421,13 @@ whitespace/wrapping, never their content or meaning.
 
 ## Open questions
 
-- Exact resolved versions of `prettier`, `eslint`, `typescript-eslint`,
-  `@eslint/js`, and `eslint-config-prettier` are not known at
+- Exact resolved versions of `prettier` and `oxlint` are not known at
   plan-authoring time — resolve via `bun add --exact` during implementation
   and record them in this file's Design section before marking the phase
   done; do not guess or backfill a version number here.
-- Whether the resolved `typescript-eslint` version's declared peer range
-  covers `typescript@7.0.2` must be confirmed at implementation time — see
-  the CRITICAL note in Design. If it lags TypeScript 7, this is a blocking
-  finding to report (with the exact versions and peer range involved)
-  before any substitution is made, not a silent downgrade.
 - Whether Bun's `prepare` lifecycle script reliably runs on every `bun
-  install` invocation (including CI's `--frozen-lockfile` install) in the
+install` invocation (including CI's `--frozen-lockfile` install) in the
   pinned `1.3.14` version should be confirmed during implementation; if it
   does not fire in CI, that is harmless (CI does not rely on git hooks —
   `format:check`/`lint` are explicit CI steps, not hook-dependent), but
   confirm local-clone behavior manually per the Tasks checklist regardless.
-- Whether `eslint.config.ts` (a TypeScript flat-config file) loads correctly
-  under the resolved ESLint version without an extra loader/runtime
-  dependency (modern ESLint has native/`jiti`-backed TS config support in
-  recent major versions) must be confirmed at implementation time; if the
-  resolved ESLint version cannot load a `.ts` config file directly, that is
-  a blocking finding to report — do not silently rename the config to
-  `eslint.config.js` /`.mjs` without flagging the deviation, since the
-  resolved decision explicitly specifies `eslint.config.ts`.

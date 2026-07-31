@@ -1,6 +1,6 @@
 # feat-transport
 
-Phase: 03  |  Status: [ ] planned
+Phase: 03 | Status: [ ] planned
 Depends on: 02-tooling
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §1, §5.1, §5.3
 
@@ -17,7 +17,7 @@ a single temporary `ping` tool.
 - `types/config.ts` — real `AuthContext` and `EnvConfig` types (replacing the
   Phase 01 placeholder).
 - `src/server.ts` — `McpServer` factory function (constructs a fresh server
-  + registers tools every call — no module-level singleton).
+  - registers tools every call — no module-level singleton).
 - `src/index.ts` — replaces the Phase 01 stub: wires `Bun.serve`,
   `createMcpHonoApp`, `/health` route, `/mcp` route.
 - One temporary `ping` tool (removed in Phase 05 once the real
@@ -121,7 +121,7 @@ export function createServer(_auth: AuthContext): McpServer {
     },
     async () => ({
       content: [{ type: 'text', text: 'pong' }],
-    }),
+    })
   );
 
   return server;
@@ -154,7 +154,7 @@ app.get('/health', (c) => c.json({ status: 'ok' }));
 
 app.route(
   '/mcp',
-  createMcpHonoApp(() => createServer(auth), { stateless: true }),
+  createMcpHonoApp(() => createServer(auth), { stateless: true })
 );
 
 log('info', 'plane-mcp server starting', { operation: 'server_init', port });
@@ -167,7 +167,7 @@ export default {
 ```
 
 **CRITICAL — stateless-reuse bug**: `createMcpHonoApp` must be given a
-factory that produces a *new* `McpServer` (and therefore a new transport)
+factory that produces a _new_ `McpServer` (and therefore a new transport)
 per request, not a shared singleton passed by reference. The signature above
 passes `() => createServer(auth)` rather than `createServer(auth)` for
 exactly this reason — confirm against the installed
@@ -175,7 +175,7 @@ exactly this reason — confirm against the installed
 that package expects the server instance directly (not a factory) instead,
 the equivalent fix is to construct a brand-new `McpServer` inside the route
 handler for every request rather than reusing one across requests. Whichever
-shape the installed package requires, the *invariant* — fresh server +
+shape the installed package requires, the _invariant_ — fresh server +
 transport per request — is the actual Definition-of-Done item, not the exact
 call shown here.
 

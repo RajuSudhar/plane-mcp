@@ -1,6 +1,6 @@
 # feat-hardening
 
-Phase: 10  |  Status: [ ] planned
+Phase: 10 | Status: [ ] planned
 Depends on: 09-sprints
 Ref: `plans/plane-mcp/00-rfc.md`, all prior phase files
 
@@ -44,16 +44,17 @@ tools present" invariants hold.
 3. **Configure** — required/optional env vars, matching `src/config.ts`
    exactly:
 
-   | Var | Required | Default |
-   | --- | --- | --- |
-   | `PLANE_API_KEY` | Yes | — |
-   | `PLANE_WORKSPACE_SLUG` | Yes | — |
-   | `PLANE_BASE_URL` | No | `https://api.plane.so` |
-   | `PORT` | No | value from Phase 03's `loadPort()` default |
+   | Var                    | Required | Default                                    |
+   | ---------------------- | -------- | ------------------------------------------ |
+   | `PLANE_API_KEY`        | Yes      | —                                          |
+   | `PLANE_WORKSPACE_SLUG` | Yes      | —                                          |
+   | `PLANE_BASE_URL`       | No       | `https://api.plane.so`                     |
+   | `PORT`                 | No       | value from Phase 03's `loadPort()` default |
 
    Note where to generate `PLANE_API_KEY` (Plane → Profile Settings →
    Personal Access Tokens, or Workspace Settings → Access Tokens for a bot
    token) — cite spec report §4.1 step 1.
+
 4. **Run** —
    ```bash
    bun run start
@@ -91,7 +92,7 @@ tools present" invariants hold.
    `createMcpHonoApp` stateless wiring (Phase 03's Open Questions may have
    resolved differently than the RFC's sketch — reconcile here).
 2. **Layering** — a table or short section per layer: transport (`src/
-   index.ts`, `src/server.ts`), config (`src/config.ts`), Plane client
+index.ts`, `src/server.ts`), config (`src/config.ts`), Plane client
    (`src/plane/`), tools (`src/tools/`), types (`types/`) — one paragraph
    each on responsibility and what it must never do (e.g. "tools never
    construct their own `PlaneClient`", "the client never imports a tool").
@@ -136,15 +137,9 @@ tools present" invariants hold.
       tests from Phase 04 — a rough floor, not an exact number to hit).
 - [ ] Manually boot the server, run through the spec report §10 example
       workflows end-to-end against a real (or sandboxed) Plane workspace at
-      least once each:
-      - Look up by human-readable ID
-      - Create a triaged bug
-      - Move a work item to Done + comment
-      - Sprint planning (create cycle, list cycles)
-      - Cross-project search (adapted to this server's project-scoped
-        `list_work_items` — confirm the workflow still holds with the
-        narrower scope)
-      - Add to a module
+      least once each: - Look up by human-readable ID - Create a triaged bug - Move a work item to Done + comment - Sprint planning (create cycle, list cycles) - Cross-project search (adapted to this server's project-scoped
+      `list_work_items` — confirm the workflow still holds with the
+      narrower scope) - Add to a module
 
 ## Tasks
 

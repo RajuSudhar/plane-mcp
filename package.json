@@ -10,7 +10,13 @@
     "dev": "bun run --watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "start": "bun run src/index.ts"
+    "start": "bun run src/index.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "check": "bun run format:check && bun run lint",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",
@@ -20,6 +26,8 @@
   },
   "devDependencies": {
     "@types/bun": "1.3.14",
+    "oxlint": "1.76.0",
+    "prettier": "3.9.6",
     "typescript": "7.0.2"
   }
 }

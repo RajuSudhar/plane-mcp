@@ -1,6 +1,6 @@
 # feat-scaffold
 
-Phase: 01  |  Status: [x] planned
+Phase: 01 | Status: [x] planned
 Depends on: none
 Ref: `plans/plane-mcp/00-rfc.md`, `docs/CODING-STANDARDS.md`, `CLAUDE.md`
 
@@ -168,7 +168,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.14"
+          bun-version: '1.3.14'
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun test

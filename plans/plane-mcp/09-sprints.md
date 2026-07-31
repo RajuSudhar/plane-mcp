@@ -1,6 +1,6 @@
 # feat-sprints
 
-Phase: 09  |  Status: [ ] planned
+Phase: 09 | Status: [ ] planned
 Depends on: 08-workflow
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.11, §3.12, §6.14, §6.15
 
@@ -31,15 +31,15 @@ work-item many-to-many join/unjoin tools.
 
 ### Endpoint map
 
-| Tool | Method | Path |
-| --- | --- | --- |
-| `list_cycles` | GET | `projects/{project_id}/cycles/` |
-| `create_cycle` | POST | `projects/{project_id}/cycles/` |
-| `add_work_items_to_cycle` | POST | `projects/{project_id}/cycles/{cycle_id}/work-items/` |
-| `remove_work_item_from_cycle` | DELETE | `projects/{project_id}/cycles/{cycle_id}/work-items/{work_item_id}/` |
-| `list_modules` | GET | `projects/{project_id}/modules/` |
-| `create_module` | POST | `projects/{project_id}/modules/` |
-| `add_work_items_to_module` | POST | `projects/{project_id}/modules/{module_id}/work-items/` |
+| Tool                           | Method | Path                                                                   |
+| ------------------------------ | ------ | ---------------------------------------------------------------------- |
+| `list_cycles`                  | GET    | `projects/{project_id}/cycles/`                                        |
+| `create_cycle`                 | POST   | `projects/{project_id}/cycles/`                                        |
+| `add_work_items_to_cycle`      | POST   | `projects/{project_id}/cycles/{cycle_id}/work-items/`                  |
+| `remove_work_item_from_cycle`  | DELETE | `projects/{project_id}/cycles/{cycle_id}/work-items/{work_item_id}/`   |
+| `list_modules`                 | GET    | `projects/{project_id}/modules/`                                       |
+| `create_module`                | POST   | `projects/{project_id}/modules/`                                       |
+| `add_work_items_to_module`     | POST   | `projects/{project_id}/modules/{module_id}/work-items/`                |
 | `remove_work_item_from_module` | DELETE | `projects/{project_id}/modules/{module_id}/work-items/{work_item_id}/` |
 
 ### Zod schemas
@@ -118,7 +118,7 @@ export function registerCycleTools(server: McpServer, client: PlaneClient): void
     toolHandler('list_cycles', client, async (c, args) => {
       const cycles = await c.get<Cycle[]>(c.workspacePath(`projects/${args.project_id}/cycles/`));
       return { content: [{ type: 'text', text: JSON.stringify(cycles) }], structuredContent: { cycles } };
-    }),
+    })
   );
 
   server.registerTool(
@@ -128,19 +128,21 @@ export function registerCycleTools(server: McpServer, client: PlaneClient): void
       const { project_id, ...body } = args;
       const cycle = await c.post<Cycle>(c.workspacePath(`projects/${project_id}/cycles/`), body);
       return { content: [{ type: 'text', text: JSON.stringify(cycle) }], structuredContent: cycle };
-    }),
+    })
   );
 
   server.registerTool(
     'add_work_items_to_cycle',
     { description: 'Add one or more work items to a cycle.', inputSchema: addWorkItemsToCycleSchema },
     toolHandler('add_work_items_to_cycle', client, async (c, args) => {
-      const result = await c.post(
-        c.workspacePath(`projects/${args.project_id}/cycles/${args.cycle_id}/work-items/`),
-        { work_item_ids: args.work_item_ids },
-      );
-      return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result as Record<string, unknown> };
-    }),
+      const result = await c.post(c.workspacePath(`projects/${args.project_id}/cycles/${args.cycle_id}/work-items/`), {
+        work_item_ids: args.work_item_ids,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+        structuredContent: result as Record<string, unknown>,
+      };
+    })
   );
 
   server.registerTool(
@@ -148,10 +150,10 @@ export function registerCycleTools(server: McpServer, client: PlaneClient): void
     { description: 'Remove a single work item from a cycle.', inputSchema: removeWorkItemFromCycleSchema },
     toolHandler('remove_work_item_from_cycle', client, async (c, args) => {
       await c.delete(
-        c.workspacePath(`projects/${args.project_id}/cycles/${args.cycle_id}/work-items/${args.work_item_id}/`),
+        c.workspacePath(`projects/${args.project_id}/cycles/${args.cycle_id}/work-items/${args.work_item_id}/`)
       );
       return { content: [{ type: 'text', text: 'removed' }] };
-    }),
+    })
   );
 }
 ```
@@ -174,7 +176,7 @@ export function registerModuleTools(server: McpServer, client: PlaneClient): voi
     toolHandler('list_modules', client, async (c, args) => {
       const modules = await c.get<Module[]>(c.workspacePath(`projects/${args.project_id}/modules/`));
       return { content: [{ type: 'text', text: JSON.stringify(modules) }], structuredContent: { modules } };
-    }),
+    })
   );
 
   server.registerTool(
@@ -184,7 +186,7 @@ export function registerModuleTools(server: McpServer, client: PlaneClient): voi
       const { project_id, ...body } = args;
       const module_ = await c.post<Module>(c.workspacePath(`projects/${project_id}/modules/`), body);
       return { content: [{ type: 'text', text: JSON.stringify(module_) }], structuredContent: module_ };
-    }),
+    })
   );
 
   server.registerTool(
@@ -193,10 +195,13 @@ export function registerModuleTools(server: McpServer, client: PlaneClient): voi
     toolHandler('add_work_items_to_module', client, async (c, args) => {
       const result = await c.post(
         c.workspacePath(`projects/${args.project_id}/modules/${args.module_id}/work-items/`),
-        { work_item_ids: args.work_item_ids },
+        { work_item_ids: args.work_item_ids }
       );
-      return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result as Record<string, unknown> };
-    }),
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+        structuredContent: result as Record<string, unknown>,
+      };
+    })
   );
 
   server.registerTool(
@@ -204,10 +209,10 @@ export function registerModuleTools(server: McpServer, client: PlaneClient): voi
     { description: 'Remove a single work item from a module.', inputSchema: removeWorkItemFromModuleSchema },
     toolHandler('remove_work_item_from_module', client, async (c, args) => {
       await c.delete(
-        c.workspacePath(`projects/${args.project_id}/modules/${args.module_id}/work-items/${args.work_item_id}/`),
+        c.workspacePath(`projects/${args.project_id}/modules/${args.module_id}/work-items/${args.work_item_id}/`)
       );
       return { content: [{ type: 'text', text: 'removed' }] };
-    }),
+    })
   );
 }
 ```

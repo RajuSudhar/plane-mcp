@@ -1,6 +1,13 @@
 import type { LogLevel, LogContext } from '@types';
 
-const REDACTED_KEYS = new Set(['apiKey', 'api_key', 'PLANE_API_KEY', 'PLANE_WORKSPACE_SLUG', 'authorization', 'Authorization']);
+const REDACTED_KEYS = new Set([
+  'apiKey',
+  'api_key',
+  'PLANE_API_KEY',
+  'PLANE_WORKSPACE_SLUG',
+  'authorization',
+  'Authorization',
+]);
 
 function redact(context: LogContext): LogContext {
   const result: LogContext = {};

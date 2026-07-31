@@ -1,15 +1,16 @@
 # feat-plane-client
 
-Phase: 04  |  Status: [ ] planned
+Phase: 04 | Status: [ ] planned
 Depends on: 03-transport
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §2, §7.1, §7.9, §9.5
 
 ## Goal
 
 Build the single `PlaneClient` class that every tool calls through: base URL
-+ `X-API-Key` header injection, cursor pagination passthrough, 429 handling
-with backoff, typed errors, and field-normalization helpers for the
-work-item read/write asymmetry.
+
+- `X-API-Key` header injection, cursor pagination passthrough, 429 handling
+  with backoff, typed errors, and field-normalization helpers for the
+  work-item read/write asymmetry.
 
 ## In scope
 
@@ -443,7 +444,7 @@ describe('PlaneClient', () => {
         new Response('rate limited', {
           status: 429,
           headers: { 'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000)) },
-        }),
+        })
     ) as typeof fetch;
 
     const client = new PlaneClient(AUTH);
@@ -490,7 +491,7 @@ far-future reset timestamp in tests (it will make the suite hang up to the
 
 - Whether `PlaneClient` should expose `fields`/`expand` passthrough as a
   generic `query` param (already covered by the generic `get<T>(path,
-  query)` signature) or as named parameters is resolved here: generic
+query)` signature) or as named parameters is resolved here: generic
   `query` bag, so no client-side change is needed as new resources add
   `fields`/`expand` support in later phases.
 - `MAX_RETRIES = 3` is a free implementation choice (spec report does not

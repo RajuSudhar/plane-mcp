@@ -96,19 +96,21 @@ if (!/^[A-Z]+-\d+$/.test(issueId)) {
 ### Avoid These Patterns
 
 1. **Logging Secrets**:
+
    ```typescript
    // WRONG
    console.error(`API Key: ${apiKey}`);
-   
+
    // CORRECT
    log('debug', 'API key configured', { hasKey: !!apiKey });
    ```
 
 2. **Exposing Tokens in Errors**:
+
    ```typescript
    // WRONG
    throw new Error(`Auth failed for token ${token}`);
-   
+
    // CORRECT
    throw new Error('Authentication failed');
    ```
@@ -117,7 +119,7 @@ if (!/^[A-Z]+-\d+$/.test(issueId)) {
    ```typescript
    // WRONG - breaks MCP JSON-RPC
    console.log('Processing request...');
-   
+
    // CORRECT - logs to stderr
    log('debug', 'Processing request');
    ```

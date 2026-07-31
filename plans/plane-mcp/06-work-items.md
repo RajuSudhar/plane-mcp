@@ -1,6 +1,6 @@
 # feat-work-items
 
-Phase: 06  |  Status: [ ] planned
+Phase: 06 | Status: [ ] planned
 Depends on: 05-tools-foundation
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.5, §5.5, §6.4, §7.1
 
@@ -37,22 +37,22 @@ pagination), `retrieve_work_item`, `retrieve_work_item_by_identifier`,
 
 ### Endpoint map (spec report §3.5, §6.4)
 
-| Tool | Method | Path |
-| --- | --- | --- |
-| `list_work_items` | GET | `projects/{project_id}/work-items/` |
-| `retrieve_work_item` | GET | `projects/{project_id}/work-items/{work_item_id}/` |
-| `retrieve_work_item_by_identifier` | GET | `projects/{project_id}/work-items/identifier/{project_identifier}-{sequence_id}/` |
-| `create_work_item` | POST | `projects/{project_id}/work-items/` |
-| `update_work_item` | PATCH | `projects/{project_id}/work-items/{work_item_id}/` |
-| `delete_work_item` | DELETE | `projects/{project_id}/work-items/{work_item_id}/` |
-| `search_work_items` | GET | `projects/{project_id}/work-items/search/?q=…` |
+| Tool                               | Method | Path                                                                              |
+| ---------------------------------- | ------ | --------------------------------------------------------------------------------- |
+| `list_work_items`                  | GET    | `projects/{project_id}/work-items/`                                               |
+| `retrieve_work_item`               | GET    | `projects/{project_id}/work-items/{work_item_id}/`                                |
+| `retrieve_work_item_by_identifier` | GET    | `projects/{project_id}/work-items/identifier/{project_identifier}-{sequence_id}/` |
+| `create_work_item`                 | POST   | `projects/{project_id}/work-items/`                                               |
+| `update_work_item`                 | PATCH  | `projects/{project_id}/work-items/{work_item_id}/`                                |
+| `delete_work_item`                 | DELETE | `projects/{project_id}/work-items/{work_item_id}/`                                |
+| `search_work_items`                | GET    | `projects/{project_id}/work-items/search/?q=…`                                    |
 
 All paths are relative to `client.workspacePath(...)`.
 
 **IMPORTANT — `retrieve_work_item_by_identifier` still needs `project_id`,
 not just `project_identifier`**: the URL path in spec report §3.5 is
 `.../projects/{project_id}/work-items/identifier/{project_identifier}-
-{sequence_id}/` — it is scoped by the project's UUID *and* carries the
+{sequence_id}/` — it is scoped by the project's UUID _and_ carries the
 human-readable identifier + sequence number in the same request. The tool's
 required args are therefore `project_id` (UUID) **and**
 `project_identifier` + `work_item_identifier` (the human-readable pieces),
@@ -119,13 +119,11 @@ const createWorkItemSchema = z.object({
   external_source: z.string().optional(),
 });
 
-const updateWorkItemSchema = createWorkItemSchema
-  .omit({ project_id: true, name: true })
-  .extend({
-    project_id: z.string(),
-    work_item_id: z.string(),
-    name: z.string().optional(),
-  });
+const updateWorkItemSchema = createWorkItemSchema.omit({ project_id: true, name: true }).extend({
+  project_id: z.string(),
+  work_item_id: z.string(),
+  name: z.string().optional(),
+});
 
 const deleteWorkItemSchema = z.object({
   project_id: z.string(),
@@ -172,10 +170,10 @@ export function registerWorkItemTools(server: McpServer, client: PlaneClient): v
       const { project_id, ...query } = args;
       const envelope = await c.get<PaginationEnvelope<WorkItem>>(
         c.workspacePath(`projects/${project_id}/work-items/`),
-        query as Record<string, string | number | boolean | undefined>,
+        query as Record<string, string | number | boolean | undefined>
       );
       return { content: [{ type: 'text', text: JSON.stringify(envelope) }], structuredContent: envelope };
-    }),
+    })
   );
 
   server.registerTool(
@@ -188,23 +186,24 @@ export function registerWorkItemTools(server: McpServer, client: PlaneClient): v
       const { project_id, work_item_id, ...query } = args;
       const item = await c.get<WorkItem>(c.workspacePath(`projects/${project_id}/work-items/${work_item_id}/`), query);
       return { content: [{ type: 'text', text: JSON.stringify(item) }], structuredContent: item };
-    }),
+    })
   );
 
   server.registerTool(
     'retrieve_work_item_by_identifier',
     {
-      description: 'Retrieve a work item by its human-readable identifier, e.g. project_identifier="ENG", work_item_identifier="42".',
+      description:
+        'Retrieve a work item by its human-readable identifier, e.g. project_identifier="ENG", work_item_identifier="42".',
       inputSchema: retrieveWorkItemByIdentifierSchema,
     },
     toolHandler('retrieve_work_item_by_identifier', client, async (c, args) => {
       const item = await c.get<WorkItem>(
         c.workspacePath(
-          `projects/${args.project_id}/work-items/identifier/${args.project_identifier}-${args.work_item_identifier}/`,
-        ),
+          `projects/${args.project_id}/work-items/identifier/${args.project_identifier}-${args.work_item_identifier}/`
+        )
       );
       return { content: [{ type: 'text', text: JSON.stringify(item) }], structuredContent: item };
-    }),
+    })
   );
 
   server.registerTool(
@@ -232,7 +231,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneClient): v
       });
       const item = await c.post<WorkItem>(c.workspacePath(`projects/${project_id}/work-items/`), body);
       return { content: [{ type: 'text', text: JSON.stringify(item) }], structuredContent: item };
-    }),
+    })
   );
 
   server.registerTool(
@@ -258,12 +257,9 @@ export function registerWorkItemTools(server: McpServer, client: PlaneClient): v
         externalId: rest.external_id,
         externalSource: rest.external_source,
       });
-      const item = await c.patch<WorkItem>(
-        c.workspacePath(`projects/${project_id}/work-items/${work_item_id}/`),
-        body,
-      );
+      const item = await c.patch<WorkItem>(c.workspacePath(`projects/${project_id}/work-items/${work_item_id}/`), body);
       return { content: [{ type: 'text', text: JSON.stringify(item) }], structuredContent: item };
-    }),
+    })
   );
 
   server.registerTool(
@@ -275,7 +271,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneClient): v
     toolHandler('delete_work_item', client, async (c, args) => {
       await c.delete(c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/`));
       return { content: [{ type: 'text', text: 'deleted' }] };
-    }),
+    })
   );
 
   server.registerTool(
@@ -288,8 +284,11 @@ export function registerWorkItemTools(server: McpServer, client: PlaneClient): v
       const results = await c.get(c.workspacePath(`projects/${args.project_id}/work-items/search/`), {
         q: args.query,
       });
-      return { content: [{ type: 'text', text: JSON.stringify(results) }], structuredContent: results as Record<string, unknown> };
-    }),
+      return {
+        content: [{ type: 'text', text: JSON.stringify(results) }],
+        structuredContent: results as Record<string, unknown>,
+      };
+    })
   );
 }
 ```

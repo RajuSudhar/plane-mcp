@@ -1,6 +1,6 @@
 # feat-collaboration
 
-Phase: 07  |  Status: [ ] planned
+Phase: 07 | Status: [ ] planned
 Depends on: 06-work-items
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.10, §6.6, §6.8
 
@@ -31,14 +31,14 @@ Implement work item comments (list/create/update/delete) and relations
 
 ### Endpoint map
 
-| Tool | Method | Path |
-| --- | --- | --- |
-| `list_work_item_comments` | GET | `projects/{project_id}/work-items/{work_item_id}/comments/` |
-| `create_work_item_comment` | POST | `projects/{project_id}/work-items/{work_item_id}/comments/` |
-| `update_work_item_comment` | PATCH | `projects/{project_id}/work-items/{work_item_id}/comments/{comment_id}/` |
-| `delete_work_item_comment` | DELETE | `projects/{project_id}/work-items/{work_item_id}/comments/{comment_id}/` |
-| `list_work_item_relations` | GET | `projects/{project_id}/work-items/{work_item_id}/relations/` |
-| `create_work_item_relation` | POST | `projects/{project_id}/work-items/{work_item_id}/relations/` |
+| Tool                        | Method | Path                                                                       |
+| --------------------------- | ------ | -------------------------------------------------------------------------- |
+| `list_work_item_comments`   | GET    | `projects/{project_id}/work-items/{work_item_id}/comments/`                |
+| `create_work_item_comment`  | POST   | `projects/{project_id}/work-items/{work_item_id}/comments/`                |
+| `update_work_item_comment`  | PATCH  | `projects/{project_id}/work-items/{work_item_id}/comments/{comment_id}/`   |
+| `delete_work_item_comment`  | DELETE | `projects/{project_id}/work-items/{work_item_id}/comments/{comment_id}/`   |
+| `list_work_item_relations`  | GET    | `projects/{project_id}/work-items/{work_item_id}/relations/`               |
+| `create_work_item_relation` | POST   | `projects/{project_id}/work-items/{work_item_id}/relations/`               |
 | `remove_work_item_relation` | DELETE | `projects/{project_id}/work-items/{work_item_id}/relations/{relation_id}/` |
 
 ### Zod schemas
@@ -114,10 +114,10 @@ export function registerCommentTools(server: McpServer, client: PlaneClient): vo
     { description: 'List comments on a work item.', inputSchema: listCommentsSchema },
     toolHandler('list_work_item_comments', client, async (c, args) => {
       const comments = await c.get<Comment[]>(
-        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/comments/`),
+        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/comments/`)
       );
       return { content: [{ type: 'text', text: JSON.stringify(comments) }], structuredContent: { comments } };
-    }),
+    })
   );
 
   server.registerTool(
@@ -126,10 +126,10 @@ export function registerCommentTools(server: McpServer, client: PlaneClient): vo
     toolHandler('create_work_item_comment', client, async (c, args) => {
       const comment = await c.post<Comment>(
         c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/comments/`),
-        { comment_html: args.comment_html },
+        { comment_html: args.comment_html }
       );
       return { content: [{ type: 'text', text: JSON.stringify(comment) }], structuredContent: comment };
-    }),
+    })
   );
 
   server.registerTool(
@@ -138,10 +138,10 @@ export function registerCommentTools(server: McpServer, client: PlaneClient): vo
     toolHandler('update_work_item_comment', client, async (c, args) => {
       const comment = await c.patch<Comment>(
         c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/comments/${args.comment_id}/`),
-        { comment_html: args.comment_html },
+        { comment_html: args.comment_html }
       );
       return { content: [{ type: 'text', text: JSON.stringify(comment) }], structuredContent: comment };
-    }),
+    })
   );
 
   server.registerTool(
@@ -149,10 +149,10 @@ export function registerCommentTools(server: McpServer, client: PlaneClient): vo
     { description: 'Delete a comment.', inputSchema: deleteCommentSchema },
     toolHandler('delete_work_item_comment', client, async (c, args) => {
       await c.delete(
-        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/comments/${args.comment_id}/`),
+        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/comments/${args.comment_id}/`)
       );
       return { content: [{ type: 'text', text: 'deleted' }] };
-    }),
+    })
   );
 }
 ```
@@ -174,25 +174,26 @@ export function registerRelationTools(server: McpServer, client: PlaneClient): v
     { description: 'List relations (blocks, duplicates, etc.) for a work item.', inputSchema: listRelationsSchema },
     toolHandler('list_work_item_relations', client, async (c, args) => {
       const relations = await c.get<Relation[]>(
-        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/relations/`),
+        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/relations/`)
       );
       return { content: [{ type: 'text', text: JSON.stringify(relations) }], structuredContent: { relations } };
-    }),
+    })
   );
 
   server.registerTool(
     'create_work_item_relation',
     {
-      description: 'Create a relation between two work items (blocking, blocked_by, duplicate_of, duplicate, relates_to).',
+      description:
+        'Create a relation between two work items (blocking, blocked_by, duplicate_of, duplicate, relates_to).',
       inputSchema: createRelationSchema,
     },
     toolHandler('create_work_item_relation', client, async (c, args) => {
       const relation = await c.post<Relation>(
         c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/relations/`),
-        { related_work_item_id: args.related_work_item_id, relation_type: args.relation_type },
+        { related_work_item_id: args.related_work_item_id, relation_type: args.relation_type }
       );
       return { content: [{ type: 'text', text: JSON.stringify(relation) }], structuredContent: relation };
-    }),
+    })
   );
 
   server.registerTool(
@@ -200,10 +201,10 @@ export function registerRelationTools(server: McpServer, client: PlaneClient): v
     { description: 'Remove a relation from a work item.', inputSchema: removeRelationSchema },
     toolHandler('remove_work_item_relation', client, async (c, args) => {
       await c.delete(
-        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/relations/${args.relation_id}/`),
+        c.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/relations/${args.relation_id}/`)
       );
       return { content: [{ type: 'text', text: 'removed' }] };
-    }),
+    })
   );
 }
 ```

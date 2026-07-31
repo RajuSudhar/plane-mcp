@@ -1,6 +1,6 @@
 # feat-tools-foundation
 
-Phase: 05  |  Status: [ ] planned
+Phase: 05 | Status: [ ] planned
 Depends on: 04-plane-client
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §5.1, §5.6, §5.7, §6.1, §6.2, §6.3
 
@@ -14,7 +14,7 @@ tool.
 ## In scope
 
 - `src/tools/register.ts` — generic wrapper: takes a pure `(auth, args) ->
-  result` function, a zod schema, and a tool name/description; returns the
+result` function, a zod schema, and a tool name/description; returns the
   `registerTool`-compatible handler with error-to-`isError` mapping baked in.
 - `types/mcp.ts` — `ToolResult`, `ToolContext` (really just `AuthContext` re-exported
   under a tool-facing name if useful), `ToolHandler<TArgs, TResult>`.
@@ -22,7 +22,7 @@ tool.
 - `src/tools/projects.ts` — `list_projects`, `retrieve_project`.
 - Update `src/server.ts` — remove `ping`, call new
   `registerUserTools(server, planeClient)` / `registerProjectTools(server,
-  planeClient)`.
+planeClient)`.
 - Update `src/index.ts` — construct one `PlaneClient` per created `McpServer`
   (see stateless note in Phase 03 — each request's fresh server gets a fresh
   client built from the shared `AuthContext`; the client itself is cheap to
@@ -88,7 +88,7 @@ import { log } from '../logger';
 export function toolHandler<TSchema extends z.ZodType>(
   toolName: string,
   client: PlaneClient,
-  fn: (client: PlaneClient, args: z.infer<TSchema>) => Promise<ToolResult>,
+  fn: (client: PlaneClient, args: z.infer<TSchema>) => Promise<ToolResult>
 ) {
   return async (args: z.infer<TSchema>): Promise<ToolResult> => {
     log('info', 'Executing tool', { operation: 'tool_execute', toolName });
@@ -142,13 +142,16 @@ export function registerUserTools(server: McpServer, client: PlaneClient): void 
     },
     toolHandler('get_me', client, async (c) => {
       const me = await c.get(c.workspacePath('../users/me/'));
-      return { content: [{ type: 'text', text: JSON.stringify(me) }], structuredContent: me as Record<string, unknown> };
-    }),
+      return {
+        content: [{ type: 'text', text: JSON.stringify(me) }],
+        structuredContent: me as Record<string, unknown>,
+      };
+    })
   );
 }
 ```
 
-**IMPORTANT**: `get_me` hits `/api/v1/users/me/`, which is *not*
+**IMPORTANT**: `get_me` hits `/api/v1/users/me/`, which is _not_
 workspace-scoped (spec report §3.1). `client.workspacePath('../users/me/')`
 is a workaround hack and must **not** be used — instead add a dedicated
 non-workspace-scoped path builder. Correct version:
@@ -201,7 +204,7 @@ export function registerProjectTools(server: McpServer, client: PlaneClient): vo
     toolHandler('list_projects', client, async (c, args) => {
       const envelope = await c.get<PaginationEnvelope<Project>>(c.workspacePath('projects/'), args);
       return { content: [{ type: 'text', text: JSON.stringify(envelope) }], structuredContent: envelope };
-    }),
+    })
   );
 
   server.registerTool(
@@ -214,7 +217,7 @@ export function registerProjectTools(server: McpServer, client: PlaneClient): vo
       const { project_id, ...query } = args;
       const project = await c.get<Project>(c.workspacePath(`projects/${project_id}/`), query);
       return { content: [{ type: 'text', text: JSON.stringify(project) }], structuredContent: project };
-    }),
+    })
   );
 }
 ```

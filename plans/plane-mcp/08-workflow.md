@@ -1,6 +1,6 @@
 # feat-workflow
 
-Phase: 08  |  Status: [ ] planned
+Phase: 08 | Status: [ ] planned
 Depends on: 07-collaboration
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.2, §3.4, §3.6, §6.12, §6.13, §6.2, §6.3
 
@@ -30,14 +30,14 @@ Implement states (list/create), labels (list/create), and member listing
 
 ### Endpoint map
 
-| Tool | Method | Path |
-| --- | --- | --- |
-| `list_states` | GET | `projects/{project_id}/states/` |
-| `create_state` | POST | `projects/{project_id}/states/` |
-| `list_labels` | GET | `projects/{project_id}/labels/` |
-| `create_label` | POST | `projects/{project_id}/labels/` |
-| `get_project_members` | GET | `projects/{project_id}/members/` |
-| `get_workspace_members` | GET | `members/` |
+| Tool                    | Method | Path                             |
+| ----------------------- | ------ | -------------------------------- |
+| `list_states`           | GET    | `projects/{project_id}/states/`  |
+| `create_state`          | POST   | `projects/{project_id}/states/`  |
+| `list_labels`           | GET    | `projects/{project_id}/labels/`  |
+| `create_label`          | POST   | `projects/{project_id}/labels/`  |
+| `get_project_members`   | GET    | `projects/{project_id}/members/` |
+| `get_workspace_members` | GET    | `members/`                       |
 
 `get_workspace_members`'s path (`members/`) is workspace-scoped —
 `client.workspacePath('members/')` resolves to
@@ -103,7 +103,7 @@ export function registerStateTools(server: McpServer, client: PlaneClient): void
     toolHandler('list_states', client, async (c, args) => {
       const states = await c.get<State[]>(c.workspacePath(`projects/${args.project_id}/states/`));
       return { content: [{ type: 'text', text: JSON.stringify(states) }], structuredContent: { states } };
-    }),
+    })
   );
 
   server.registerTool(
@@ -113,7 +113,7 @@ export function registerStateTools(server: McpServer, client: PlaneClient): void
       const { project_id, ...body } = args;
       const state = await c.post<State>(c.workspacePath(`projects/${project_id}/states/`), body);
       return { content: [{ type: 'text', text: JSON.stringify(state) }], structuredContent: state };
-    }),
+    })
   );
 }
 ```
@@ -136,7 +136,7 @@ export function registerLabelTools(server: McpServer, client: PlaneClient): void
     toolHandler('list_labels', client, async (c, args) => {
       const labels = await c.get<Label[]>(c.workspacePath(`projects/${args.project_id}/labels/`));
       return { content: [{ type: 'text', text: JSON.stringify(labels) }], structuredContent: { labels } };
-    }),
+    })
   );
 
   server.registerTool(
@@ -146,7 +146,7 @@ export function registerLabelTools(server: McpServer, client: PlaneClient): void
       const { project_id, ...body } = args;
       const label = await c.post<Label>(c.workspacePath(`projects/${project_id}/labels/`), body);
       return { content: [{ type: 'text', text: JSON.stringify(label) }], structuredContent: label };
-    }),
+    })
   );
 }
 ```
@@ -169,7 +169,7 @@ export function registerMemberTools(server: McpServer, client: PlaneClient): voi
     toolHandler('get_project_members', client, async (c, args) => {
       const members = await c.get<Member[]>(c.workspacePath(`projects/${args.project_id}/members/`));
       return { content: [{ type: 'text', text: JSON.stringify(members) }], structuredContent: { members } };
-    }),
+    })
   );
 
   server.registerTool(
@@ -178,7 +178,7 @@ export function registerMemberTools(server: McpServer, client: PlaneClient): voi
     toolHandler('get_workspace_members', client, async (c) => {
       const members = await c.get<Member[]>(c.workspacePath('members/'));
       return { content: [{ type: 'text', text: JSON.stringify(members) }], structuredContent: { members } };
-    }),
+    })
   );
 }
 ```

@@ -236,10 +236,12 @@ log('debug', 'Cache miss', {
 **CRITICAL**: MCP servers communicate via JSON-RPC over stdio. Writing to stdout with `console.log()` injects non-JSON text into the stream, causing protocol errors and connection failures.
 
 **Allowed**:
+
 - `process.stderr.write()` (used by logger)
 - `console.error()` (writes to stderr)
 
 **Forbidden**:
+
 - `console.log()` (writes to stdout)
 - `console.info()` (writes to stdout)
 - `process.stdout.write()` (except for MCP protocol messages)
@@ -295,12 +297,13 @@ Logging is REQUIRED at these critical paths:
 - Semicolons required
 - Trailing commas (ES5 style)
 
-**ESLint Configuration** (if added):
+**oxlint Configuration**:
 
-- Import ordering (alphabetical within groups)
-- No unused imports
-- Separate type imports
-- No duplicate imports
+oxlint (`.oxlintrc.json`) enforces the three hard-rule correctness checks for `.ts` files:
+
+- `typescript/consistent-type-definitions: ["error", "type"]` — type-over-interface
+- `typescript/no-explicit-any: "error"` — no `any`
+- `typescript/consistent-type-imports: "error"` — separate type imports
 
 ### Import Organization
 

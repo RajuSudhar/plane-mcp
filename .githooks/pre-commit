@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+echo "[pre-commit] Formatting (prettier)..."
+bun run format
+
+echo "[pre-commit] Re-staging any files the formatter touched..."
+git add -u
+
+echo "[pre-commit] Linting (oxlint)..."
+bun run lint
+
+echo "[pre-commit] OK"

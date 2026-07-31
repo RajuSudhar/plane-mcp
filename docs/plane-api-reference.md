@@ -10,12 +10,12 @@ Plane already ships an **official, MIT-licensed MCP server** — [`makeplane/pla
 
 Practical takeaways before you write code:
 
-| If you want…                                                                | Recommended path                                                                                                                    |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Fastest working integration for Plane Cloud                                 | Just point your client at `https://mcp.plane.so/http/mcp` (OAuth) or `.../http/api-key/mcp` (PAT). No build needed.                  |
-| Self-hosted Plane, minimal custom logic                                     | Self-host the official server (Docker Compose / Helm — see §11).                                                                    |
-| Custom tool set (filtered/narrower), domain-specific prompts, extra plumbing (Slack fan-out, dashboards, workflows) | **Build your own**, using this spec. You can still copy structure/patterns from the official server. |
-| Different language (TS/Go/Rust) or non-FastMCP framework                    | **Build your own** — the official server is Python-only.                                                                            |
+| If you want…                                                                                                        | Recommended path                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Fastest working integration for Plane Cloud                                                                         | Just point your client at `https://mcp.plane.so/http/mcp` (OAuth) or `.../http/api-key/mcp` (PAT). No build needed. |
+| Self-hosted Plane, minimal custom logic                                                                             | Self-host the official server (Docker Compose / Helm — see §11).                                                    |
+| Custom tool set (filtered/narrower), domain-specific prompts, extra plumbing (Slack fan-out, dashboards, workflows) | **Build your own**, using this spec. You can still copy structure/patterns from the official server.                |
+| Different language (TS/Go/Rust) or non-FastMCP framework                                                            | **Build your own** — the official server is Python-only.                                                            |
 
 The rest of this document assumes you're **building your own**. Everything here also holds as a reference guide even if you decide to fork the official one.
 
@@ -50,12 +50,12 @@ The rest of this document assumes you're **building your own**. Everything here 
 
 ### The three-way matrix
 
-| Transport         | Where it runs                        | How the token gets in                          | Best for                        |
-| ----------------- | ------------------------------------ | ---------------------------------------------- | ------------------------------- |
-| **stdio**         | Local subprocess of the MCP client   | Environment variables                          | Local dev, self-hosted Plane, Claude Desktop, IDEs |
-| **HTTP + OAuth**  | Remote server (single URL for team)  | Browser OAuth flow → Bearer token per request  | Cloud users, Claude.ai web, easy onboarding |
-| **HTTP + PAT**    | Remote server (single URL for team)  | `X-API-Key` + `X-Workspace-Slug` headers       | CI/CD, headless bots, scripts   |
-| **SSE (legacy)**  | Remote server                        | Browser OAuth                                  | Backward compat only — do not build new integrations on this |
+| Transport        | Where it runs                       | How the token gets in                         | Best for                                                     |
+| ---------------- | ----------------------------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| **stdio**        | Local subprocess of the MCP client  | Environment variables                         | Local dev, self-hosted Plane, Claude Desktop, IDEs           |
+| **HTTP + OAuth** | Remote server (single URL for team) | Browser OAuth flow → Bearer token per request | Cloud users, Claude.ai web, easy onboarding                  |
+| **HTTP + PAT**   | Remote server (single URL for team) | `X-API-Key` + `X-Workspace-Slug` headers      | CI/CD, headless bots, scripts                                |
+| **SSE (legacy)** | Remote server                       | Browser OAuth                                 | Backward compat only — do not build new integrations on this |
 
 You should implement **stdio + streamable HTTP** (the two current MCP-spec-blessed transports). SSE is deprecated by the MCP spec; only support it if you must.
 
@@ -67,10 +67,10 @@ Everything the MCP server does is a wrapper around Plane's REST API. Get this la
 
 ### 2.1 Base URLs
 
-| Environment    | Base URL                                    |
-| -------------- | ------------------------------------------- |
-| Plane Cloud    | `https://api.plane.so`                      |
-| Self-hosted    | `https://<your-plane-domain>` (from config) |
+| Environment | Base URL                                    |
+| ----------- | ------------------------------------------- |
+| Plane Cloud | `https://api.plane.so`                      |
+| Self-hosted | `https://<your-plane-domain>` (from config) |
 
 All API paths in this document are prefixed with `/api/v1/`. Most are scoped to a workspace: `/api/v1/workspaces/{workspace_slug}/…`.
 
@@ -82,8 +82,8 @@ Plane's public API accepts two credential types **interchangeably**. Every docum
 
 - Header: `X-API-Key: <token>`
 - Two kinds of tokens exist:
-  - **Personal Access Token (PAT)** — created at *Profile Settings → Personal Access Tokens*. Acts as the individual user.
-  - **Workspace Access Token** — created at *Workspace Settings → Access Tokens*. Acts as a workspace-scoped bot.
+  - **Personal Access Token (PAT)** — created at _Profile Settings → Personal Access Tokens_. Acts as the individual user.
+  - **Workspace Access Token** — created at _Workspace Settings → Access Tokens_. Acts as a workspace-scoped bot.
 - Tokens can have optional expiry.
 - Keep the token confidential. If leaked, regenerate.
 - The token is scoped to the user/workspace that created it — no explicit scope negotiation.
@@ -98,27 +98,27 @@ Plane's public API accepts two credential types **interchangeably**. Every docum
 
 ### 2.3 HTTP verbs, status codes, and errors
 
-| Verb   | Semantics                                     |
-| ------ | --------------------------------------------- |
-| GET    | Read a resource                               |
-| POST   | Create a new resource                         |
-| PATCH  | Partial update                                |
-| DELETE | Remove a resource                             |
+| Verb   | Semantics             |
+| ------ | --------------------- |
+| GET    | Read a resource       |
+| POST   | Create a new resource |
+| PATCH  | Partial update        |
+| DELETE | Remove a resource     |
 
-| Success | Meaning                                                       |
-| ------- | ------------------------------------------------------------- |
-| 200 OK  | Successful GET / PATCH                                        |
-| 201     | Resource created (POST or occasionally PATCH)                 |
-| 204     | No content — used for DELETE                                  |
+| Success | Meaning                                       |
+| ------- | --------------------------------------------- |
+| 200 OK  | Successful GET / PATCH                        |
+| 201     | Resource created (POST or occasionally PATCH) |
+| 204     | No content — used for DELETE                  |
 
-| Error | Meaning                                                                   |
-| ----- | ------------------------------------------------------------------------- |
-| 400   | Bad request (bad body, missing field)                                     |
-| 401   | Unauthenticated — missing/invalid token                                   |
-| 403   | Authenticated but not permitted (role too low, wrong workspace)           |
-| 404   | Not found — bad URL or resource doesn't exist                             |
-| 429   | Rate-limited — retry after `X-RateLimit-Reset`                            |
-| 500   | Server error                                                              |
+| Error           | Meaning                                                         |
+| --------------- | --------------------------------------------------------------- |
+| 400             | Bad request (bad body, missing field)                           |
+| 401             | Unauthenticated — missing/invalid token                         |
+| 403             | Authenticated but not permitted (role too low, wrong workspace) |
+| 404             | Not found — bad URL or resource doesn't exist                   |
+| 429             | Rate-limited — retry after `X-RateLimit-Reset`                  |
+| 500             | Server error                                                    |
 | 502 / 503 / 504 | Gateway / unavailability                                        |
 
 ### 2.4 Pagination (cursor-based)
@@ -143,7 +143,7 @@ Response envelope:
   "total_pages": 50,
   "total_results": 1000,
   "extra_stats": {},
-  "results": [ /* … */ ]
+  "results": [/* … */]
 }
 ```
 
@@ -176,82 +176,82 @@ This is the full list of resources exposed by `/api/v1/`. Path pattern conventio
 
 ### 3.1 Workspace-scoped resources
 
-| Resource                | Method | Path                                                                           | Scope                             |
-| ----------------------- | ------ | ------------------------------------------------------------------------------ | --------------------------------- |
-| **Current user**        | GET    | `/api/v1/users/me/`                                                            | `profile:read`                    |
-| **Workspace members**   | GET    | `/api/v1/workspaces/{slug}/members/`                                           | `workspaces.members:read`         |
-| **Workspace members**   | DELETE | `/api/v1/workspaces/{slug}/members/{member_id}/`                               | `workspaces.members:write`        |
-| **Workspace invitations** | GET  | `/api/v1/workspaces/{slug}/invitations/`                                       | `workspaces.members:read`         |
-| **Workspace invitations** | POST | `/api/v1/workspaces/{slug}/invitations/`                                       | `workspaces.members:write`        |
-| **Workspace invitations** | GET  | `/api/v1/workspaces/{slug}/invitations/{invitation_id}/`                       | `workspaces.members:read`         |
-| **Workspace invitations** | PATCH | `/api/v1/workspaces/{slug}/invitations/{invitation_id}/`                      | `workspaces.members:write`        |
-| **Workspace invitations** | DELETE | `/api/v1/workspaces/{slug}/invitations/{invitation_id}/`                     | `workspaces.members:write`        |
-| **Workspace features**  | GET    | `/api/v1/workspaces/{slug}/features/`                                          | `workspaces.features:read`        |
-| **Workspace features**  | PATCH  | `/api/v1/workspaces/{slug}/features/`                                          | `workspaces.features:write`       |
-| **Workspace pages**     | GET/POST | `/api/v1/workspaces/{slug}/pages/`                                           | `wiki.pages:read` / `:write`      |
-| **Workspace page**      | GET    | `/api/v1/workspaces/{slug}/pages/{page_id}/`                                   | `wiki.pages:read`                 |
-| **Workspace assets**    | POST   | `/api/v1/workspaces/{slug}/assets/` (create upload)                            | `assets:write`                    |
-| **Workspace assets**    | GET    | `/api/v1/workspaces/{slug}/assets/{asset_id}/`                                 | `assets:read`                     |
-| **Workspace assets**    | PATCH  | `/api/v1/workspaces/{slug}/assets/{asset_id}/`                                 | `assets:write`                    |
-| **User assets**         | POST/PATCH/DELETE | `/api/v1/users/{user_id}/assets/…`                                | `assets:write`                    |
+| Resource                  | Method            | Path                                                     | Scope                        |
+| ------------------------- | ----------------- | -------------------------------------------------------- | ---------------------------- |
+| **Current user**          | GET               | `/api/v1/users/me/`                                      | `profile:read`               |
+| **Workspace members**     | GET               | `/api/v1/workspaces/{slug}/members/`                     | `workspaces.members:read`    |
+| **Workspace members**     | DELETE            | `/api/v1/workspaces/{slug}/members/{member_id}/`         | `workspaces.members:write`   |
+| **Workspace invitations** | GET               | `/api/v1/workspaces/{slug}/invitations/`                 | `workspaces.members:read`    |
+| **Workspace invitations** | POST              | `/api/v1/workspaces/{slug}/invitations/`                 | `workspaces.members:write`   |
+| **Workspace invitations** | GET               | `/api/v1/workspaces/{slug}/invitations/{invitation_id}/` | `workspaces.members:read`    |
+| **Workspace invitations** | PATCH             | `/api/v1/workspaces/{slug}/invitations/{invitation_id}/` | `workspaces.members:write`   |
+| **Workspace invitations** | DELETE            | `/api/v1/workspaces/{slug}/invitations/{invitation_id}/` | `workspaces.members:write`   |
+| **Workspace features**    | GET               | `/api/v1/workspaces/{slug}/features/`                    | `workspaces.features:read`   |
+| **Workspace features**    | PATCH             | `/api/v1/workspaces/{slug}/features/`                    | `workspaces.features:write`  |
+| **Workspace pages**       | GET/POST          | `/api/v1/workspaces/{slug}/pages/`                       | `wiki.pages:read` / `:write` |
+| **Workspace page**        | GET               | `/api/v1/workspaces/{slug}/pages/{page_id}/`             | `wiki.pages:read`            |
+| **Workspace assets**      | POST              | `/api/v1/workspaces/{slug}/assets/` (create upload)      | `assets:write`               |
+| **Workspace assets**      | GET               | `/api/v1/workspaces/{slug}/assets/{asset_id}/`           | `assets:read`                |
+| **Workspace assets**      | PATCH             | `/api/v1/workspaces/{slug}/assets/{asset_id}/`           | `assets:write`               |
+| **User assets**           | POST/PATCH/DELETE | `/api/v1/users/{user_id}/assets/…`                       | `assets:write`               |
 
 ### 3.2 Projects
 
-| Method | Path                                                             | Scope               |
-| ------ | ---------------------------------------------------------------- | ------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/`                            | `projects:read`     |
-| POST   | `/api/v1/workspaces/{slug}/projects/`                            | `projects:write`    |
-| POST   | `/api/v1/workspaces/{slug}/projects/from-template/`              | `projects:write`    |
-| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/`               | `projects:read`     |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/`               | `projects:write`    |
-| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/archive/`       | `projects:write`    |
-| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/unarchive/`     | `projects:write`    |
-| DELETE | `/api/v1/workspaces/{slug}/projects/{project_id}/`               | `projects:write`    |
+| Method | Path                                                         | Scope            |
+| ------ | ------------------------------------------------------------ | ---------------- |
+| GET    | `/api/v1/workspaces/{slug}/projects/`                        | `projects:read`  |
+| POST   | `/api/v1/workspaces/{slug}/projects/`                        | `projects:write` |
+| POST   | `/api/v1/workspaces/{slug}/projects/from-template/`          | `projects:write` |
+| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/`           | `projects:read`  |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/`           | `projects:write` |
+| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/archive/`   | `projects:write` |
+| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/unarchive/` | `projects:write` |
+| DELETE | `/api/v1/workspaces/{slug}/projects/{project_id}/`           | `projects:write` |
 
 ### 3.3 Project features & members
 
-| Method | Path                                                                        | Scope                       |
-| ------ | --------------------------------------------------------------------------- | --------------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/features/`                 | `projects.features:read`    |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/features/`                 | `projects.features:write`   |
-| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/members/`                  | `projects.members:read`     |
-| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/members/`                  | `projects.members:write`    |
-| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/members/{member_id}/`      | `projects.members:read`     |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/members/{member_id}/`      | `projects.members:write`    |
-| DELETE | `/api/v1/workspaces/{slug}/projects/{project_id}/members/{member_id}/`      | `projects.members:write`    |
+| Method | Path                                                                   | Scope                     |
+| ------ | ---------------------------------------------------------------------- | ------------------------- |
+| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/features/`            | `projects.features:read`  |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/features/`            | `projects.features:write` |
+| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/members/`             | `projects.members:read`   |
+| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/members/`             | `projects.members:write`  |
+| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/members/{member_id}/` | `projects.members:read`   |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/members/{member_id}/` | `projects.members:write`  |
+| DELETE | `/api/v1/workspaces/{slug}/projects/{project_id}/members/{member_id}/` | `projects.members:write`  |
 
 ### 3.4 Project labels
 
-| Method | Path                                                                        | Scope                     |
-| ------ | --------------------------------------------------------------------------- | ------------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/`                   | `projects.labels:read`    |
-| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/`                   | `projects.labels:write`   |
-| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/{label_id}/`        | `projects.labels:read`    |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/{label_id}/`        | `projects.labels:write`   |
-| DELETE | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/{label_id}/`        | `projects.labels:write`   |
+| Method | Path                                                                 | Scope                   |
+| ------ | -------------------------------------------------------------------- | ----------------------- |
+| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/`            | `projects.labels:read`  |
+| POST   | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/`            | `projects.labels:write` |
+| GET    | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/{label_id}/` | `projects.labels:read`  |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/{label_id}/` | `projects.labels:write` |
+| DELETE | `/api/v1/workspaces/{slug}/projects/{project_id}/labels/{label_id}/` | `projects.labels:write` |
 
 ### 3.5 Work items (issues)
 
-| Method | Path                                                                                       | Scope                              |
-| ------ | ------------------------------------------------------------------------------------------ | ---------------------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`                                     | `projects.work_items:read`         |
-| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`                                     | `projects.work_items:write`        |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                               | `projects.work_items:read`         |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                               | `projects.work_items:write`        |
-| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                               | `projects.work_items:write`        |
+| Method | Path                                                                                                 | Scope                       |
+| ------ | ---------------------------------------------------------------------------------------------------- | --------------------------- |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`                                               | `projects.work_items:read`  |
+| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`                                               | `projects.work_items:write` |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                                         | `projects.work_items:read`  |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                                         | `projects.work_items:write` |
+| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                                         | `projects.work_items:write` |
 | GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/identifier/{project_identifier}-{sequence_id}/` | `projects.work_items:read`  |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/search/?q=…`                          | `projects.work_items:read`         |
-| GET    | `/api/v1/workspaces/{slug}/work-items/search/` (advanced, workspace-wide with filters)     | `projects.work_items:read`         |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/search/?q=…`                                    | `projects.work_items:read`  |
+| GET    | `/api/v1/workspaces/{slug}/work-items/search/` (advanced, workspace-wide with filters)               | `projects.work_items:read`  |
 
 ### 3.6 Work item states
 
-| Method | Path                                                                              | Scope                       |
-| ------ | --------------------------------------------------------------------------------- | --------------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/states/`                                | `projects.states:read`      |
-| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/states/`                                | `projects.states:write`     |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/states/{state_id}/`                     | `projects.states:read`      |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/states/{state_id}/`                     | `projects.states:write`     |
-| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/states/{state_id}/`                     | `projects.states:write`     |
+| Method | Path                                                          | Scope                   |
+| ------ | ------------------------------------------------------------- | ----------------------- |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/states/`            | `projects.states:read`  |
+| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/states/`            | `projects.states:write` |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/states/{state_id}/` | `projects.states:read`  |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/states/{state_id}/` | `projects.states:write` |
+| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/states/{state_id}/` | `projects.states:write` |
 
 ### 3.7 Work item labels (project-scoped, distinct from project labels — same endpoints; kept here for clarity)
 
@@ -259,176 +259,176 @@ Same as §3.4.
 
 ### 3.8 Work item types (custom types like Bug/Feature/Epic)
 
-| Method | Path                                                                                                       | Scope                                  |
-| ------ | ---------------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/`                                                | `projects.work_item_types:read`        |
-| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/`                                                | `projects.work_item_types:write`       |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/`                                      | `projects.work_item_types:read`        |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/schema/`                               | `projects.work_item_types:read`        |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/`                                      | `projects.work_item_types:write`       |
-| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/`                                      | `projects.work_item_types:write`       |
+| Method | Path                                                                         | Scope                            |
+| ------ | ---------------------------------------------------------------------------- | -------------------------------- |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/`                  | `projects.work_item_types:read`  |
+| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/`                  | `projects.work_item_types:write` |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/`        | `projects.work_item_types:read`  |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/schema/` | `projects.work_item_types:read`  |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/`        | `projects.work_item_types:write` |
+| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{type_id}/`        | `projects.work_item_types:write` |
 
 ### 3.9 Custom properties (per work-item-type)
 
-| Method | Path                                                                                                                              | Scope                                          |
-| ------ | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{tid}/properties/`                                                      | `projects.work_item_properties:read`           |
-| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{tid}/properties/`                                                      | `projects.work_item_properties:write`          |
-| GET    | `…/properties/{property_id}/`                                                                                                     | `projects.work_item_properties:read`           |
-| PATCH  | `…/properties/{property_id}/`                                                                                                     | `projects.work_item_properties:write`          |
-| DELETE | `…/properties/{property_id}/`                                                                                                     | `projects.work_item_properties:write`          |
-| GET    | `…/properties/{property_id}/options/`                                                                                             | `projects.work_item_property_options:read`     |
-| POST   | `…/properties/{property_id}/options/`                                                                                             | `projects.work_item_property_options:write`    |
-| GET/PATCH/DELETE | `…/properties/{property_id}/options/{option_id}/`                                                                       | `projects.work_item_property_options:*`        |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/property-values/`                                                      | `projects.work_item_property_values:read`      |
-| POST   | `…/property-values/`                                                                                                              | `projects.work_item_property_values:write`     |
-| GET/PATCH/DELETE | `…/property-values/{value_id}/`                                                                                         | `projects.work_item_property_values:*`         |
+| Method           | Path                                                                         | Scope                                       |
+| ---------------- | ---------------------------------------------------------------------------- | ------------------------------------------- |
+| GET              | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{tid}/properties/` | `projects.work_item_properties:read`        |
+| POST             | `/api/v1/workspaces/{slug}/projects/{pid}/work-item-types/{tid}/properties/` | `projects.work_item_properties:write`       |
+| GET              | `…/properties/{property_id}/`                                                | `projects.work_item_properties:read`        |
+| PATCH            | `…/properties/{property_id}/`                                                | `projects.work_item_properties:write`       |
+| DELETE           | `…/properties/{property_id}/`                                                | `projects.work_item_properties:write`       |
+| GET              | `…/properties/{property_id}/options/`                                        | `projects.work_item_property_options:read`  |
+| POST             | `…/properties/{property_id}/options/`                                        | `projects.work_item_property_options:write` |
+| GET/PATCH/DELETE | `…/properties/{property_id}/options/{option_id}/`                            | `projects.work_item_property_options:*`     |
+| GET              | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/property-values/` | `projects.work_item_property_values:read`   |
+| POST             | `…/property-values/`                                                         | `projects.work_item_property_values:write`  |
+| GET/PATCH/DELETE | `…/property-values/{value_id}/`                                              | `projects.work_item_property_values:*`      |
 
 ### 3.10 Work item comments / links / activity / worklogs / attachments / page links / relations
 
-| Resource       | Method | Path                                                                                                           | Scope                                          |
-| -------------- | ------ | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Comments       | GET/POST | `…/work-items/{wid}/comments/`                                                                              | `projects.work_items.comments:read/write`      |
-| Comments       | GET/PATCH/DELETE | `…/work-items/{wid}/comments/{comment_id}/`                                                        | `projects.work_items.comments:*`               |
-| Links          | GET/POST | `…/work-items/{wid}/links/`                                                                                 | `projects.work_items.links:read/write`         |
-| Links          | GET/PATCH/DELETE | `…/work-items/{wid}/links/{link_id}/`                                                              | `projects.work_items.links:*`                  |
-| Activity       | GET    | `…/work-items/{wid}/activities/`                                                                               | `projects.work_items.activities:read`          |
-| Activity       | GET    | `…/work-items/{wid}/activities/{activity_id}/`                                                                 | `projects.work_items.activities:read`          |
-| Worklogs       | GET/POST | `…/work-items/{wid}/worklogs/`                                                                              | `projects.work_items.worklogs:read/write`      |
-| Worklogs       | PATCH/DELETE | `…/work-items/{wid}/worklogs/{worklog_id}/`                                                            | `projects.work_items.worklogs:write`           |
-| Worklogs (project total) | GET | `…/projects/{pid}/worklogs/total-time/`                                                              | `projects.work_items.worklogs:read`            |
-| Attachments    | GET    | `…/work-items/{wid}/attachments/`                                                                              | `projects.work_items.attachments:read`         |
-| Attachments    | POST   | `…/work-items/{wid}/attachments/` (get upload credentials)                                                     | `projects.work_items.attachments:write`        |
-| Attachments    | POST   | `…/work-items/{wid}/attachments/{aid}/complete/` (mark upload done)                                            | `projects.work_items.attachments:write`        |
-| Attachments    | GET/PATCH/DELETE | `…/work-items/{wid}/attachments/{aid}/`                                                            | `projects.work_items.attachments:*`            |
-| Relations      | GET/POST | `…/work-items/{wid}/relations/`                                                                             | `projects.work_items.relations:read/write`     |
-| Relations      | DELETE | `…/work-items/{wid}/relations/{relation_id}/`                                                                  | `projects.work_items.relations:write`          |
-| Page links     | GET/POST | `…/work-items/{wid}/page-links/`                                                                            | `projects.work_items:read/write`               |
-| Page links     | GET/DELETE | `…/work-items/{wid}/page-links/{link_id}/`                                                                | `projects.work_items:read/write`               |
+| Resource                 | Method           | Path                                                                | Scope                                      |
+| ------------------------ | ---------------- | ------------------------------------------------------------------- | ------------------------------------------ |
+| Comments                 | GET/POST         | `…/work-items/{wid}/comments/`                                      | `projects.work_items.comments:read/write`  |
+| Comments                 | GET/PATCH/DELETE | `…/work-items/{wid}/comments/{comment_id}/`                         | `projects.work_items.comments:*`           |
+| Links                    | GET/POST         | `…/work-items/{wid}/links/`                                         | `projects.work_items.links:read/write`     |
+| Links                    | GET/PATCH/DELETE | `…/work-items/{wid}/links/{link_id}/`                               | `projects.work_items.links:*`              |
+| Activity                 | GET              | `…/work-items/{wid}/activities/`                                    | `projects.work_items.activities:read`      |
+| Activity                 | GET              | `…/work-items/{wid}/activities/{activity_id}/`                      | `projects.work_items.activities:read`      |
+| Worklogs                 | GET/POST         | `…/work-items/{wid}/worklogs/`                                      | `projects.work_items.worklogs:read/write`  |
+| Worklogs                 | PATCH/DELETE     | `…/work-items/{wid}/worklogs/{worklog_id}/`                         | `projects.work_items.worklogs:write`       |
+| Worklogs (project total) | GET              | `…/projects/{pid}/worklogs/total-time/`                             | `projects.work_items.worklogs:read`        |
+| Attachments              | GET              | `…/work-items/{wid}/attachments/`                                   | `projects.work_items.attachments:read`     |
+| Attachments              | POST             | `…/work-items/{wid}/attachments/` (get upload credentials)          | `projects.work_items.attachments:write`    |
+| Attachments              | POST             | `…/work-items/{wid}/attachments/{aid}/complete/` (mark upload done) | `projects.work_items.attachments:write`    |
+| Attachments              | GET/PATCH/DELETE | `…/work-items/{wid}/attachments/{aid}/`                             | `projects.work_items.attachments:*`        |
+| Relations                | GET/POST         | `…/work-items/{wid}/relations/`                                     | `projects.work_items.relations:read/write` |
+| Relations                | DELETE           | `…/work-items/{wid}/relations/{relation_id}/`                       | `projects.work_items.relations:write`      |
+| Page links               | GET/POST         | `…/work-items/{wid}/page-links/`                                    | `projects.work_items:read/write`           |
+| Page links               | GET/DELETE       | `…/work-items/{wid}/page-links/{link_id}/`                          | `projects.work_items:read/write`           |
 
 ### 3.11 Cycles (sprints)
 
-| Method | Path                                                                                | Scope                        |
-| ------ | ----------------------------------------------------------------------------------- | ---------------------------- |
-| GET    | `…/projects/{pid}/cycles/`                                                          | `projects.cycles:read`       |
-| POST   | `…/projects/{pid}/cycles/`                                                          | `projects.cycles:write`      |
-| GET    | `…/projects/{pid}/cycles/{cycle_id}/`                                               | `projects.cycles:read`       |
-| PATCH  | `…/projects/{pid}/cycles/{cycle_id}/`                                               | `projects.cycles:write`      |
-| DELETE | `…/projects/{pid}/cycles/{cycle_id}/`                                               | `projects.cycles:write`      |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/archive/`                                       | `projects.cycles:write`      |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/unarchive/`                                     | `projects.cycles:write`      |
-| GET    | `…/projects/{pid}/cycles/archived/`                                                 | `projects.cycles:read`       |
-| GET    | `…/projects/{pid}/cycles/{cycle_id}/work-items/`                                    | `projects.cycles:read`       |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/work-items/` (add work items)                   | `projects.cycles:write`      |
-| DELETE | `…/projects/{pid}/cycles/{cycle_id}/work-items/{wid}/`                              | `projects.cycles:write`      |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/transfer-work-items/`                           | `projects.cycles:write`      |
+| Method | Path                                                              | Scope                   |
+| ------ | ----------------------------------------------------------------- | ----------------------- |
+| GET    | `…/projects/{pid}/cycles/`                                        | `projects.cycles:read`  |
+| POST   | `…/projects/{pid}/cycles/`                                        | `projects.cycles:write` |
+| GET    | `…/projects/{pid}/cycles/{cycle_id}/`                             | `projects.cycles:read`  |
+| PATCH  | `…/projects/{pid}/cycles/{cycle_id}/`                             | `projects.cycles:write` |
+| DELETE | `…/projects/{pid}/cycles/{cycle_id}/`                             | `projects.cycles:write` |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/archive/`                     | `projects.cycles:write` |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/unarchive/`                   | `projects.cycles:write` |
+| GET    | `…/projects/{pid}/cycles/archived/`                               | `projects.cycles:read`  |
+| GET    | `…/projects/{pid}/cycles/{cycle_id}/work-items/`                  | `projects.cycles:read`  |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/work-items/` (add work items) | `projects.cycles:write` |
+| DELETE | `…/projects/{pid}/cycles/{cycle_id}/work-items/{wid}/`            | `projects.cycles:write` |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/transfer-work-items/`         | `projects.cycles:write` |
 
 ### 3.12 Modules
 
-| Method | Path                                                                                | Scope                        |
-| ------ | ----------------------------------------------------------------------------------- | ---------------------------- |
-| GET/POST | `…/projects/{pid}/modules/`                                                       | `projects.modules:read/write` |
-| GET/PATCH/DELETE | `…/projects/{pid}/modules/{module_id}/`                                   | `projects.modules:*`         |
-| POST   | `…/projects/{pid}/modules/{module_id}/archive/`                                     | `projects.modules:write`     |
-| POST   | `…/projects/{pid}/modules/{module_id}/unarchive/`                                   | `projects.modules:write`     |
-| GET    | `…/projects/{pid}/modules/archived/`                                                | `projects.modules:read`      |
-| GET/POST | `…/projects/{pid}/modules/{module_id}/work-items/`                                | `projects.modules:*`         |
-| DELETE | `…/projects/{pid}/modules/{module_id}/work-items/{wid}/`                            | `projects.modules:write`     |
+| Method           | Path                                                     | Scope                         |
+| ---------------- | -------------------------------------------------------- | ----------------------------- |
+| GET/POST         | `…/projects/{pid}/modules/`                              | `projects.modules:read/write` |
+| GET/PATCH/DELETE | `…/projects/{pid}/modules/{module_id}/`                  | `projects.modules:*`          |
+| POST             | `…/projects/{pid}/modules/{module_id}/archive/`          | `projects.modules:write`      |
+| POST             | `…/projects/{pid}/modules/{module_id}/unarchive/`        | `projects.modules:write`      |
+| GET              | `…/projects/{pid}/modules/archived/`                     | `projects.modules:read`       |
+| GET/POST         | `…/projects/{pid}/modules/{module_id}/work-items/`       | `projects.modules:*`          |
+| DELETE           | `…/projects/{pid}/modules/{module_id}/work-items/{wid}/` | `projects.modules:write`      |
 
 ### 3.13 Pages
 
-| Method | Path                                                                                | Scope                        |
-| ------ | ----------------------------------------------------------------------------------- | ---------------------------- |
-| GET/POST | `/api/v1/workspaces/{slug}/pages/`                                                | `wiki.pages:read/write`      |
-| GET    | `/api/v1/workspaces/{slug}/pages/{page_id}/`                                        | `wiki.pages:read`            |
-| GET/POST | `…/projects/{pid}/pages/`                                                         | `projects.pages:read/write`  |
-| GET    | `…/projects/{pid}/pages/{page_id}/`                                                 | `projects.pages:read`        |
+| Method   | Path                                         | Scope                       |
+| -------- | -------------------------------------------- | --------------------------- |
+| GET/POST | `/api/v1/workspaces/{slug}/pages/`           | `wiki.pages:read/write`     |
+| GET      | `/api/v1/workspaces/{slug}/pages/{page_id}/` | `wiki.pages:read`           |
+| GET/POST | `…/projects/{pid}/pages/`                    | `projects.pages:read/write` |
+| GET      | `…/projects/{pid}/pages/{page_id}/`          | `projects.pages:read`       |
 
 ### 3.14 Intake (triage queue)
 
-| Method | Path                                                                                | Scope                        |
-| ------ | ----------------------------------------------------------------------------------- | ---------------------------- |
-| GET/POST | `…/projects/{pid}/intake-issues/`                                                 | `projects.intakes:read/write` |
-| GET/PATCH/DELETE | `…/projects/{pid}/intake-issues/{intake_id}/`                             | `projects.intakes:*`         |
+| Method           | Path                                          | Scope                         |
+| ---------------- | --------------------------------------------- | ----------------------------- |
+| GET/POST         | `…/projects/{pid}/intake-issues/`             | `projects.intakes:read/write` |
+| GET/PATCH/DELETE | `…/projects/{pid}/intake-issues/{intake_id}/` | `projects.intakes:*`          |
 
 ### 3.15 Epics
 
-| Method | Path                                                                                | Scope                        |
-| ------ | ----------------------------------------------------------------------------------- | ---------------------------- |
-| GET/POST | `…/projects/{pid}/epics/`                                                         | `projects.epics:read/write`  |
-| GET/PATCH/DELETE | `…/projects/{pid}/epics/{epic_id}/`                                       | `projects.epics:*`           |
-| GET/POST | `…/projects/{pid}/epics/{epic_id}/work-items/`                                    | `projects.epics:*`           |
+| Method           | Path                                           | Scope                       |
+| ---------------- | ---------------------------------------------- | --------------------------- |
+| GET/POST         | `…/projects/{pid}/epics/`                      | `projects.epics:read/write` |
+| GET/PATCH/DELETE | `…/projects/{pid}/epics/{epic_id}/`            | `projects.epics:*`          |
+| GET/POST         | `…/projects/{pid}/epics/{epic_id}/work-items/` | `projects.epics:*`          |
 
 ### 3.16 Milestones
 
-| Method | Path                                                                                | Scope                            |
-| ------ | ----------------------------------------------------------------------------------- | -------------------------------- |
-| GET/POST | `…/projects/{pid}/milestones/`                                                    | `projects.milestones:read/write` |
-| GET/PATCH/DELETE | `…/projects/{pid}/milestones/{milestone_id}/`                             | `projects.milestones:*`          |
-| GET/POST | `…/projects/{pid}/milestones/{milestone_id}/work-items/`                          | `projects.milestones:*`          |
-| DELETE | `…/projects/{pid}/milestones/{milestone_id}/work-items/{wid}/`                      | `projects.milestones:write`      |
+| Method           | Path                                                           | Scope                            |
+| ---------------- | -------------------------------------------------------------- | -------------------------------- |
+| GET/POST         | `…/projects/{pid}/milestones/`                                 | `projects.milestones:read/write` |
+| GET/PATCH/DELETE | `…/projects/{pid}/milestones/{milestone_id}/`                  | `projects.milestones:*`          |
+| GET/POST         | `…/projects/{pid}/milestones/{milestone_id}/work-items/`       | `projects.milestones:*`          |
+| DELETE           | `…/projects/{pid}/milestones/{milestone_id}/work-items/{wid}/` | `projects.milestones:write`      |
 
 ### 3.17 Estimates (story-point systems)
 
-| Method | Path                                                                                | Scope                        |
-| ------ | ----------------------------------------------------------------------------------- | ---------------------------- |
-| GET/POST | `…/projects/{pid}/estimates/`                                                     | `projects.work_items:read/write` |
-| GET/PATCH/DELETE | `…/projects/{pid}/estimates/{estimate_id}/`                               | `projects.work_items:*`      |
-| GET/POST | `…/projects/{pid}/estimates/{estimate_id}/points/`                                | `projects.work_items:*`      |
-| PATCH/DELETE | `…/projects/{pid}/estimates/{estimate_id}/points/{point_id}/`                 | `projects.work_items:write`  |
+| Method           | Path                                                          | Scope                            |
+| ---------------- | ------------------------------------------------------------- | -------------------------------- |
+| GET/POST         | `…/projects/{pid}/estimates/`                                 | `projects.work_items:read/write` |
+| GET/PATCH/DELETE | `…/projects/{pid}/estimates/{estimate_id}/`                   | `projects.work_items:*`          |
+| GET/POST         | `…/projects/{pid}/estimates/{estimate_id}/points/`            | `projects.work_items:*`          |
+| PATCH/DELETE     | `…/projects/{pid}/estimates/{estimate_id}/points/{point_id}/` | `projects.work_items:write`      |
 
 ### 3.18 Initiatives (workspace-scoped, cross-project goals)
 
-| Method | Path                                                                                    | Scope                              |
-| ------ | --------------------------------------------------------------------------------------- | ---------------------------------- |
-| GET/POST | `/api/v1/workspaces/{slug}/initiatives/`                                              | `initiatives:read/write`           |
-| GET/PATCH/DELETE | `/api/v1/workspaces/{slug}/initiatives/{init_id}/`                            | `initiatives:*`                    |
-| GET/POST | `…/initiatives/{init_id}/labels/`                                                     | `initiatives.labels:*`             |
-| GET/PATCH/DELETE | `…/initiatives/{init_id}/labels/{label_id}/`                                  | `initiatives.labels:*`             |
-| GET/POST | `…/initiatives/{init_id}/projects/`                                                   | `initiatives.projects:*`           |
-| DELETE | `…/initiatives/{init_id}/projects/{project_id}/`                                        | `initiatives.projects:write`       |
-| GET/POST | `…/initiatives/{init_id}/epics/`                                                      | `initiatives.epics:*`              |
-| DELETE | `…/initiatives/{init_id}/epics/{epic_id}/`                                              | `initiatives.epics:write`          |
+| Method           | Path                                               | Scope                        |
+| ---------------- | -------------------------------------------------- | ---------------------------- |
+| GET/POST         | `/api/v1/workspaces/{slug}/initiatives/`           | `initiatives:read/write`     |
+| GET/PATCH/DELETE | `/api/v1/workspaces/{slug}/initiatives/{init_id}/` | `initiatives:*`              |
+| GET/POST         | `…/initiatives/{init_id}/labels/`                  | `initiatives.labels:*`       |
+| GET/PATCH/DELETE | `…/initiatives/{init_id}/labels/{label_id}/`       | `initiatives.labels:*`       |
+| GET/POST         | `…/initiatives/{init_id}/projects/`                | `initiatives.projects:*`     |
+| DELETE           | `…/initiatives/{init_id}/projects/{project_id}/`   | `initiatives.projects:write` |
+| GET/POST         | `…/initiatives/{init_id}/epics/`                   | `initiatives.epics:*`        |
+| DELETE           | `…/initiatives/{init_id}/epics/{epic_id}/`         | `initiatives.epics:write`    |
 
 ### 3.19 Customers
 
-| Method | Path                                                                                    | Scope                                 |
-| ------ | --------------------------------------------------------------------------------------- | ------------------------------------- |
-| GET/POST | `/api/v1/workspaces/{slug}/customers/`                                                | `customers:read/write`                |
-| GET/PATCH/DELETE | `…/customers/{customer_id}/`                                                  | `customers:*`                         |
-| POST/DELETE | `…/customers/{customer_id}/work-items/` (link/unlink)                              | `customers.work_items:write`          |
-| GET    | `…/customers/{customer_id}/work-items/`                                                 | `customers.work_items:read`           |
-| GET/POST | `…/customers/{customer_id}/requests/`                                                 | `customers.requests:*`                |
-| GET/PATCH/DELETE | `…/customers/{customer_id}/requests/{req_id}/`                                | `customers.requests:*`                |
-| GET/POST | `…/customers/properties/`                                                             | `customers.properties:*`              |
-| GET/PATCH/DELETE | `…/customers/properties/{prop_id}/`                                           | `customers.properties:*`              |
-| GET/PATCH | `…/customers/{customer_id}/property-values/` and `…/{value_id}/`                     | `customers.property_values:*`         |
+| Method           | Path                                                             | Scope                         |
+| ---------------- | ---------------------------------------------------------------- | ----------------------------- |
+| GET/POST         | `/api/v1/workspaces/{slug}/customers/`                           | `customers:read/write`        |
+| GET/PATCH/DELETE | `…/customers/{customer_id}/`                                     | `customers:*`                 |
+| POST/DELETE      | `…/customers/{customer_id}/work-items/` (link/unlink)            | `customers.work_items:write`  |
+| GET              | `…/customers/{customer_id}/work-items/`                          | `customers.work_items:read`   |
+| GET/POST         | `…/customers/{customer_id}/requests/`                            | `customers.requests:*`        |
+| GET/PATCH/DELETE | `…/customers/{customer_id}/requests/{req_id}/`                   | `customers.requests:*`        |
+| GET/POST         | `…/customers/properties/`                                        | `customers.properties:*`      |
+| GET/PATCH/DELETE | `…/customers/properties/{prop_id}/`                              | `customers.properties:*`      |
+| GET/PATCH        | `…/customers/{customer_id}/property-values/` and `…/{value_id}/` | `customers.property_values:*` |
 
 ### 3.20 Teamspaces (grouping of members/projects)
 
-| Method | Path                                                                                    | Scope                            |
-| ------ | --------------------------------------------------------------------------------------- | -------------------------------- |
-| GET/POST | `/api/v1/workspaces/{slug}/teamspaces/`                                               | `teamspaces:read/write`          |
-| GET/PATCH/DELETE | `…/teamspaces/{team_id}/`                                                     | `teamspaces:*`                   |
-| GET/POST/DELETE | `…/teamspaces/{team_id}/members/`                                              | `teamspaces.members:*`           |
-| GET/POST/DELETE | `…/teamspaces/{team_id}/projects/`                                             | `teamspaces.projects:*`          |
+| Method           | Path                                    | Scope                   |
+| ---------------- | --------------------------------------- | ----------------------- |
+| GET/POST         | `/api/v1/workspaces/{slug}/teamspaces/` | `teamspaces:read/write` |
+| GET/PATCH/DELETE | `…/teamspaces/{team_id}/`               | `teamspaces:*`          |
+| GET/POST/DELETE  | `…/teamspaces/{team_id}/members/`       | `teamspaces.members:*`  |
+| GET/POST/DELETE  | `…/teamspaces/{team_id}/projects/`      | `teamspaces.projects:*` |
 
 ### 3.21 Stickies (personal quick notes)
 
-| Method | Path                                                                                    | Scope                            |
-| ------ | --------------------------------------------------------------------------------------- | -------------------------------- |
-| GET/POST | `/api/v1/workspaces/{slug}/stickies/`                                                 | `stickies:read/write`            |
-| GET/PATCH/DELETE | `…/stickies/{sticky_id}/`                                                     | `stickies:*`                     |
+| Method           | Path                                  | Scope                 |
+| ---------------- | ------------------------------------- | --------------------- |
+| GET/POST         | `/api/v1/workspaces/{slug}/stickies/` | `stickies:read/write` |
+| GET/PATCH/DELETE | `…/stickies/{sticky_id}/`             | `stickies:*`          |
 
 ### 3.22 IDP Group Sync (enterprise)
 
-| Method | Path                                                                                    | Scope         |
-| ------ | --------------------------------------------------------------------------------------- | ------------- |
-| GET/PATCH | `…/idp-group-sync/config/`                                                            | admin-only    |
-| GET/POST | `…/idp-group-sync/project-mappings/`                                                  | admin-only    |
-| GET/PATCH/DELETE | `…/idp-group-sync/project-mappings/{mapping_id}/`                             | admin-only    |
-| GET/POST | `…/idp-group-sync/workspace-mappings/`                                                | admin-only    |
-| GET/PATCH/DELETE | `…/idp-group-sync/workspace-mappings/{mapping_id}/`                           | admin-only    |
+| Method           | Path                                                | Scope      |
+| ---------------- | --------------------------------------------------- | ---------- |
+| GET/PATCH        | `…/idp-group-sync/config/`                          | admin-only |
+| GET/POST         | `…/idp-group-sync/project-mappings/`                | admin-only |
+| GET/PATCH/DELETE | `…/idp-group-sync/project-mappings/{mapping_id}/`   | admin-only |
+| GET/POST         | `…/idp-group-sync/workspace-mappings/`              | admin-only |
+| GET/PATCH/DELETE | `…/idp-group-sync/workspace-mappings/{mapping_id}/` | admin-only |
 
 ### 3.23 OpenAPI machine-readable spec (self-hosted feature)
 
@@ -457,7 +457,7 @@ Feed this OpenAPI file into your MCP server's build step to auto-generate the Pl
 ### 4.1 API Key path (simplest — recommended default for MCP)
 
 1. **User generates the token in Plane:**
-   - *Profile Settings → Personal Access Tokens* (or *Workspace Settings → Access Tokens* for a shared workspace bot token).
+   - _Profile Settings → Personal Access Tokens_ (or _Workspace Settings → Access Tokens_ for a shared workspace bot token).
    - Set title, optional description, optional expiry.
    - Copy the token — it's shown once.
 2. **Config the MCP server:**
@@ -482,54 +482,56 @@ Plane's OAuth server lives under `/auth/o/`. There are two grant types.
 Use when the app acts as itself (bot), not as a specific user. **This is the recommended flow for most MCP servers.**
 
 1. **User clicks Install → your app redirects to Plane's consent screen:**
-    ```
-    GET https://api.plane.so/auth/o/authorize-app/
-       ?client_id=YOUR_CLIENT_ID
-       &response_type=code
-       &redirect_uri=https://your-mcp.example.com/callback
-       &scope=projects:read%20projects.work_items:write%20…
-    ```
+   ```
+   GET https://api.plane.so/auth/o/authorize-app/
+      ?client_id=YOUR_CLIENT_ID
+      &response_type=code
+      &redirect_uri=https://your-mcp.example.com/callback
+      &scope=projects:read%20projects.work_items:write%20…
+   ```
 2. **User approves → Plane redirects to your callback:**
-    ```
-    GET https://your-mcp.example.com/callback
-       ?app_installation_id=<install-uuid>
-       &code=<ignored-in-bot-flow>
-    ```
+   ```
+   GET https://your-mcp.example.com/callback
+      ?app_installation_id=<install-uuid>
+      &code=<ignored-in-bot-flow>
+   ```
 3. **Server exchanges install ID for bot token:**
-    ```http
-    POST https://api.plane.so/auth/o/token/
-    Content-Type: application/x-www-form-urlencoded
-    Authorization: Basic base64(client_id:client_secret)
+   ```http
+   POST https://api.plane.so/auth/o/token/
+   Content-Type: application/x-www-form-urlencoded
+   Authorization: Basic base64(client_id:client_secret)
 
-    grant_type=client_credentials
-    &app_installation_id=<install-uuid>
-    &scope=projects:read projects.work_items:write …
-    ```
-    Response:
-    ```json
-    {
-      "access_token": "pln_bot_xxxxxxxxxxxx",
-      "token_type": "Bearer",
-      "expires_in": 86400,
-      "scope": "projects:read projects.work_items:write …"
-    }
-    ```
+   grant_type=client_credentials
+   &app_installation_id=<install-uuid>
+   &scope=projects:read projects.work_items:write …
+   ```
+   Response:
+   ```json
+   {
+     "access_token": "pln_bot_xxxxxxxxxxxx",
+     "token_type": "Bearer",
+     "expires_in": 86400,
+     "scope": "projects:read projects.work_items:write …"
+   }
+   ```
 4. **Fetch workspace details so you know which workspace slug to use:**
-    ```http
-    GET https://api.plane.so/auth/o/app-installation/?id=<install-uuid>
-    Authorization: Bearer <bot-token>
-    ```
-    Response:
-    ```json
-    [{
-      "id": "<install-uuid>",
-      "workspace": "<workspace-uuid>",
-      "workspace_detail": { "name": "Acme", "slug": "acme" },
-      "app_bot": "<bot-user-uuid>",
-      "status": "installed"
-    }]
-    ```
-    Store `workspace_detail.slug` and `app_installation_id` — you need them going forward.
+   ```http
+   GET https://api.plane.so/auth/o/app-installation/?id=<install-uuid>
+   Authorization: Bearer <bot-token>
+   ```
+   Response:
+   ```json
+   [
+     {
+       "id": "<install-uuid>",
+       "workspace": "<workspace-uuid>",
+       "workspace_detail": { "name": "Acme", "slug": "acme" },
+       "app_bot": "<bot-user-uuid>",
+       "status": "installed"
+     }
+   ]
+   ```
+   Store `workspace_detail.slug` and `app_installation_id` — you need them going forward.
 5. **Refresh** by repeating step 3 (bot tokens expire; there's no separate refresh token — just re-issue with the install ID).
 
 #### 4.2.2 User Token flow (authorization code) — for act-as-user
@@ -537,67 +539,68 @@ Use when the app acts as itself (bot), not as a specific user. **This is the rec
 Use only when your MCP must perform actions as the specific end user (e.g., attribution matters, or the user's permissions differ per project).
 
 1. **Redirect to authorize:**
-    ```
-    GET https://api.plane.so/auth/o/authorize-app/
-       ?client_id=YOUR_CLIENT_ID
-       &response_type=code
-       &redirect_uri=https://your-mcp.example.com/callback
-       &state=<random-csrf-token>
-       &scope=projects:read projects.work_items:write …
-    ```
+   ```
+   GET https://api.plane.so/auth/o/authorize-app/
+      ?client_id=YOUR_CLIENT_ID
+      &response_type=code
+      &redirect_uri=https://your-mcp.example.com/callback
+      &state=<random-csrf-token>
+      &scope=projects:read projects.work_items:write …
+   ```
 2. **Callback:**
-    ```
-    GET https://your-mcp.example.com/callback?code=<code>&state=<same-csrf>
-    ```
-    Verify `state` matches. Reject if not.
+   ```
+   GET https://your-mcp.example.com/callback?code=<code>&state=<same-csrf>
+   ```
+   Verify `state` matches. Reject if not.
 3. **Exchange code for tokens:**
-    ```http
-    POST https://api.plane.so/auth/o/token/
-    Content-Type: application/x-www-form-urlencoded
+   ```http
+   POST https://api.plane.so/auth/o/token/
+   Content-Type: application/x-www-form-urlencoded
 
-    grant_type=authorization_code
-    &code=<code>
-    &client_id=YOUR_CLIENT_ID
-    &client_secret=YOUR_CLIENT_SECRET
-    &redirect_uri=https://your-mcp.example.com/callback
-    ```
-    Response includes both `access_token` and `refresh_token`:
-    ```json
-    {
-      "access_token": "pln_xxxxxxxxxxxx",
-      "refresh_token": "pln_refresh_xxxxxxxxxxxx",
-      "token_type": "Bearer",
-      "expires_in": 86400,
-      "scope": "projects:read …"
-    }
-    ```
+   grant_type=authorization_code
+   &code=<code>
+   &client_id=YOUR_CLIENT_ID
+   &client_secret=YOUR_CLIENT_SECRET
+   &redirect_uri=https://your-mcp.example.com/callback
+   ```
+   Response includes both `access_token` and `refresh_token`:
+   ```json
+   {
+     "access_token": "pln_xxxxxxxxxxxx",
+     "refresh_token": "pln_refresh_xxxxxxxxxxxx",
+     "token_type": "Bearer",
+     "expires_in": 86400,
+     "scope": "projects:read …"
+   }
+   ```
 4. **Refresh:**
-    ```http
-    POST https://api.plane.so/auth/o/token/
-    Content-Type: application/x-www-form-urlencoded
+   ```http
+   POST https://api.plane.so/auth/o/token/
+   Content-Type: application/x-www-form-urlencoded
 
-    grant_type=refresh_token
-    &refresh_token=<refresh-token>
-    &client_id=YOUR_CLIENT_ID
-    &client_secret=YOUR_CLIENT_SECRET
-    ```
+   grant_type=refresh_token
+   &refresh_token=<refresh-token>
+   &client_id=YOUR_CLIENT_ID
+   &client_secret=YOUR_CLIENT_SECRET
+   ```
 
 #### 4.2.3 Register your OAuth app (one-time, per Plane workspace)
 
-1. Go to *Workspace Settings → Integrations* (URL: `https://<plane-domain>/<workspace>/settings/integrations/`).
+1. Go to _Workspace Settings → Integrations_ (URL: `https://<plane-domain>/<workspace>/settings/integrations/`).
 2. Click **Build your own**.
 3. Fields to fill:
 
-    | Field           | For an MCP server                                                                             |
-    | --------------- | --------------------------------------------------------------------------------------------- |
-    | App Name        | e.g. `Acme Plane MCP`                                                                         |
-    | Setup URL       | Public URL of the MCP server, e.g. `https://mcp.acme.com`                                     |
-    | Redirect URI    | Space-separated. If following the official server's model, list all three:                    |
-    |                 | `https://mcp.acme.com/callback` (generic)                                                     |
-    |                 | `https://mcp.acme.com/http/auth/callback` (HTTP transport)                                    |
-    |                 | `https://mcp.acme.com/auth/callback` (SSE legacy)                                             |
-    | Webhook URL     | Leave empty unless you also want to consume webhooks server-side                              |
-    | Scopes          | Pick per §4.3 — for a general assistant, request read+write on projects, work_items, cycles, modules, comments, links, worklogs, labels, states, pages, plus `profile:read` |
+   | Field        | For an MCP server                                                                                                                                                           |
+   | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | App Name     | e.g. `Acme Plane MCP`                                                                                                                                                       |
+   | Setup URL    | Public URL of the MCP server, e.g. `https://mcp.acme.com`                                                                                                                   |
+   | Redirect URI | Space-separated. If following the official server's model, list all three:                                                                                                  |
+   |              | `https://mcp.acme.com/callback` (generic)                                                                                                                                   |
+   |              | `https://mcp.acme.com/http/auth/callback` (HTTP transport)                                                                                                                  |
+   |              | `https://mcp.acme.com/auth/callback` (SSE legacy)                                                                                                                           |
+   | Webhook URL  | Leave empty unless you also want to consume webhooks server-side                                                                                                            |
+   | Scopes       | Pick per §4.3 — for a general assistant, request read+write on projects, work_items, cycles, modules, comments, links, worklogs, labels, states, pages, plus `profile:read` |
+
 4. Store `Client ID` and `Client Secret` in a secret manager. Never commit them.
 
 #### 4.2.4 OAuth redirect URIs for popular MCP clients
@@ -616,85 +619,85 @@ Request the minimum needed. Scopes are space-separated.
 
 #### Profile
 
-| Scope             | Purpose                                              |
-| ----------------- | ---------------------------------------------------- |
-| `profile:read`    | `GET /api/v1/users/me/`                              |
+| Scope          | Purpose                 |
+| -------------- | ----------------------- |
+| `profile:read` | `GET /api/v1/users/me/` |
 
 #### Projects
 
-| Scope                                       | Purpose                                       |
-| ------------------------------------------- | --------------------------------------------- |
-| `projects:read` / `projects:write`          | CRUD on projects                              |
-| `projects.features:read` / `:write`         | Project feature toggles                       |
-| `projects.members:read` / `:write`          | Project membership                            |
-| `projects.states:read` / `:write`           | Workflow states                               |
-| `projects.labels:read` / `:write`           | Labels                                        |
-| `projects.intakes:read` / `:write`          | Intake queue                                  |
-| `projects.epics:read` / `:write`            | Epics                                         |
-| `projects.cycles:read` / `:write`           | Sprints                                       |
-| `projects.pages:read` / `:write`            | Project pages                                 |
-| `projects.modules:read` / `:write`          | Modules                                       |
-| `projects.milestones:read` / `:write`       | Milestones                                    |
-| `projects.work_items:read` / `:write`       | Work items                                    |
-| `projects.work_items.comments:read` / `:write` | Comments                                   |
-| `projects.work_items.attachments:read` / `:write` | Attachments                             |
-| `projects.work_items.links:read` / `:write` | External URL links on a work item             |
-| `projects.work_items.relations:read` / `:write` | Blocks / blocked-by / duplicate / relates |
-| `projects.work_items.activities:read` / `:write` | Activity log                             |
-| `projects.work_items.worklogs:read` / `:write` | Time tracking                              |
-| `projects.work_item_types:read` / `:write`  | Custom work item types                        |
-| `projects.work_item_properties:read` / `:write` | Custom properties                         |
-| `projects.work_item_property_options:read` / `:write` | Dropdown options                    |
-| `projects.work_item_property_values:read` / `:write`  | Property values on work items       |
+| Scope                                                 | Purpose                                   |
+| ----------------------------------------------------- | ----------------------------------------- |
+| `projects:read` / `projects:write`                    | CRUD on projects                          |
+| `projects.features:read` / `:write`                   | Project feature toggles                   |
+| `projects.members:read` / `:write`                    | Project membership                        |
+| `projects.states:read` / `:write`                     | Workflow states                           |
+| `projects.labels:read` / `:write`                     | Labels                                    |
+| `projects.intakes:read` / `:write`                    | Intake queue                              |
+| `projects.epics:read` / `:write`                      | Epics                                     |
+| `projects.cycles:read` / `:write`                     | Sprints                                   |
+| `projects.pages:read` / `:write`                      | Project pages                             |
+| `projects.modules:read` / `:write`                    | Modules                                   |
+| `projects.milestones:read` / `:write`                 | Milestones                                |
+| `projects.work_items:read` / `:write`                 | Work items                                |
+| `projects.work_items.comments:read` / `:write`        | Comments                                  |
+| `projects.work_items.attachments:read` / `:write`     | Attachments                               |
+| `projects.work_items.links:read` / `:write`           | External URL links on a work item         |
+| `projects.work_items.relations:read` / `:write`       | Blocks / blocked-by / duplicate / relates |
+| `projects.work_items.activities:read` / `:write`      | Activity log                              |
+| `projects.work_items.worklogs:read` / `:write`        | Time tracking                             |
+| `projects.work_item_types:read` / `:write`            | Custom work item types                    |
+| `projects.work_item_properties:read` / `:write`       | Custom properties                         |
+| `projects.work_item_property_options:read` / `:write` | Dropdown options                          |
+| `projects.work_item_property_values:read` / `:write`  | Property values on work items             |
 
 #### Workspaces
 
-| Scope                                       | Purpose                                       |
-| ------------------------------------------- | --------------------------------------------- |
-| `workspaces.members:read` / `:write`        | Workspace membership + invitations            |
-| `workspaces.features:read` / `:write`       | Feature toggles                               |
+| Scope                                 | Purpose                            |
+| ------------------------------------- | ---------------------------------- |
+| `workspaces.members:read` / `:write`  | Workspace membership + invitations |
+| `workspaces.features:read` / `:write` | Feature toggles                    |
 
 #### Wiki / Assets / Stickies
 
-| Scope                                       | Purpose                                       |
-| ------------------------------------------- | --------------------------------------------- |
-| `wiki.pages:read` / `wiki.pages:write`      | Workspace-level pages                         |
-| `assets:read` / `assets:write`              | File assets                                   |
-| `stickies:read` / `stickies:write`          | Personal quick notes                          |
+| Scope                                  | Purpose               |
+| -------------------------------------- | --------------------- |
+| `wiki.pages:read` / `wiki.pages:write` | Workspace-level pages |
+| `assets:read` / `assets:write`         | File assets           |
+| `stickies:read` / `stickies:write`     | Personal quick notes  |
 
 #### Customers
 
-| Scope                                       | Purpose                                       |
-| ------------------------------------------- | --------------------------------------------- |
-| `customers:read` / `customers:write`        | Customers                                     |
-| `customers.requests:read` / `:write`        | Customer feature requests                     |
-| `customers.properties:read` / `:write`      | Custom properties                             |
-| `customers.property_values:read` / `:write` | Property values                               |
-| `customers.work_items:read` / `:write`      | Linking work items to customers               |
+| Scope                                       | Purpose                         |
+| ------------------------------------------- | ------------------------------- |
+| `customers:read` / `customers:write`        | Customers                       |
+| `customers.requests:read` / `:write`        | Customer feature requests       |
+| `customers.properties:read` / `:write`      | Custom properties               |
+| `customers.property_values:read` / `:write` | Property values                 |
+| `customers.work_items:read` / `:write`      | Linking work items to customers |
 
 #### Initiatives
 
-| Scope                                       | Purpose                                       |
-| ------------------------------------------- | --------------------------------------------- |
-| `initiatives:read` / `:write`               | Initiatives                                   |
-| `initiatives.projects:read` / `:write`      | Project associations                          |
-| `initiatives.epics:read` / `:write`         | Epic associations                             |
-| `initiatives.labels:read` / `:write`        | Labels                                        |
+| Scope                                  | Purpose              |
+| -------------------------------------- | -------------------- |
+| `initiatives:read` / `:write`          | Initiatives          |
+| `initiatives.projects:read` / `:write` | Project associations |
+| `initiatives.epics:read` / `:write`    | Epic associations    |
+| `initiatives.labels:read` / `:write`   | Labels               |
 
 #### Teamspaces
 
-| Scope                                       | Purpose                                       |
-| ------------------------------------------- | --------------------------------------------- |
-| `teamspaces:read` / `:write`                | Teamspaces                                    |
-| `teamspaces.projects:read` / `:write`       | Project membership                            |
-| `teamspaces.members:read` / `:write`        | Member management                             |
+| Scope                                 | Purpose            |
+| ------------------------------------- | ------------------ |
+| `teamspaces:read` / `:write`          | Teamspaces         |
+| `teamspaces.projects:read` / `:write` | Project membership |
+| `teamspaces.members:read` / `:write`  | Member management  |
 
 #### Agent Runs (only if you're building an agent)
 
-| Scope                                       | Purpose                                       |
-| ------------------------------------------- | --------------------------------------------- |
-| `agents.runs:read` / `:write`               | Agent runs                                    |
-| `agents.run_activities:read` / `:write`     | Run activity log                              |
+| Scope                                   | Purpose          |
+| --------------------------------------- | ---------------- |
+| `agents.runs:read` / `:write`           | Agent runs       |
+| `agents.run_activities:read` / `:write` | Run activity log |
 
 **A sensible default scope bundle** for a general-purpose MCP assistant covering ~90% of use cases:
 
@@ -727,12 +730,12 @@ assets:read assets:write
 
 The auth-per-transport mapping the official server uses (and you should mirror):
 
-| Transport                | Auth resolver reads from                                                                        |
-| ------------------------ | ----------------------------------------------------------------------------------------------- |
-| **stdio**                | `PLANE_API_KEY`, `PLANE_WORKSPACE_SLUG`, `PLANE_BASE_URL` env vars (API-Key path only)          |
+| Transport                | Auth resolver reads from                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **stdio**                | `PLANE_API_KEY`, `PLANE_WORKSPACE_SLUG`, `PLANE_BASE_URL` env vars (API-Key path only)                         |
 | **HTTP + OAuth**         | `Authorization: Bearer <token>` header; workspace slug resolved via `/users/me/` + `/auth/o/app-installation/` |
-| **HTTP + API Key (PAT)** | `X-API-Key: <token>` + `X-Workspace-Slug: <slug>` headers per request                            |
-| **SSE (legacy)**         | Same as HTTP + OAuth                                                                             |
+| **HTTP + API Key (PAT)** | `X-API-Key: <token>` + `X-Workspace-Slug: <slug>` headers per request                                          |
+| **SSE (legacy)**         | Same as HTTP + OAuth                                                                                           |
 
 The auth resolver is a small piece; the rest of the server is transport-agnostic.
 
@@ -759,6 +762,7 @@ transports/
 ```
 
 Key rules:
+
 - **Tools are pure functions** of `(auth_context, args) → dict`. No per-transport branching inside the tool.
 - **Auth resolution happens in middleware** — before the tool runs, an `AuthContext` is assembled from env vars (stdio) or from request headers / OAuth token (HTTP).
 - **The Plane API client is one class**, reads `auth_context` for each call.
@@ -780,11 +784,11 @@ Key rules:
 
 Two auth surfaces on the same server, on different paths:
 
-| Path                     | Auth               |
-| ------------------------ | ------------------ |
-| `/http/mcp`              | OAuth Bearer       |
-| `/http/api-key/mcp`      | `X-API-Key` + `X-Workspace-Slug` headers |
-| `/sse` (optional)        | OAuth Bearer (SSE) |
+| Path                | Auth                                     |
+| ------------------- | ---------------------------------------- |
+| `/http/mcp`         | OAuth Bearer                             |
+| `/http/api-key/mcp` | `X-API-Key` + `X-Workspace-Slug` headers |
+| `/sse` (optional)   | OAuth Bearer (SSE)                       |
 
 Per-request auth resolver:
 
@@ -832,6 +836,7 @@ When the MCP client hits `/http/mcp` for the first time and no valid bearer is p
 5. Returns the bearer to the MCP client, which now includes it on every MCP request.
 
 **Registered redirect URIs to allowlist in the OAuth app** (see §4.2.3):
+
 - `<mcp_url>/callback` — generic
 - `<mcp_url>/http/auth/callback` — HTTP transport
 - `<mcp_url>/auth/callback` — SSE legacy
@@ -842,10 +847,10 @@ Plus the client-native URIs from §4.2.4 if you want in-client redirect for IDE 
 
 Plane exposes work items two ways:
 
-| Kind                    | Example                                        | Used by                              |
-| ----------------------- | ---------------------------------------------- | ------------------------------------ |
-| **Readable identifier** | `ENG-42` = `<project_identifier>-<seq_id>`     | Users, URLs, chat                    |
-| **UUID**                | `3fa85f64-5717-4562-b3fc-2c963f66afa6`         | Every API endpoint                   |
+| Kind                    | Example                                    | Used by            |
+| ----------------------- | ------------------------------------------ | ------------------ |
+| **Readable identifier** | `ENG-42` = `<project_identifier>-<seq_id>` | Users, URLs, chat  |
+| **UUID**                | `3fa85f64-5717-4562-b3fc-2c963f66afa6`     | Every API endpoint |
 
 Give the model two retrieval tools:
 
@@ -888,45 +893,46 @@ This mirrors the 100+ tools shipped by the official server. Group headings match
 
 ### 6.1 Users
 
-| Tool     | Description                                                        |
-| -------- | ------------------------------------------------------------------ |
-| `get_me` | Return the authenticated user's profile. No parameters.            |
+| Tool     | Description                                             |
+| -------- | ------------------------------------------------------- |
+| `get_me` | Return the authenticated user's profile. No parameters. |
 
 ### 6.2 Workspaces
 
-| Tool                        | Args                     | Description                                     |
-| --------------------------- | ------------------------ | ----------------------------------------------- |
-| `get_workspace_members`     | —                        | List all workspace members                      |
-| `get_workspace_features`    | —                        | Read enabled workspace features                 |
-| `update_workspace_features` | (partial features dict)  | Toggle workspace features                       |
+| Tool                        | Args                    | Description                     |
+| --------------------------- | ----------------------- | ------------------------------- |
+| `get_workspace_members`     | —                       | List all workspace members      |
+| `get_workspace_features`    | —                       | Read enabled workspace features |
+| `update_workspace_features` | (partial features dict) | Toggle workspace features       |
 
 ### 6.3 Projects
 
-| Tool                          | Required                          | Optional                                            |
-| ----------------------------- | --------------------------------- | --------------------------------------------------- |
-| `list_projects`               | —                                 | `cursor`, `per_page`, `fields`, `expand`            |
-| `create_project`              | `name`, `identifier`              | `description`, `network` (`0`=secret, `2`=public)   |
-| `retrieve_project`            | `project_id`                      | `fields`, `expand`                                  |
-| `update_project`              | `project_id`                      | any project fields                                  |
-| `delete_project`              | `project_id`                      | —                                                   |
-| `get_project_worklog_summary` | `project_id`                      | —                                                   |
-| `get_project_members`         | `project_id`                      | —                                                   |
-| `get_project_features`        | `project_id`                      | —                                                   |
-| `update_project_features`     | `project_id`                      | feature flags                                       |
+| Tool                          | Required             | Optional                                          |
+| ----------------------------- | -------------------- | ------------------------------------------------- |
+| `list_projects`               | —                    | `cursor`, `per_page`, `fields`, `expand`          |
+| `create_project`              | `name`, `identifier` | `description`, `network` (`0`=secret, `2`=public) |
+| `retrieve_project`            | `project_id`         | `fields`, `expand`                                |
+| `update_project`              | `project_id`         | any project fields                                |
+| `delete_project`              | `project_id`         | —                                                 |
+| `get_project_worklog_summary` | `project_id`         | —                                                 |
+| `get_project_members`         | `project_id`         | —                                                 |
+| `get_project_features`        | `project_id`         | —                                                 |
+| `update_project_features`     | `project_id`         | feature flags                                     |
 
 ### 6.4 Work items
 
-| Tool                                | Required                                                    | Optional                                                                                                       |
-| ----------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `list_work_items`                   | `project_id` **or** at least one filter                     | `query`, `assignee_ids[]`, `state_ids[]`, `state_groups[]`, `priorities[]`, `label_ids[]`, `type_ids[]`, `cycle_ids[]`, `module_ids[]`, `is_archived`, `created_by_ids[]`, `workspace_search`, `limit`, `cursor`, `per_page`, `expand`, `fields`, `order_by` |
-| `create_work_item`                  | `project_id`, `name`                                        | `description_html`, `state_id`, `priority`, `assignee_ids[]`, `label_ids[]`, `type_id`, `parent_id`, `start_date`, `due_date`, `estimate_point`, `external_source`, `external_id` |
-| `retrieve_work_item`                | `project_id`, `work_item_id`                                | `fields`, `expand`                                                                                             |
-| `retrieve_work_item_by_identifier`  | `project_identifier` (e.g., `ENG`), `work_item_identifier` (e.g., `42`) | —                                                                                             |
-| `update_work_item`                  | `project_id`, `work_item_id`                                | any updatable field                                                                                            |
-| `delete_work_item`                  | `project_id`, `work_item_id`                                | —                                                                                                              |
-| `search_work_items`                 | `project_id`, `query`                                       | —                                                                                                              |
+| Tool                               | Required                                                                | Optional                                                                                                                                                                                                                                                     |
+| ---------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `list_work_items`                  | `project_id` **or** at least one filter                                 | `query`, `assignee_ids[]`, `state_ids[]`, `state_groups[]`, `priorities[]`, `label_ids[]`, `type_ids[]`, `cycle_ids[]`, `module_ids[]`, `is_archived`, `created_by_ids[]`, `workspace_search`, `limit`, `cursor`, `per_page`, `expand`, `fields`, `order_by` |
+| `create_work_item`                 | `project_id`, `name`                                                    | `description_html`, `state_id`, `priority`, `assignee_ids[]`, `label_ids[]`, `type_id`, `parent_id`, `start_date`, `due_date`, `estimate_point`, `external_source`, `external_id`                                                                            |
+| `retrieve_work_item`               | `project_id`, `work_item_id`                                            | `fields`, `expand`                                                                                                                                                                                                                                           |
+| `retrieve_work_item_by_identifier` | `project_identifier` (e.g., `ENG`), `work_item_identifier` (e.g., `42`) | —                                                                                                                                                                                                                                                            |
+| `update_work_item`                 | `project_id`, `work_item_id`                                            | any updatable field                                                                                                                                                                                                                                          |
+| `delete_work_item`                 | `project_id`, `work_item_id`                                            | —                                                                                                                                                                                                                                                            |
+| `search_work_items`                | `project_id`, `query`                                                   | —                                                                                                                                                                                                                                                            |
 
 **Vocabularies:**
+
 - `priority` ∈ {`urgent`, `high`, `medium`, `low`, `none`}
 - `state_groups` ∈ {`backlog`, `unstarted`, `started`, `completed`, `cancelled`}
 
@@ -939,177 +945,177 @@ This mirrors the 100+ tools shipped by the official server. Group headings match
 
 ### 6.6 Work item comments
 
-| Tool                          | Required                                                     |
-| ----------------------------- | ------------------------------------------------------------ |
-| `list_work_item_comments`     | `project_id`, `work_item_id`                                 |
-| `retrieve_work_item_comment`  | `project_id`, `work_item_id`, `comment_id`                   |
-| `create_work_item_comment`    | `project_id`, `work_item_id`, `comment_html`                 |
-| `update_work_item_comment`    | `project_id`, `work_item_id`, `comment_id`, `comment_html`   |
-| `delete_work_item_comment`    | `project_id`, `work_item_id`, `comment_id`                   |
+| Tool                         | Required                                                   |
+| ---------------------------- | ---------------------------------------------------------- |
+| `list_work_item_comments`    | `project_id`, `work_item_id`                               |
+| `retrieve_work_item_comment` | `project_id`, `work_item_id`, `comment_id`                 |
+| `create_work_item_comment`   | `project_id`, `work_item_id`, `comment_html`               |
+| `update_work_item_comment`   | `project_id`, `work_item_id`, `comment_id`, `comment_html` |
+| `delete_work_item_comment`   | `project_id`, `work_item_id`, `comment_id`                 |
 
 ### 6.7 Work item links
 
-| Tool                        | Required                                                      |
-| --------------------------- | ------------------------------------------------------------- |
-| `list_work_item_links`      | `project_id`, `work_item_id`                                  |
-| `retrieve_work_item_link`   | `project_id`, `work_item_id`, `link_id`                       |
-| `create_work_item_link`     | `project_id`, `work_item_id`, `url` (+ optional `title`)      |
-| `update_work_item_link`     | `project_id`, `work_item_id`, `link_id`, `url` / `title`      |
-| `delete_work_item_link`     | `project_id`, `work_item_id`, `link_id`                       |
+| Tool                      | Required                                                 |
+| ------------------------- | -------------------------------------------------------- |
+| `list_work_item_links`    | `project_id`, `work_item_id`                             |
+| `retrieve_work_item_link` | `project_id`, `work_item_id`, `link_id`                  |
+| `create_work_item_link`   | `project_id`, `work_item_id`, `url` (+ optional `title`) |
+| `update_work_item_link`   | `project_id`, `work_item_id`, `link_id`, `url` / `title` |
+| `delete_work_item_link`   | `project_id`, `work_item_id`, `link_id`                  |
 
 ### 6.8 Work item relations
 
 `relation_type` ∈ {`blocking`, `blocked_by`, `duplicate_of`, `duplicate`, `relates_to`}.
 
-| Tool                         | Required                                                              |
-| ---------------------------- | --------------------------------------------------------------------- |
-| `list_work_item_relations`   | `project_id`, `work_item_id`                                          |
-| `create_work_item_relation`  | `project_id`, `work_item_id`, `related_work_item_id`, `relation_type` |
-| `remove_work_item_relation`  | `project_id`, `work_item_id`, `relation_id`                           |
+| Tool                        | Required                                                              |
+| --------------------------- | --------------------------------------------------------------------- |
+| `list_work_item_relations`  | `project_id`, `work_item_id`                                          |
+| `create_work_item_relation` | `project_id`, `work_item_id`, `related_work_item_id`, `relation_type` |
+| `remove_work_item_relation` | `project_id`, `work_item_id`, `relation_id`                           |
 
 ### 6.9 Work item properties (custom fields)
 
-| Tool                          | Required                                                          |
-| ----------------------------- | ----------------------------------------------------------------- |
-| `list_work_item_properties`   | `project_id`                                                      |
-| `create_work_item_property`   | `project_id`, `name`, `property_type`                             |
-| `retrieve_work_item_property` | `project_id`, `property_id`                                       |
-| `update_work_item_property`   | `project_id`, `property_id` (+ patch fields)                      |
-| `delete_work_item_property`   | `project_id`, `property_id`                                       |
+| Tool                          | Required                                     |
+| ----------------------------- | -------------------------------------------- |
+| `list_work_item_properties`   | `project_id`                                 |
+| `create_work_item_property`   | `project_id`, `name`, `property_type`        |
+| `retrieve_work_item_property` | `project_id`, `property_id`                  |
+| `update_work_item_property`   | `project_id`, `property_id` (+ patch fields) |
+| `delete_work_item_property`   | `project_id`, `property_id`                  |
 
 ### 6.10 Work item types
 
-| Tool                     | Required                                             |
-| ------------------------ | ---------------------------------------------------- |
-| `list_work_item_types`   | `project_id`                                         |
-| `create_work_item_type`  | `project_id`, `name` (+ optional `description`, `is_active`) |
-| `retrieve_work_item_type`| `project_id`, `type_id`                              |
-| `update_work_item_type`  | `project_id`, `type_id` (+ patch)                    |
-| `delete_work_item_type`  | `project_id`, `type_id`                              |
+| Tool                      | Required                                                     |
+| ------------------------- | ------------------------------------------------------------ |
+| `list_work_item_types`    | `project_id`                                                 |
+| `create_work_item_type`   | `project_id`, `name` (+ optional `description`, `is_active`) |
+| `retrieve_work_item_type` | `project_id`, `type_id`                                      |
+| `update_work_item_type`   | `project_id`, `type_id` (+ patch)                            |
+| `delete_work_item_type`   | `project_id`, `type_id`                                      |
 
 ### 6.11 Worklogs (time tracking, minutes)
 
-| Tool             | Required                                                              |
-| ---------------- | --------------------------------------------------------------------- |
-| `list_work_logs` | `project_id`, `work_item_id`                                          |
-| `create_work_log`| `project_id`, `work_item_id`, `duration` (int, minutes) (+ `description`) |
-| `update_work_log`| `project_id`, `work_item_id`, `work_log_id` (+ patch)                 |
-| `delete_work_log`| `project_id`, `work_item_id`, `work_log_id`                           |
+| Tool              | Required                                                                  |
+| ----------------- | ------------------------------------------------------------------------- |
+| `list_work_logs`  | `project_id`, `work_item_id`                                              |
+| `create_work_log` | `project_id`, `work_item_id`, `duration` (int, minutes) (+ `description`) |
+| `update_work_log` | `project_id`, `work_item_id`, `work_log_id` (+ patch)                     |
+| `delete_work_log` | `project_id`, `work_item_id`, `work_log_id`                               |
 
 ### 6.12 States
 
 Create/update fields: `name`, `color` (`#RRGGBB`), `group` (see vocab), optional `description`.
 
-| Tool             | Required                                    |
-| ---------------- | ------------------------------------------- |
-| `list_states`    | `project_id`                                |
-| `create_state`   | `project_id`, `name`, `color`, `group`      |
-| `retrieve_state` | `project_id`, `state_id`                    |
-| `update_state`   | `project_id`, `state_id` (+ patch)          |
-| `delete_state`   | `project_id`, `state_id`                    |
+| Tool             | Required                               |
+| ---------------- | -------------------------------------- |
+| `list_states`    | `project_id`                           |
+| `create_state`   | `project_id`, `name`, `color`, `group` |
+| `retrieve_state` | `project_id`, `state_id`               |
+| `update_state`   | `project_id`, `state_id` (+ patch)     |
+| `delete_state`   | `project_id`, `state_id`               |
 
 ### 6.13 Labels
 
 Create fields: `name`, `color`, optional `parent`.
 
-| Tool             | Required                                    |
-| ---------------- | ------------------------------------------- |
-| `list_labels`    | `project_id`                                |
-| `create_label`   | `project_id`, `name`, `color`               |
-| `retrieve_label` | `project_id`, `label_id`                    |
-| `update_label`   | `project_id`, `label_id` (+ patch)          |
-| `delete_label`   | `project_id`, `label_id`                    |
+| Tool             | Required                           |
+| ---------------- | ---------------------------------- |
+| `list_labels`    | `project_id`                       |
+| `create_label`   | `project_id`, `name`, `color`      |
+| `retrieve_label` | `project_id`, `label_id`           |
+| `update_label`   | `project_id`, `label_id` (+ patch) |
+| `delete_label`   | `project_id`, `label_id`           |
 
 ### 6.14 Cycles (sprints)
 
-| Tool                            | Required                                                          |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `list_cycles`                   | `project_id`                                                      |
-| `list_archived_cycles`          | `project_id`                                                      |
-| `create_cycle`                  | `project_id`, `name` (+ `start_date`, `end_date`, `description`)  |
-| `retrieve_cycle`                | `project_id`, `cycle_id`                                          |
-| `update_cycle`                  | `project_id`, `cycle_id` (+ patch)                                |
-| `delete_cycle`                  | `project_id`, `cycle_id`                                          |
-| `archive_cycle`                 | `project_id`, `cycle_id`                                          |
-| `unarchive_cycle`               | `project_id`, `cycle_id`                                          |
-| `list_cycle_work_items`         | `project_id`, `cycle_id`                                          |
-| `add_work_items_to_cycle`       | `project_id`, `cycle_id`, `work_item_ids[]`                       |
-| `remove_work_item_from_cycle`   | `project_id`, `cycle_id`, `work_item_id`                          |
-| `transfer_cycle_work_items`     | `project_id`, `cycle_id` (source), `new_cycle_id` (target)        |
+| Tool                          | Required                                                         |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `list_cycles`                 | `project_id`                                                     |
+| `list_archived_cycles`        | `project_id`                                                     |
+| `create_cycle`                | `project_id`, `name` (+ `start_date`, `end_date`, `description`) |
+| `retrieve_cycle`              | `project_id`, `cycle_id`                                         |
+| `update_cycle`                | `project_id`, `cycle_id` (+ patch)                               |
+| `delete_cycle`                | `project_id`, `cycle_id`                                         |
+| `archive_cycle`               | `project_id`, `cycle_id`                                         |
+| `unarchive_cycle`             | `project_id`, `cycle_id`                                         |
+| `list_cycle_work_items`       | `project_id`, `cycle_id`                                         |
+| `add_work_items_to_cycle`     | `project_id`, `cycle_id`, `work_item_ids[]`                      |
+| `remove_work_item_from_cycle` | `project_id`, `cycle_id`, `work_item_id`                         |
+| `transfer_cycle_work_items`   | `project_id`, `cycle_id` (source), `new_cycle_id` (target)       |
 
 ### 6.15 Modules
 
-| Tool                             | Required                                                             |
-| -------------------------------- | -------------------------------------------------------------------- |
-| `list_modules`                   | `project_id`                                                         |
-| `list_archived_modules`          | `project_id`                                                         |
-| `create_module`                  | `project_id`, `name` (+ `description`, `start_date`, `target_date`, `lead`, `members[]`) |
-| `retrieve_module`                | `project_id`, `module_id`                                            |
-| `update_module`                  | `project_id`, `module_id` (+ patch)                                  |
-| `delete_module`                  | `project_id`, `module_id`                                            |
-| `archive_module`                 | `project_id`, `module_id`                                            |
-| `unarchive_module`               | `project_id`, `module_id`                                            |
-| `list_module_work_items`         | `project_id`, `module_id`                                            |
-| `add_work_items_to_module`       | `project_id`, `module_id`, `work_item_ids[]`                         |
-| `remove_work_item_from_module`   | `project_id`, `module_id`, `work_item_id`                            |
+| Tool                           | Required                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------------------------- |
+| `list_modules`                 | `project_id`                                                                             |
+| `list_archived_modules`        | `project_id`                                                                             |
+| `create_module`                | `project_id`, `name` (+ `description`, `start_date`, `target_date`, `lead`, `members[]`) |
+| `retrieve_module`              | `project_id`, `module_id`                                                                |
+| `update_module`                | `project_id`, `module_id` (+ patch)                                                      |
+| `delete_module`                | `project_id`, `module_id`                                                                |
+| `archive_module`               | `project_id`, `module_id`                                                                |
+| `unarchive_module`             | `project_id`, `module_id`                                                                |
+| `list_module_work_items`       | `project_id`, `module_id`                                                                |
+| `add_work_items_to_module`     | `project_id`, `module_id`, `work_item_ids[]`                                             |
+| `remove_work_item_from_module` | `project_id`, `module_id`, `work_item_id`                                                |
 
 ### 6.16 Epics
 
 Epics are a specialised work-item type. The MCP layer should transparently resolve the Epic type UUID and use the epics endpoints.
 
-| Tool             | Required                                    |
-| ---------------- | ------------------------------------------- |
-| `list_epics`     | `project_id`                                |
-| `create_epic`    | `project_id`, `name` (+ description, etc.)  |
-| `retrieve_epic`  | `project_id`, `epic_id`                     |
-| `update_epic`    | `project_id`, `epic_id` (+ patch)           |
-| `delete_epic`    | `project_id`, `epic_id`                     |
+| Tool            | Required                                   |
+| --------------- | ------------------------------------------ |
+| `list_epics`    | `project_id`                               |
+| `create_epic`   | `project_id`, `name` (+ description, etc.) |
+| `retrieve_epic` | `project_id`, `epic_id`                    |
+| `update_epic`   | `project_id`, `epic_id` (+ patch)          |
+| `delete_epic`   | `project_id`, `epic_id`                    |
 
 Also expose work-item join tools (`add_epic_work_items`, `list_epic_work_items`) which map to `/api/v1/workspaces/{slug}/projects/{pid}/epics/{eid}/work-items/`.
 
 ### 6.17 Milestones
 
-| Tool                               | Required                                                       |
-| ---------------------------------- | -------------------------------------------------------------- |
-| `list_milestones`                  | `project_id`                                                   |
-| `create_milestone`                 | `project_id`, `name` (+ dates, description)                    |
-| `retrieve_milestone`               | `project_id`, `milestone_id`                                   |
-| `update_milestone`                 | `project_id`, `milestone_id`                                   |
-| `delete_milestone`                 | `project_id`, `milestone_id`                                   |
-| `list_milestone_work_items`        | `project_id`, `milestone_id`                                   |
-| `add_work_items_to_milestone`      | `project_id`, `milestone_id`, `work_item_ids[]`                |
-| `remove_work_items_from_milestone` | `project_id`, `milestone_id`, `work_item_ids[]`                |
+| Tool                               | Required                                        |
+| ---------------------------------- | ----------------------------------------------- |
+| `list_milestones`                  | `project_id`                                    |
+| `create_milestone`                 | `project_id`, `name` (+ dates, description)     |
+| `retrieve_milestone`               | `project_id`, `milestone_id`                    |
+| `update_milestone`                 | `project_id`, `milestone_id`                    |
+| `delete_milestone`                 | `project_id`, `milestone_id`                    |
+| `list_milestone_work_items`        | `project_id`, `milestone_id`                    |
+| `add_work_items_to_milestone`      | `project_id`, `milestone_id`, `work_item_ids[]` |
+| `remove_work_items_from_milestone` | `project_id`, `milestone_id`, `work_item_ids[]` |
 
 ### 6.18 Initiatives (workspace-scoped)
 
-| Tool                    | Required                                    |
-| ----------------------- | ------------------------------------------- |
-| `list_initiatives`      | —                                           |
-| `create_initiative`     | `name` (+ dates, lead, description)         |
-| `retrieve_initiative`   | `initiative_id`                             |
-| `update_initiative`     | `initiative_id`                             |
-| `delete_initiative`     | `initiative_id`                             |
+| Tool                  | Required                            |
+| --------------------- | ----------------------------------- |
+| `list_initiatives`    | —                                   |
+| `create_initiative`   | `name` (+ dates, lead, description) |
+| `retrieve_initiative` | `initiative_id`                     |
+| `update_initiative`   | `initiative_id`                     |
+| `delete_initiative`   | `initiative_id`                     |
 
 Plus sub-resource tools: `list_initiative_projects` / `add_projects_to_initiative` / `remove_projects_from_initiative`; same for epics; and label CRUD.
 
 ### 6.19 Intake
 
-| Tool                          | Required                                                           |
-| ----------------------------- | ------------------------------------------------------------------ |
-| `list_intake_work_items`      | `project_id`                                                       |
-| `create_intake_work_item`     | `project_id`, `name` (+ `description_html`)                        |
-| `retrieve_intake_work_item`   | `project_id`, `work_item_id`                                       |
-| `update_intake_work_item`     | `project_id`, `work_item_id`                                       |
-| `delete_intake_work_item`     | `project_id`, `work_item_id`                                       |
+| Tool                        | Required                                    |
+| --------------------------- | ------------------------------------------- |
+| `list_intake_work_items`    | `project_id`                                |
+| `create_intake_work_item`   | `project_id`, `name` (+ `description_html`) |
+| `retrieve_intake_work_item` | `project_id`, `work_item_id`                |
+| `update_intake_work_item`   | `project_id`, `work_item_id`                |
+| `delete_intake_work_item`   | `project_id`, `work_item_id`                |
 
 ### 6.20 Pages
 
-| Tool                       | Required                                                     |
-| -------------------------- | ------------------------------------------------------------ |
-| `retrieve_workspace_page`  | `page_id`                                                    |
-| `retrieve_project_page`    | `project_id`, `page_id`                                      |
-| `create_workspace_page`    | `name` (+ `description_html`)                                |
-| `create_project_page`      | `project_id`, `name` (+ `description_html`)                  |
+| Tool                      | Required                                    |
+| ------------------------- | ------------------------------------------- |
+| `retrieve_workspace_page` | `page_id`                                   |
+| `retrieve_project_page`   | `project_id`, `page_id`                     |
+| `create_workspace_page`   | `name` (+ `description_html`)               |
+| `create_project_page`     | `project_id`, `name` (+ `description_html`) |
 
 ---
 
@@ -1128,7 +1134,7 @@ The exact wire-level shape of the main entities, as returned by the API. Use the
   "description_stripped": "…",
   "description_json": {},
 
-  "priority": "none",            // urgent | high | medium | low | none
+  "priority": "none", // urgent | high | medium | low | none
   "state_id": "067b88e5-…",
   "type_id": null,
   "estimate_point_id": null,
@@ -1142,7 +1148,7 @@ The exact wire-level shape of the main entities, as returned by the API. Use the
   "label_ids": [],
 
   "start_date": null,
-  "target_date": null,           // == due_date on writes
+  "target_date": null, // == due_date on writes
   "completed_at": null,
 
   "sort_order": 75535,
@@ -1190,9 +1196,9 @@ Note: on the write side the field name for assignees is `assignees` and state is
 {
   "id": "59e3be42-…",
   "name": "Engineering",
-  "identifier": "ENG",       // used in ENG-42 style work item IDs
+  "identifier": "ENG", // used in ENG-42 style work item IDs
   "description": "…",
-  "network": 2,              // 0 secret, 2 public
+  "network": 2, // 0 secret, 2 public
   "workspace": "b54ecb0d-…",
   "workspace_slug": "acme",
   "created_at": "…",
@@ -1200,7 +1206,7 @@ Note: on the write side the field name for assignees is `assignees` and state is
   "created_by": "…",
   "default_assignee": null,
   "project_lead": "…",
-  "estimate": null,          // estimate scheme UUID
+  "estimate": null, // estimate scheme UUID
   "module_view": true,
   "cycle_view": true,
   "issue_views_view": true,
@@ -1240,7 +1246,7 @@ Note: on the write side the field name for assignees is `assignees` and state is
   "id": "…",
   "name": "In Progress",
   "color": "#F59E0B",
-  "group": "started",        // backlog | unstarted | started | completed | cancelled
+  "group": "started", // backlog | unstarted | started | completed | cancelled
   "sequence": 30000,
   "default": false,
   "description": "",
@@ -1271,7 +1277,7 @@ Note: on the write side the field name for assignees is `assignees` and state is
   "actor_id": "88fc36c8-…",
   "comment_html": "<p>Fixed in commit abc123</p>",
   "comment_stripped": "Fixed in commit abc123",
-  "access": "INTERNAL",        // INTERNAL or EXTERNAL
+  "access": "INTERNAL", // INTERNAL or EXTERNAL
   "edited_at": null,
   "created_at": "…",
   "updated_at": "…"
@@ -1301,7 +1307,7 @@ Note: on the write side the field name for assignees is `assignees` and state is
   "issue_id": "…",
   "project_id": "…",
   "workspace_id": "…",
-  "duration": 90,              // minutes
+  "duration": 90, // minutes
   "description": "Implemented retry logic",
   "logged_by": "…",
   "created_at": "…",
@@ -1321,7 +1327,7 @@ Note: on the write side the field name for assignees is `assignees` and state is
   "total_pages": 50,
   "total_results": 1000,
   "extra_stats": {},
-  "results": [ /* array of the resource */ ]
+  "results": [/* array of the resource */]
 }
 ```
 
@@ -1333,7 +1339,8 @@ If your MCP tool also reacts to Plane events (e.g. an agent that comments on new
 
 ### 8.1 Registering a webhook
 
-*Workspace Settings → Webhooks → Add webhook.* Set:
+_Workspace Settings → Webhooks → Add webhook._ Set:
+
 - **Payload URL** — public HTTPS endpoint.
 - **Events** — pick from the list in §8.2.
 - **Filters** (optional) — PQL expression to only fire on matching work items.
@@ -1342,22 +1349,22 @@ Plane generates and downloads (once) an HMAC secret starting with `plane_wh_`. S
 
 ### 8.2 Available events (all v2, dot-notation)
 
-| Group                    | Events                                                                 |
-| ------------------------ | ---------------------------------------------------------------------- |
-| Projects                 | `project.created` `.updated` `.archived` `.deleted`                    |
-| Cycles                   | `cycle.created` `.updated` `.archived` `.deleted`                      |
-| Modules                  | `module.created` `.updated` `.archived` `.deleted`                     |
-| Milestones               | `milestone.created` `.updated` `.deleted`                              |
-| Pages                    | `page.created` `.updated` `.archived` `.deleted`                       |
-| Page comments            | `page.comment.created` `.updated` `.deleted`                           |
-| Work items               | `workitem.created` `.updated` `.archived` `.deleted`                   |
-| Work item comments       | `workitem.comment.created` `.updated` `.deleted`                       |
-| Work item links          | `workitem.link.created` `.updated` `.deleted`                          |
-| Work item votes          | `workitem.vote.created` `.deleted`                                     |
-| Work item attachments    | `workitem.attachment.created` `.updated` `.deleted`                    |
-| Work item relations      | `workitem.relation.created` `.deleted`                                 |
-| Work item dependencies   | `workitem.dependency.created` `.deleted`                               |
-| Work item page links     | `workitem.page_link.created` `.deleted`                                |
+| Group                  | Events                                               |
+| ---------------------- | ---------------------------------------------------- |
+| Projects               | `project.created` `.updated` `.archived` `.deleted`  |
+| Cycles                 | `cycle.created` `.updated` `.archived` `.deleted`    |
+| Modules                | `module.created` `.updated` `.archived` `.deleted`   |
+| Milestones             | `milestone.created` `.updated` `.deleted`            |
+| Pages                  | `page.created` `.updated` `.archived` `.deleted`     |
+| Page comments          | `page.comment.created` `.updated` `.deleted`         |
+| Work items             | `workitem.created` `.updated` `.archived` `.deleted` |
+| Work item comments     | `workitem.comment.created` `.updated` `.deleted`     |
+| Work item links        | `workitem.link.created` `.updated` `.deleted`        |
+| Work item votes        | `workitem.vote.created` `.deleted`                   |
+| Work item attachments  | `workitem.attachment.created` `.updated` `.deleted`  |
+| Work item relations    | `workitem.relation.created` `.deleted`               |
+| Work item dependencies | `workitem.dependency.created` `.deleted`             |
+| Work item page links   | `workitem.page_link.created` `.deleted`              |
 
 ### 8.3 Filtering (PQL)
 
@@ -1375,27 +1382,27 @@ Available fields: `type_id`, `state_group`, `assignee_id`, `label_id`, `project_
 
 ### 8.4 Request headers Plane sends
 
-| Header              | Value                                                                        |
-| ------------------- | ---------------------------------------------------------------------------- |
-| `Content-Type`      | `application/json`                                                           |
-| `User-Agent`        | `Autopilot`                                                                  |
+| Header              | Value                                                                            |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `Content-Type`      | `application/json`                                                               |
+| `User-Agent`        | `Autopilot`                                                                      |
 | `X-Plane-Delivery`  | Unique per delivery attempt (retries get new IDs; matches `delivery_id` in body) |
-| `X-Plane-Event`     | Event name, e.g. `workitem.created` (matches `event` in body)                |
-| `X-Plane-Signature` | HMAC-SHA256 of raw body with your secret                                     |
+| `X-Plane-Event`     | Event name, e.g. `workitem.created` (matches `event` in body)                    |
+| `X-Plane-Signature` | HMAC-SHA256 of raw body with your secret                                         |
 
 ### 8.5 Payload envelope
 
 ```json
 {
   "version": "v2",
-  "delivery_id": "<uuid>",     // new per retry
-  "event_id": "<uuid>",        // stable across retries — use for dedup
+  "delivery_id": "<uuid>", // new per retry
+  "event_id": "<uuid>", // stable across retries — use for dedup
   "entity_id": "<uuid>",
-  "entity_type": "issue",       // or cycle, issue_comment, issue_link, …
+  "entity_type": "issue", // or cycle, issue_comment, issue_link, …
   "event": "workitem.updated",
   "webhook_id": "<uuid>",
   "workspace_id": "<uuid>",
-  "data": { /* full entity — empty {} for deletes */ },
+  "data": {/* full entity — empty {} for deletes */},
   "previous_attributes": {
     /* on updated: previous values of changed fields */
     /* on deleted: full pre-delete record */
@@ -1438,6 +1445,7 @@ Use `event_id` (stable across retries) as the idempotency key. Store recent even
 - **TypeScript** if your team is JS-heavy or you want browser-side tooling. Use `@modelcontextprotocol/sdk` + `zod` + `undici`. Ship via npm.
 
 Storage:
+
 - **Redis / Valkey** for token cache, OAuth state, dedup — small footprint, official server uses it.
 
 ### 9.2 Minimal directory layout (Python + FastMCP)
@@ -1588,21 +1596,23 @@ These are the workflows any LLM using your MCP should be able to accomplish in 2
 
 ### Look up by human-readable ID
 
-Prompt: *"What's ENG-42 about?"*
+Prompt: _"What's ENG-42 about?"_
 Flow: `retrieve_work_item_by_identifier(project_identifier="ENG", work_item_identifier="42")`
 
 ### Create a triaged bug
 
-Prompt: *"Create a high-priority bug in ENG called 'Login times out on Safari' and assign it to me."*
+Prompt: _"Create a high-priority bug in ENG called 'Login times out on Safari' and assign it to me."_
 Flow:
+
 1. `get_me()` → grab user UUID
 2. `list_projects()` (or cache) → resolve `ENG` → `project_id`
 3. `create_work_item(project_id, name="Login times out on Safari", priority="high", assignee_ids=[<me>])`
 
 ### Move a work item to Done + comment
 
-Prompt: *"Mark ENG-88 as done. Comment: 'Fixed in commit abc123.'"*
+Prompt: _"Mark ENG-88 as done. Comment: 'Fixed in commit abc123.'"_
 Flow:
+
 1. `retrieve_work_item_by_identifier("ENG", "88")` → UUID
 2. `list_states(project_id)` → find state with `group="completed"`
 3. `update_work_item(project_id, work_item_id, state_id=<done>)`
@@ -1610,30 +1620,34 @@ Flow:
 
 ### Sprint planning
 
-Prompt: *"Create 'Sprint 15' in ENG from Jun 2 to Jun 15, and move all incomplete Sprint 14 issues into it."*
+Prompt: _"Create 'Sprint 15' in ENG from Jun 2 to Jun 15, and move all incomplete Sprint 14 issues into it."_
 Flow:
+
 1. `create_cycle(project_id, name="Sprint 15", start_date="2025-06-02", end_date="2025-06-15")`
 2. `list_cycles(project_id)` → find Sprint 14's UUID
 3. `transfer_cycle_work_items(project_id, cycle_id=<sprint14>, new_cycle_id=<sprint15>)`
 
 ### Cross-project search
 
-Prompt: *"Show me all high-priority bugs assigned to me still in progress."*
+Prompt: _"Show me all high-priority bugs assigned to me still in progress."_
 Flow:
+
 1. `get_me()` → user UUID
 2. `list_work_items(priorities=["high"], state_groups=["started"], assignee_ids=[<me>], workspace_search=true)`
 
 ### Log time
 
-Prompt: *"Log 90 min on ENG-42: 'Implemented retry logic.'"*
+Prompt: _"Log 90 min on ENG-42: 'Implemented retry logic.'"_
 Flow:
+
 1. `retrieve_work_item_by_identifier("ENG","42")` → UUID
 2. `create_work_log(project_id, work_item_id, duration=90, description="Implemented retry logic")`
 
 ### Add to a module
 
-Prompt: *"Add ENG-55, ENG-56, ENG-57 to the 'Checkout Redesign' module."*
+Prompt: _"Add ENG-55, ENG-56, ENG-57 to the 'Checkout Redesign' module."_
 Flow:
+
 1. Resolve all three via `retrieve_work_item_by_identifier` (3 calls)
 2. `list_modules(project_id)` → find `Checkout Redesign` UUID
 3. `add_work_items_to_module(project_id, module_id, work_item_ids=[...])`
@@ -1645,6 +1659,7 @@ Flow:
 ### 11.1 Stdio distribution
 
 **Python (PyPI):**
+
 ```toml
 # pyproject.toml
 [project]
@@ -1659,6 +1674,7 @@ your-plane-mcp = "your_plane_mcp.__main__:main"
 Users install and run via `uvx your-plane-mcp stdio`.
 
 **TypeScript (npm):**
+
 ```json
 {
   "name": "@your/plane-mcp",
@@ -1679,11 +1695,11 @@ services:
     image: your/plane-mcp-server:latest
     restart: always
     ports:
-      - "8211:8211"
+      - '8211:8211'
     env_file: variables.env
     environment:
       REDIS_HOST: valkey
-      REDIS_PORT: "6379"
+      REDIS_PORT: '6379'
     depends_on:
       valkey: { condition: service_healthy }
 
@@ -1693,7 +1709,7 @@ services:
     volumes:
       - valkey-data:/data
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: ['CMD', 'valkey-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -1703,6 +1719,7 @@ volumes:
 ```
 
 `variables.env`:
+
 ```
 PLANE_BASE_URL=https://api.plane.so
 PLANE_OAUTH_PROVIDER_CLIENT_ID=your-client-id
@@ -1716,15 +1733,15 @@ Front the container with a TLS-terminating reverse proxy (nginx / Caddy / Traefi
 
 **Environment variable reference:**
 
-| Var                                  | Required | Description                                                                    |
-| ------------------------------------ | -------- | ------------------------------------------------------------------------------ |
-| `PLANE_BASE_URL`                     | No       | Plane API URL. Default `https://api.plane.so`.                                 |
+| Var                                  | Required | Description                                                                                  |
+| ------------------------------------ | -------- | -------------------------------------------------------------------------------------------- |
+| `PLANE_BASE_URL`                     | No       | Plane API URL. Default `https://api.plane.so`.                                               |
 | `PLANE_INTERNAL_BASE_URL`            | No       | Alternate URL for server-to-server calls (private networks). Falls back to `PLANE_BASE_URL`. |
-| `PLANE_OAUTH_PROVIDER_CLIENT_ID`     | Yes      | From your OAuth app registration.                                              |
-| `PLANE_OAUTH_PROVIDER_CLIENT_SECRET` | Yes      | Same.                                                                          |
-| `PLANE_OAUTH_PROVIDER_BASE_URL`      | Yes      | Public URL of **this MCP server** — used to build redirect URIs.               |
-| `MCP_PATH_PREFIX`                    | No       | Path prefix if reverse-proxying alongside other apps.                          |
-| `REDIS_HOST` / `REDIS_PORT`          | No       | Redis/Valkey for token cache. Omit → in-memory (lost on restart).              |
+| `PLANE_OAUTH_PROVIDER_CLIENT_ID`     | Yes      | From your OAuth app registration.                                                            |
+| `PLANE_OAUTH_PROVIDER_CLIENT_SECRET` | Yes      | Same.                                                                                        |
+| `PLANE_OAUTH_PROVIDER_BASE_URL`      | Yes      | Public URL of **this MCP server** — used to build redirect URIs.                             |
+| `MCP_PATH_PREFIX`                    | No       | Path prefix if reverse-proxying alongside other apps.                                        |
+| `REDIS_HOST` / `REDIS_PORT`          | No       | Redis/Valkey for token cache. Omit → in-memory (lost on restart).                            |
 
 ### 11.3 Remote HTTP — Kubernetes / Helm
 
@@ -1744,14 +1761,14 @@ ingress:
 services:
   api:
     replicas: 2
-    plane_base_url: "https://api.plane.so"
+    plane_base_url: 'https://api.plane.so'
     plane_oauth:
       enabled: true
-      client_id: "<...>"
-      client_secret: "<...>"
-      provider_base_url: "https://mcp.yourdomain.com"
+      client_id: '<...>'
+      client_secret: '<...>'
+      provider_base_url: 'https://mcp.yourdomain.com'
   redis:
-    local_setup: true   # or set external_redis_url
+    local_setup: true # or set external_redis_url
 ```
 
 ### 11.4 Sanity check
@@ -1848,12 +1865,14 @@ claude mcp add-json plane '{
 ### Claude.ai (Pro/Max/Team/Enterprise)
 
 Web UI can't spawn processes — remote HTTP only.
-1. *Customize → Connectors → Add custom connector.*
+
+1. _Customize → Connectors → Add custom connector._
 2. URL: `https://mcp.yourdomain.com/http/mcp` (OAuth).
 
 ### Cursor — `~/.cursor/mcp.json`
 
 Stdio:
+
 ```json
 {
   "mcpServers": {
@@ -1870,6 +1889,7 @@ Stdio:
 ```
 
 HTTP + OAuth (Cursor registers `cursor://` natively):
+
 ```json
 { "mcpServers": { "plane": { "url": "https://mcp.yourdomain.com/http/mcp", "type": "http" } } }
 ```
@@ -1920,20 +1940,20 @@ Zed's stdio format is quirky — `command` becomes an object `{ path, args, env 
 
 ## 13. Troubleshooting matrix
 
-| Symptom                                         | HTTP status | Cause                                             | Fix                                                              |
-| ----------------------------------------------- | ----------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| All tools fail immediately                      | 401         | Missing/invalid API key                           | Regenerate in Plane; re-set env or headers                       |
-| Some tools fail, others work                    | 403         | Insufficient OAuth scope or workspace role        | Add scope; check user role in workspace/project                  |
-| "Workspace not found"                           | 404         | Wrong `PLANE_WORKSPACE_SLUG` / `x-workspace-slug` | Take slug straight from Plane URL                                |
-| Sporadic failures under load                    | 429         | Rate limit (60/min)                               | Backoff via `X-RateLimit-Reset`; batch operations where possible |
-| OAuth redirect loops                            | —           | Redirect URI not registered in OAuth app          | Register all three: `/callback`, `/http/auth/callback`, `/auth/callback` |
-| OAuth "invalid client"                          | 400         | Wrong `PLANE_OAUTH_PROVIDER_CLIENT_ID`/`SECRET`   | Re-copy from OAuth app in Plane                                  |
-| OAuth callback but wrong domain                 | —           | `PLANE_OAUTH_PROVIDER_BASE_URL` is Plane's URL, not the MCP server's | Set to your MCP server's public HTTPS URL          |
-| Tokens lost across restarts                     | —           | Redis/Valkey not configured                       | Set `REDIS_HOST`/`REDIS_PORT`                                    |
-| Cannot fetch full description                   | —           | Not requesting expansion                          | Add `expand=description_html` or use retrieve endpoint           |
-| Claude Desktop can't reach remote               | —           | Doesn't natively support `"type": "http"`         | Use `npx mcp-remote@latest <url>` bridge                         |
-| Config file ignored                             | —           | JSON syntax error / trailing comma                | Validate JSON                                                    |
-| Signature verification failing (webhooks)       | —           | JSON re-serialized before HMAC                    | Compute HMAC over **raw request bytes**                          |
+| Symptom                                   | HTTP status | Cause                                                                | Fix                                                                      |
+| ----------------------------------------- | ----------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| All tools fail immediately                | 401         | Missing/invalid API key                                              | Regenerate in Plane; re-set env or headers                               |
+| Some tools fail, others work              | 403         | Insufficient OAuth scope or workspace role                           | Add scope; check user role in workspace/project                          |
+| "Workspace not found"                     | 404         | Wrong `PLANE_WORKSPACE_SLUG` / `x-workspace-slug`                    | Take slug straight from Plane URL                                        |
+| Sporadic failures under load              | 429         | Rate limit (60/min)                                                  | Backoff via `X-RateLimit-Reset`; batch operations where possible         |
+| OAuth redirect loops                      | —           | Redirect URI not registered in OAuth app                             | Register all three: `/callback`, `/http/auth/callback`, `/auth/callback` |
+| OAuth "invalid client"                    | 400         | Wrong `PLANE_OAUTH_PROVIDER_CLIENT_ID`/`SECRET`                      | Re-copy from OAuth app in Plane                                          |
+| OAuth callback but wrong domain           | —           | `PLANE_OAUTH_PROVIDER_BASE_URL` is Plane's URL, not the MCP server's | Set to your MCP server's public HTTPS URL                                |
+| Tokens lost across restarts               | —           | Redis/Valkey not configured                                          | Set `REDIS_HOST`/`REDIS_PORT`                                            |
+| Cannot fetch full description             | —           | Not requesting expansion                                             | Add `expand=description_html` or use retrieve endpoint                   |
+| Claude Desktop can't reach remote         | —           | Doesn't natively support `"type": "http"`                            | Use `npx mcp-remote@latest <url>` bridge                                 |
+| Config file ignored                       | —           | JSON syntax error / trailing comma                                   | Validate JSON                                                            |
+| Signature verification failing (webhooks) | —           | JSON re-serialized before HMAC                                       | Compute HMAC over **raw request bytes**                                  |
 
 ---
 
@@ -1948,7 +1968,7 @@ Zed's stdio format is quirky — `command` becomes an object `{ path, args, env 
 - [ ] Compute HMAC over the raw request body — do not re-serialize.
 - [ ] Rate-limit your own MCP endpoints (per-token and per-IP) so a compromised token can't burn Plane's 60/min quota.
 - [ ] Handle 429 with backoff — don't retry immediately.
-- [ ] Refresh OAuth tokens *before* they expire (e.g., at 80% of TTL), not on 401.
+- [ ] Refresh OAuth tokens _before_ they expire (e.g., at 80% of TTL), not on 401.
 - [ ] Document required scopes in your consent screen — don't request write scopes for a read-only tool.
 - [ ] For self-hosted Plane, verify TLS cert chain in outbound requests; don't disable cert validation.
 
@@ -1957,10 +1977,12 @@ Zed's stdio format is quirky — `command` becomes an object `{ path, args, env 
 ## 15. References
 
 **Plane repos**
+
 - Plane monorepo: <https://github.com/makeplane/plane>
 - Official Plane MCP server (Python + FastMCP, MIT): <https://github.com/makeplane/plane-mcp-server>
 
 **Developer docs**
+
 - Landing: <https://developers.plane.so/>
 - API reference: <https://developers.plane.so/api-reference/introduction>
 - Build a Plane app (OAuth): <https://developers.plane.so/dev-tools/build-plane-app/overview>
@@ -1973,6 +1995,7 @@ Zed's stdio format is quirky — `command` becomes an object `{ path, args, env 
 - OpenAPI spec generator: <https://developers.plane.so/dev-tools/openapi-specification>
 
 **Standards**
+
 - Model Context Protocol: <https://modelcontextprotocol.io>
 - OAuth 2.0 (RFC 6749): <https://datatracker.ietf.org/doc/html/rfc6749>
 - HMAC-SHA256 (RFC 2104): <https://datatracker.ietf.org/doc/html/rfc2104>
