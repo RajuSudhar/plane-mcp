@@ -44,7 +44,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 08 — Workflow
 
-[ ] `plans/plane-mcp/08-workflow.md` — states, labels, project/workspace members
+[x] `plans/plane-mcp/08-workflow.md` — states, labels, project/workspace members
 
 ### Phase 09 — Sprints
 

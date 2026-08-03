@@ -6,6 +6,9 @@ import { registerProjectTools } from './tools/projects';
 import { registerWorkItemTools } from './tools/work-items';
 import { registerCommentTools } from './tools/comments';
 import { registerRelationTools } from './tools/relations';
+import { registerStateTools } from './tools/states';
+import { registerLabelTools } from './tools/labels';
+import { registerMemberTools } from './tools/members';
 
 export function createServer(auth: AuthContext): McpServer {
   const server = new McpServer({
@@ -20,6 +23,9 @@ export function createServer(auth: AuthContext): McpServer {
   registerWorkItemTools(server, client);
   registerCommentTools(server, client);
   registerRelationTools(server, client);
+  registerStateTools(server, client);
+  registerLabelTools(server, client);
+  registerMemberTools(server, client);
 
   return server;
 }

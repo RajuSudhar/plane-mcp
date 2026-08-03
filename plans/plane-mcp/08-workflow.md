@@ -1,6 +1,6 @@
 # feat-workflow
 
-Phase: 08 | Status: [ ] planned
+Phase: 08 | Status: [x] done
 Depends on: 07-collaboration
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.2, §3.4, §3.6, §6.12, §6.13, §6.2, §6.3
 
@@ -185,26 +185,26 @@ export function registerMemberTools(server: McpServer, client: PlaneClient): voi
 
 ## Tasks
 
-- [ ] Write zod schemas for states/labels/members per Design
-- [ ] Implement `registerStateTools` (2 tools)
-- [ ] Implement `registerLabelTools` (2 tools)
-- [ ] Implement `registerMemberTools` (2 tools)
-- [ ] Wire all three into `src/server.ts`
-- [ ] Write `src/tools/states.test.ts` incl. a test asserting an invalid
+- [x] Write zod schemas for states/labels/members per Design
+- [x] Implement `registerStateTools` (2 tools)
+- [x] Implement `registerLabelTools` (2 tools)
+- [x] Implement `registerMemberTools` (2 tools)
+- [x] Wire all three into `src/server.ts`
+- [x] Write `src/tools/states.test.ts` incl. a test asserting an invalid
       `group` value (e.g. `"done"`, not in the enum) is rejected before any
       client call
-- [ ] Write `src/tools/labels.test.ts` incl. a test asserting an invalid
+- [x] Write `src/tools/labels.test.ts` incl. a test asserting an invalid
       `color` (not `#RRGGBB`) is rejected before any client call
-- [ ] Write `src/tools/members.test.ts` — success + error path for both
+- [x] Write `src/tools/members.test.ts` — success + error path for both
       tools
-- [ ] Run `bun test` — all green
-- [ ] Run `bun run typecheck` — passes
+- [x] Run `bun test` — all green
+- [x] Run `bun run typecheck` — passes
 
 ## Definition of done
 
-- [ ] All 6 tools registered and callable
-- [ ] `group` enum and `color` hex-format validated at the zod layer
-- [ ] `docs/plans/TRACK.md` updated: Phase 08 row `[~]` at start, `[x]` at
+- [x] All 6 tools registered and callable
+- [x] `group` enum and `color` hex-format validated at the zod layer
+- [x] `docs/plans/TRACK.md` updated: Phase 08 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions
