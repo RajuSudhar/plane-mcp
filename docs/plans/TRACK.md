@@ -32,7 +32,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 05 — Tools Foundation
 
-[ ] `plans/plane-mcp/05-tools-foundation.md` — tool-registration pattern, zod v4 schemas, first vertical slice (get_me, list_projects, retrieve_project)
+[x] `plans/plane-mcp/05-tools-foundation.md` — tool-registration pattern, zod v4 schemas, first vertical slice (get_me, list_projects, retrieve_project)
 
 ### Phase 06 — Work Items
 

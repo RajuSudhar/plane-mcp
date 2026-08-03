@@ -1,6 +1,6 @@
 # feat-tools-foundation
 
-Phase: 05 | Status: [ ] planned
+Phase: 05 | Status: [x] done
 Depends on: 04-plane-client
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §5.1, §5.6, §5.7, §6.1, §6.2, §6.3
 

@@ -22,6 +22,10 @@ export class PlaneClient {
     return `/api/v1/workspaces/${this.auth.workspaceSlug}/${sub.replace(/^\//, '')}`;
   }
 
+  apiPath(sub: string): string {
+    return `/api/v1/${sub.replace(/^\//, '')}`;
+  }
+
   private sanitizeEndpoint(path: string): string {
     return path.split('/workspaces/' + this.auth.workspaceSlug).join('/workspaces/{workspace}');
   }

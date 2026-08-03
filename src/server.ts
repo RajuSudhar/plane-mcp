@@ -1,22 +1,19 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import type { AuthContext } from '@types';
+import { PlaneClient } from './plane/client';
+import { registerUserTools } from './tools/users';
+import { registerProjectTools } from './tools/projects';
 
-export function createServer(_auth: AuthContext): McpServer {
+export function createServer(auth: AuthContext): McpServer {
   const server = new McpServer({
     name: 'plane-mcp',
     version: '0.1.0',
   });
 
-  server.registerTool(
-    'ping',
-    {
-      description: 'Temporary boot-verification tool. Removed once real tools land in Phase 05.',
-      inputSchema: {},
-    },
-    async (_args: Record<string, unknown>) => ({
-      content: [{ type: 'text' as const, text: 'pong' }],
-    })
-  );
+  const client = new PlaneClient(auth);
+
+  registerUserTools(server, client);
+  registerProjectTools(server, client);
 
   return server;
 }
