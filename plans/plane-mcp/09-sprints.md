@@ -1,6 +1,6 @@
 # feat-sprints
 
-Phase: 09 | Status: [ ] planned
+Phase: 09 | Status: [x] done
 Depends on: 08-workflow
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.11, §3.12, §6.14, §6.15
 
@@ -219,27 +219,27 @@ export function registerModuleTools(server: McpServer, client: PlaneClient): voi
 
 ## Tasks
 
-- [ ] Write zod schemas for cycles/modules per Design
-- [ ] Implement `registerCycleTools` (4 tools)
-- [ ] Implement `registerModuleTools` (4 tools)
-- [ ] Wire both into `src/server.ts`
-- [ ] Write `src/tools/cycles.test.ts`:
-  - [ ] `add_work_items_to_cycle` asserts the body sent to `client.post` is
+- [x] Write zod schemas for cycles/modules per Design
+- [x] Implement `registerCycleTools` (4 tools)
+- [x] Implement `registerModuleTools` (4 tools)
+- [x] Wire both into `src/server.ts`
+- [x] Write `src/tools/cycles.test.ts`:
+  - [x] `add_work_items_to_cycle` asserts the body sent to `client.post` is
         exactly `{ work_item_ids: [...] }`, not a differently-shaped body
-  - [ ] `remove_work_item_from_cycle` asserts the DELETE path includes the
+  - [x] `remove_work_item_from_cycle` asserts the DELETE path includes the
         single `work_item_id` segment
-  - [ ] `work_item_ids: []` (empty array) rejected by zod's `.min(1)` before
+  - [x] `work_item_ids: []` (empty array) rejected by zod's `.min(1)` before
         any client call
-- [ ] Write `src/tools/modules.test.ts` — same coverage shape, module-scoped
-- [ ] Run `bun test` — all green
-- [ ] Run `bun run typecheck` — passes
+- [x] Write `src/tools/modules.test.ts` — same coverage shape, module-scoped
+- [x] Run `bun test` — all green
+- [x] Run `bun run typecheck` — passes
 
 ## Definition of done
 
-- [ ] All 8 tools (4 cycle + 4 module) registered and callable
-- [ ] m2m add-body shape (`{ work_item_ids: [...] }`) and remove-path shape
+- [x] All 8 tools (4 cycle + 4 module) registered and callable
+- [x] m2m add-body shape (`{ work_item_ids: [...] }`) and remove-path shape
       (single `work_item_id` in the URL) both explicitly asserted in tests
-- [ ] `docs/plans/TRACK.md` updated: Phase 09 row `[~]` at start, `[x]` at
+- [x] `docs/plans/TRACK.md` updated: Phase 09 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

@@ -1,6 +1,6 @@
 # TRACK — Plane MCP
 
-Last updated: 2026-07-31
+Last updated: 2026-08-03
 
 ## Status legend
 
@@ -48,7 +48,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 09 — Sprints
 
-[ ] `plans/plane-mcp/09-sprints.md` — cycles + modules, work-item join/unjoin tools
+[x] `plans/plane-mcp/09-sprints.md` — cycles + modules, work-item join/unjoin tools
 
 ### Phase 10 — Hardening
 
