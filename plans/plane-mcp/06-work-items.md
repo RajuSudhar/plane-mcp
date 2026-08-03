@@ -1,6 +1,6 @@
 # feat-work-items
 
-Phase: 06 | Status: [ ] planned
+Phase: 06 | Status: [x] done
 Depends on: 05-tools-foundation
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.5, §5.5, §6.4, §7.1
 
@@ -300,39 +300,39 @@ explicitly so it isn't missed during implementation.
 
 ## Tasks
 
-- [ ] Write all 7 zod schemas in `src/tools/work-items.ts` (or a co-located
+- [x] Write all 7 zod schemas in `src/tools/work-items.ts` (or a co-located
       `src/tools/work-items.schemas.ts` if the file grows unwieldy — file
       split is an implementation choice, not a design requirement)
-- [ ] Implement `registerWorkItemTools` with all 7 tools per Design
-- [ ] Wire `registerWorkItemTools(server, client)` into `src/server.ts`
-- [ ] Write `src/tools/work-items.test.ts` covering:
-  - [ ] `list_work_items` passes all filter args through as query params
+- [x] Implement `registerWorkItemTools` with all 7 tools per Design
+- [x] Wire `registerWorkItemTools(server, client)` into `src/server.ts`
+- [x] Write `src/tools/work-items.test.ts` covering:
+  - [x] `list_work_items` passes all filter args through as query params
         untouched (no client-side filtering/re-shaping)
-  - [ ] `retrieve_work_item` builds the correct UUID-based path
-  - [ ] `retrieve_work_item_by_identifier` builds the correct
+  - [x] `retrieve_work_item` builds the correct UUID-based path
+  - [x] `retrieve_work_item_by_identifier` builds the correct
         `identifier/{project_identifier}-{work_item_identifier}/` path (the
         `ENG-42` path) and returns the full record including its UUID
-  - [ ] `create_work_item` calls `toWorkItemWriteBody` correctly — assert
+  - [x] `create_work_item` calls `toWorkItemWriteBody` correctly — assert
         the body sent to `client.post` has `state` (not `state_id`),
         `assignees` (not `assignee_ids`), `target_date` (not `due_date`)
-  - [ ] `update_work_item` — same normalization assertion as create, for a
+  - [x] `update_work_item` — same normalization assertion as create, for a
         partial update (e.g. only `priority` changed)
-  - [ ] `delete_work_item` calls `client.delete` with the correct path
-  - [ ] `search_work_items` maps `query` -> `q` query param
-  - [ ] Error path: at least one tool's mocked client throws
+  - [x] `delete_work_item` calls `client.delete` with the correct path
+  - [x] `search_work_items` maps `query` -> `q` query param
+  - [x] Error path: at least one tool's mocked client throws
         `PlaneApiError`, assert `isError: true`
-- [ ] Run `bun test` — all green
-- [ ] Run `bun run typecheck` — passes
+- [x] Run `bun test` — all green
+- [x] Run `bun run typecheck` — passes
 
 ## Definition of done
 
-- [ ] All 7 work-item tools registered and callable
-- [ ] Each tool unit-tested per the Tasks checklist above (mocked
+- [x] All 7 work-item tools registered and callable
+- [x] Each tool unit-tested per the Tasks checklist above (mocked
       `PlaneClient`)
-- [ ] Field normalization verified by explicit assertions on the request
+- [x] Field normalization verified by explicit assertions on the request
       body sent to `client.post`/`client.patch`, not just "response looks
       right"
-- [ ] `docs/plans/TRACK.md` updated: Phase 06 row `[~]` at start, `[x]` at
+- [x] `docs/plans/TRACK.md` updated: Phase 06 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions

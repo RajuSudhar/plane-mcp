@@ -3,6 +3,7 @@ import type { AuthContext } from '@types';
 import { PlaneClient } from './plane/client';
 import { registerUserTools } from './tools/users';
 import { registerProjectTools } from './tools/projects';
+import { registerWorkItemTools } from './tools/work-items';
 
 export function createServer(auth: AuthContext): McpServer {
   const server = new McpServer({
@@ -14,6 +15,7 @@ export function createServer(auth: AuthContext): McpServer {
 
   registerUserTools(server, client);
   registerProjectTools(server, client);
+  registerWorkItemTools(server, client);
 
   return server;
 }

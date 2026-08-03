@@ -36,7 +36,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 06 — Work Items
 
-[ ] `plans/plane-mcp/06-work-items.md` — list/retrieve/retrieve_by_identifier/create/update/delete/search work items, field normalization
+[x] `plans/plane-mcp/06-work-items.md` — list/retrieve/retrieve_by_identifier/create/update/delete/search work items, field normalization
 
 ### Phase 07 — Collaboration
 
