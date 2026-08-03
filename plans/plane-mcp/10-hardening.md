@@ -1,6 +1,6 @@
 # feat-hardening
 
-Phase: 10 | Status: [ ] planned
+Phase: 10 | Status: [x] done
 Depends on: 09-sprints
 Ref: `plans/plane-mcp/00-rfc.md`, all prior phase files
 
@@ -122,20 +122,20 @@ index.ts`, `src/server.ts`), config (`src/config.ts`), Plane client
 
 ### Final review checklist (this phase's actual verification work)
 
-- [ ] `grep -rl` (or equivalent) across the repo for any `.js`, `.d.ts`,
+- [x] `grep -rl` (or equivalent) across the repo for any `.js`, `.d.ts`,
       `.map` file outside `node_modules` — must return nothing.
-- [ ] Cross-check the tool list registered across `src/server.ts` (which by
+- [x] Cross-check the tool list registered across `src/server.ts` (which by
       now calls all 9 `register*Tools` functions from Phases 05-09) against
       the 25-tool list in `00-rfc.md` — every tool present exactly once, no
       `ping` remnant, no accidental duplicate registration.
-- [ ] `bun run typecheck` — zero errors.
-- [ ] `bun run format:check` and `bun run lint` — both zero errors (Phase
+- [x] `bun run typecheck` — zero errors.
+- [x] `bun run format:check` and `bun run lint` — both zero errors (Phase
       02's formatting/lint gate must still hold at the end of the project).
-- [ ] `bun test` — all suites green, and spot-check that test count roughly
+- [x] `bun test` — all suites green, and spot-check that test count roughly
       matches "every tool has at least a success-path and an error-path
       test" (25 tools x >=2 tests each, plus `PlaneClient`/`normalize`
       tests from Phase 04 — a rough floor, not an exact number to hit).
-- [ ] Manually boot the server, run through the spec report §10 example
+- [x] Manually boot the server, run through the spec report §10 example
       workflows end-to-end against a real (or sandboxed) Plane workspace at
       least once each: - Look up by human-readable ID - Create a triaged bug - Move a work item to Done + comment - Sprint planning (create cycle, list cycles) - Cross-project search (adapted to this server's project-scoped
       `list_work_items` — confirm the workflow still holds with the
@@ -143,27 +143,27 @@ index.ts`, `src/server.ts`), config (`src/config.ts`), Plane client
 
 ## Tasks
 
-- [ ] Write `README.md` per Design
-- [ ] Write `docs/ARCHITECTURE.md` per Design
-- [ ] Run the Final review checklist above, fix anything it surfaces
-- [ ] Update `docs/plans/TRACK.md`: replace all phase rows with `[x]`, add
+- [x] Write `README.md` per Design
+- [x] Write `docs/ARCHITECTURE.md` per Design
+- [x] Run the Final review checklist above, fix anything it surfaces
+- [x] Update `docs/plans/TRACK.md`: replace all phase rows with `[x]`, add
       a "Done" entry noting the full ~25-tool server is complete
-- [ ] Update `CLAUDE.md`'s "Routing" table rows currently marked `TBD` to
+- [x] Update `CLAUDE.md`'s "Routing" table rows currently marked `TBD` to
       point at the real files (`plans/plane-mcp/0X-*.md`,
       `docs/ARCHITECTURE.md`) now that they exist
 
 ## Definition of done
 
-- [ ] `README.md` covers install, env config, run, client connection, full
+- [x] `README.md` covers install, env config, run, client connection, full
       tool inventory, dev commands
-- [ ] `docs/ARCHITECTURE.md` covers system diagram, layering, request
+- [x] `docs/ARCHITECTURE.md` covers system diagram, layering, request
       lifecycle, field normalization, explicit non-goals
-- [ ] Zero `.js`/`.d.ts`/`.map` files anywhere outside `node_modules`
-- [ ] All 25 tools confirmed present, none missing, none duplicated
-- [ ] `bun run typecheck`, `bun run format:check`, `bun run lint`, and
+- [x] Zero `.js`/`.d.ts`/`.map` files anywhere outside `node_modules`
+- [x] All 25 tools confirmed present, none missing, none duplicated
+- [x] `bun run typecheck`, `bun run format:check`, `bun run lint`, and
       `bun test` all green
-- [ ] `docs/plans/TRACK.md` fully updated, no `TBD` placeholders remain
-- [ ] `CLAUDE.md` routing table updated to remove stale `TBD` entries
+- [x] `docs/plans/TRACK.md` fully updated, no `TBD` placeholders remain
+- [x] `CLAUDE.md` routing table updated to remove stale `TBD` entries
 
 ## Open questions
 

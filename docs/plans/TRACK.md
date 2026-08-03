@@ -24,7 +24,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 03 — Transport
 
-[ ] `plans/plane-mcp/03-transport.md` — stateless streamable-HTTP server on /mcp, health endpoint, AuthContext loader, McpServer factory, temporary ping tool
+[x] `plans/plane-mcp/03-transport.md` — stateless streamable-HTTP server on /mcp, health endpoint, AuthContext loader, McpServer factory, temporary ping tool
 
 ### Phase 04 — Plane Client
 
@@ -52,7 +52,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 10 — Hardening
 
-[ ] `plans/plane-mcp/10-hardening.md` — README.md, docs/ARCHITECTURE.md, final review, zero-.js verification, full tool inventory check
+[x] `plans/plane-mcp/10-hardening.md` — README.md, docs/ARCHITECTURE.md, final review, zero-.js verification, full tool inventory check
 
 ## Done
 
@@ -70,16 +70,17 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 - Full phase plan authored: `plans/plane-mcp/01-scaffold.md` through `plans/plane-mcp/10-hardening.md` (11 files: RFC + 10 phases)
 - Phase 01 (scaffold) implemented and committed
 - Tooling phase inserted as the new Phase 02 (formatting/linting baseline via Prettier + oxlint); every downstream phase (former 02-09) renumbered to 03-10; all internal cross-references and `Depends on:` chains updated to match
+- All 10 phases (00-10) completed, all 31 tools shipped across 10 resource domains (users, projects, work items, comments, relations, states, labels, members, cycles, modules)
 
 ## Decisions / deviations
 
 1. **SDK + Validation**: MCP SDK v2 (`@modelcontextprotocol/server`, 2.0.0 exact) + `@modelcontextprotocol/hono` for transport, Zod v4 for runtime validation (schema passed directly as inputSchema)
 2. **Transport**: Streamable-HTTP single local server, stateless (sessionIdGenerator undefined), bound to 127.0.0.1, single `/mcp` endpoint, env-var auth (PLANE_API_KEY + PLANE_WORKSPACE_SLUG + optional PLANE_BASE_URL/PORT)
-3. **Tool Scope**: exactly ~25 core ticket-workflow tools (users/projects/work items/comments/relations/states/labels/members/cycles/modules) — full catalog in `plans/plane-mcp/00-rfc.md`
+3. **Tool Scope**: exactly 31 core ticket-workflow tools (users/projects/work items/comments/relations/states/labels/members/cycles/modules) — full catalog in `plans/plane-mcp/00-rfc.md`
 4. **Rejected alternatives**: stdio-only transport, full 100+ tool scope (mirroring the official Python server), MCP SDK v1 (`@modelcontextprotocol/sdk`) — rationale in `plans/plane-mcp/00-rfc.md` Alternatives section
 5. **Architecture laws**: tools are pure functions `(authContext, args) -> result`; one `PlaneClient` class is the sole Plane API boundary; `list_*` tools return the raw pagination envelope (no auto-paging); 429s surfaced as tool errors, never swallowed; field-name asymmetry (`state`/`state_id`, `assignees`/`assignee_ids`, `target_date`/`due_date`) normalized centrally in `src/plane/normalize.ts`
 6. **Tooling stack (Phase 02)**: Prettier is the single formatter for every file type (`.ts`, `.json`, `.md`) with per-language overrides — no Biome. oxlint (`.oxlintrc.json`) owns `.ts` correctness/linting, enforcing the three hard-rule mappings: `typescript/consistent-type-definitions` (type-over-interface), `typescript/no-explicit-any`, `typescript/consistent-type-imports`. typescript-eslint was rejected because it lacks TypeScript 7 support; oxlint is a Rust-based linter with zero TypeScript compiler coupling, so the TS7 pin cannot break it. A committed, zero-dependency `.githooks/pre-commit` script (wired via `git config core.hooksPath .githooks`) runs Prettier then oxlint before every commit; `--no-verify` is never used. Phase 02 runs immediately after scaffold, before any feature code, so the one-time full-repo baseline reformat never collides with a later feature commit.
 
 ## Blockers / decisions pending
 
-- None — RFC and full phase plan (00, 01, 02 tooling, 03-10) are written. Phase 01 (scaffold) and Phase 02 (tooling) are implemented. Next action is starting Phase 03 (`plans/plane-mcp/03-transport.md`) per `docs/plans/README.md`'s rule: never start a feat without opening its plan.md.
+- None — project complete. All phases (00 RFC through 10 hardening) sealed. Full 31-tool server shipped (users, projects, work items, comments, relations, states, labels, members, cycles, modules).

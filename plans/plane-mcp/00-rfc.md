@@ -27,7 +27,7 @@ We need a greenfield, Bun/TypeScript MCP server that:
 
 ## Goals
 
-- Ship exactly the ~25 tools enumerated in the Tool Scope (below) — full
+- Ship exactly the 31 tools enumerated in the Tool Scope (below) — full
   parity with the read/write/list/search shape the spec report's official
   server exposes for those resources, nothing more.
 - Single streamable-HTTP transport, stateless, one `/mcp` endpoint.
@@ -79,7 +79,7 @@ We need a greenfield, Bun/TypeScript MCP server that:
                                        │  │ Config / AuthContext             │  │
                                        │  │  env vars read once at startup   │  │
                                        │  ├──────────────────────────────────┤  │
-                                       │  │ Tool registry (~25 pure fns)     │  │
+                                       │  │ Tool registry (31 pure fns)      │  │
                                        │  │  (authContext, args) -> result   │  │
                                        │  ├──────────────────────────────────┤  │
                                        │  │ PlaneClient (one class)          │  │
@@ -129,7 +129,7 @@ ToolContext), `types/config.ts` (AuthContext, EnvConfig), `types/logger.ts`
 (LogLevel, LogContext), `types/common.ts` (shared utility types), re-exported
 from `types/index.ts`. Imported via the `@types` path alias.
 
-### Tool scope (exactly 25 tools — locked)
+### Tool scope (exactly 31 tools — locked)
 
 `get_me`; `list_projects`, `retrieve_project`; `list_work_items`,
 `retrieve_work_item`, `retrieve_work_item_by_identifier`, `create_work_item`,
@@ -166,7 +166,7 @@ the stated goal is a ticket-workflow-focused server, not a full Plane API
 mirror; (2) each additional resource group adds a full CRUD surface, its own
 zod schemas, its own field-asymmetry rules, and its own test suite —
 multiplying phase count and review burden for tools with materially lower
-usage frequency (per spec report §10's example workflows, the ~25 selected
+usage frequency (per spec report §10's example workflows, the 31 selected
 tools cover every listed workflow); (3) narrower scope is easier to keep at
 100% test coverage, which is a stated Definition-of-Done bar for every phase.
 Expanding scope later is additive (new phase files), not a rewrite, because
