@@ -5,6 +5,8 @@ const REDACTED_KEYS = new Set([
   'api_key',
   'PLANE_API_KEY',
   'PLANE_WORKSPACE_SLUG',
+  'workspaceSlug',
+  'workspace_slug',
   'authorization',
   'Authorization',
 ]);

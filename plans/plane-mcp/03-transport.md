@@ -215,13 +215,13 @@ locally-hosted server bound to 127.0.0.1", not `0.0.0.0`.
 
 ## Open questions
 
-- Exact shape of `createMcpHonoApp`'s stateless option and whether it takes
-  a server instance or a factory function needs to be confirmed against the
-  actual installed `@modelcontextprotocol/hono` API docs/types at
-  implementation time — the sketch in Design is best-effort from the locked
-  decisions' description ("create a fresh server+transport per request") and
-  must be reconciled with the real function signature before this phase is
-  marked done.
+- ~~Exact shape of `createMcpHonoApp`'s stateless option~~ **RESOLVED**: The
+  installed `@modelcontextprotocol/hono` exposes `createMcpHandler(factory,
+options)` which takes a factory function `(ctx) => McpServer` (fresh server
+  per request) and a config object `{ legacy: 'stateless' }` (not `{
+stateless: true }`). The container is `createMcpHonoApp()`. A bare `app.all('/mcp',
+async (c) => mcpHandler.fetch(c.req.raw))` wires the handler. This
+  satisfies the fresh-per-request invariant.
 - Default `PORT` value (`3000` above) is not specified by the locked
   decisions — confirmed as a free implementation choice; change here if a
   different default is preferred, but document the choice in this file
