@@ -40,7 +40,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 07 — Collaboration
 
-[ ] `plans/plane-mcp/07-collaboration.md` — comments CRUD, relations CRUD (relation_type enum)
+[x] `plans/plane-mcp/07-collaboration.md` — comments CRUD, relations CRUD (relation_type enum)
 
 ### Phase 08 — Workflow
 

@@ -1,6 +1,6 @@
 # feat-collaboration
 
-Phase: 07 | Status: [ ] planned
+Phase: 07 | Status: [x] done
 Depends on: 06-work-items
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §3.10, §6.6, §6.8
 
@@ -211,23 +211,23 @@ export function registerRelationTools(server: McpServer, client: PlaneClient): v
 
 ## Tasks
 
-- [ ] Write zod schemas for both modules per Design
-- [ ] Implement `registerCommentTools` (4 tools)
-- [ ] Implement `registerRelationTools` (3 tools)
-- [ ] Wire both into `src/server.ts`
-- [ ] Write `src/tools/comments.test.ts` — success + error path per tool
-- [ ] Write `src/tools/relations.test.ts` — success + error path per tool,
+- [x] Write zod schemas for both modules per Design
+- [x] Implement `registerCommentTools` (4 tools)
+- [x] Implement `registerRelationTools` (3 tools)
+- [x] Wire both into `src/server.ts`
+- [x] Write `src/tools/comments.test.ts` — success + error path per tool
+- [x] Write `src/tools/relations.test.ts` — success + error path per tool,
       plus an explicit test asserting an invalid `relation_type` (e.g.
       `"invalid_type"`) is rejected by zod before any client call is made
-- [ ] Run `bun test` — all green
-- [ ] Run `bun run typecheck` — passes
+- [x] Run `bun test` — all green
+- [x] Run `bun run typecheck` — passes
 
 ## Definition of done
 
-- [ ] All 7 tools (4 comment + 3 relation) registered and callable
-- [ ] `relation_type` enum validated — invalid value never reaches
+- [x] All 7 tools (4 comment + 3 relation) registered and callable
+- [x] `relation_type` enum validated — invalid value never reaches
       `PlaneClient`
-- [ ] `docs/plans/TRACK.md` updated: Phase 07 row `[~]` at start, `[x]` at
+- [x] `docs/plans/TRACK.md` updated: Phase 07 row `[~]` at start, `[x]` at
       completion
 
 ## Open questions
