@@ -28,7 +28,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 ### Phase 04 — Plane Client
 
-[ ] `plans/plane-mcp/04-plane-client.md` — PlaneClient class, pagination passthrough, 429 handling, typed errors, field-normalization helpers
+[x] `plans/plane-mcp/04-plane-client.md` — PlaneClient class, pagination passthrough, 429 handling, typed errors, field-normalization helpers
 
 ### Phase 05 — Tools Foundation
 

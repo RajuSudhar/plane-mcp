@@ -1,6 +1,6 @@
 # feat-plane-client
 
-Phase: 04 | Status: [ ] planned
+Phase: 04 | Status: [x] done
 Depends on: 03-transport
 Ref: `plans/plane-mcp/00-rfc.md`, `../../../docs/plane-api-reference.md` §2, §7.1, §7.9, §9.5
 
