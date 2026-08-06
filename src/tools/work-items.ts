@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { PaginationEnvelope, WorkItem, ToolResult } from '@types';
 import { toolHandler } from './register';
 import { toWorkItemWriteBody } from '../plane/normalize';
@@ -90,7 +90,7 @@ const searchWorkItemsSchema = z.object({
 type SearchWorkItemsArgs = z.infer<typeof searchWorkItemsSchema>;
 
 export async function listWorkItems(
-  client: PlaneClient,
+  client: PlaneApi,
   args: ListWorkItemsArgs
 ): Promise<ToolResult> {
   const data = await client.get<PaginationEnvelope<WorkItem>>(
@@ -112,27 +112,27 @@ export async function listWorkItems(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: data as Record<string, unknown>,
+    structuredContent: data,
   };
 }
 
 export async function retrieveWorkItem(
-  client: PlaneClient,
+  client: PlaneApi,
   args: RetrieveWorkItemArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, ...query } = args;
   const workItem = await client.get<WorkItem>(
     client.workspacePath(`projects/${project_id}/work-items/${work_item_id}/`),
-    query as Record<string, string | number | boolean | undefined>
+    query
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(workItem) }],
-    structuredContent: workItem as Record<string, unknown>,
+    structuredContent: workItem,
   };
 }
 
 export async function retrieveWorkItemByIdentifier(
-  client: PlaneClient,
+  client: PlaneApi,
   args: RetrieveWorkItemByIdentifierArgs
 ): Promise<ToolResult> {
   const path = client.workspacePath(
@@ -141,12 +141,12 @@ export async function retrieveWorkItemByIdentifier(
   const workItem = await client.get<WorkItem>(path);
   return {
     content: [{ type: 'text', text: JSON.stringify(workItem) }],
-    structuredContent: workItem as Record<string, unknown>,
+    structuredContent: workItem,
   };
 }
 
 export async function createWorkItem(
-  client: PlaneClient,
+  client: PlaneApi,
   args: CreateWorkItemArgs
 ): Promise<ToolResult> {
   const { project_id, ...rest } = args;
@@ -171,12 +171,12 @@ export async function createWorkItem(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(workItem) }],
-    structuredContent: workItem as Record<string, unknown>,
+    structuredContent: workItem,
   };
 }
 
 export async function updateWorkItem(
-  client: PlaneClient,
+  client: PlaneApi,
   args: UpdateWorkItemArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, ...rest } = args;
@@ -201,12 +201,12 @@ export async function updateWorkItem(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(workItem) }],
-    structuredContent: workItem as Record<string, unknown>,
+    structuredContent: workItem,
   };
 }
 
 export async function deleteWorkItem(
-  client: PlaneClient,
+  client: PlaneApi,
   args: DeleteWorkItemArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id } = args;
@@ -218,7 +218,7 @@ export async function deleteWorkItem(
 }
 
 export async function searchWorkItems(
-  client: PlaneClient,
+  client: PlaneApi,
   args: SearchWorkItemsArgs
 ): Promise<ToolResult> {
   const { project_id, query } = args;
@@ -228,11 +228,11 @@ export async function searchWorkItems(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: data as Record<string, unknown>,
+    structuredContent: data,
   };
 }
 
-export function registerWorkItemTools(server: McpServer, client: PlaneClient): void {
+export function registerWorkItemTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'list_work_items',
     {

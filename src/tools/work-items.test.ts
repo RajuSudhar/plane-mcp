@@ -1,6 +1,5 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import {
   listWorkItems,
   retrieveWorkItem,
@@ -11,30 +10,14 @@ import {
   searchWorkItems,
 } from './work-items';
 import { toolHandler } from './register';
-
-type Spies = {
-  get?: (...a: unknown[]) => Promise<unknown>;
-  post?: (...a: unknown[]) => Promise<unknown>;
-  patch?: (...a: unknown[]) => Promise<unknown>;
-  delete?: (...a: unknown[]) => Promise<unknown>;
-};
-
-const makeClient = (spies: Spies) =>
-  ({
-    get: spies.get ?? mock(async () => ({})),
-    post: spies.post ?? mock(async () => ({})),
-    patch: spies.patch ?? mock(async () => ({})),
-    delete: spies.delete ?? mock(async () => undefined),
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('work-items', () => {
   describe('list_work_items', () => {
     it('success: filters are comma-joined in query', async () => {
       const envelope = { results: [{ id: 'w1' }], count: 1 };
       const getSpy = mock(async () => envelope);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_items',
@@ -70,7 +53,7 @@ describe('work-items', () => {
     it('success: passthrough all filter params', async () => {
       const envelope = { results: [{ id: 'w1' }], count: 1 };
       const getSpy = mock(async () => envelope);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_items',
@@ -116,7 +99,7 @@ describe('work-items', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(500, 'boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_items',
@@ -136,7 +119,7 @@ describe('work-items', () => {
       const getSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_items',
@@ -157,7 +140,7 @@ describe('work-items', () => {
     it('success: calls get with correct path', async () => {
       const data = { id: 'w1', name: 'Bug' };
       const getSpy = mock(async () => data);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'retrieve_work_item',
@@ -184,7 +167,7 @@ describe('work-items', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(404, 'not found');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'retrieve_work_item',
@@ -206,7 +189,7 @@ describe('work-items', () => {
     it('success: calls get with identifier path', async () => {
       const data = { id: 'w1', name: 'Task' };
       const getSpy = mock(async () => data);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'retrieve_work_item_by_identifier',
@@ -235,7 +218,7 @@ describe('work-items', () => {
     it('success: normalization (state_id→state, assignee_ids→assignees, due_date→target_date)', async () => {
       const createdItem = { id: 'w1', name: 'Bug' };
       const postSpy = mock(async () => createdItem);
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_work_item',
@@ -265,15 +248,15 @@ describe('work-items', () => {
       expect(bodyArg.target_date).toBe('2026-01-01');
       expect(bodyArg.name).toBe('Bug');
 
-      expect((bodyArg as Record<string, unknown>).state_id).toBeUndefined();
-      expect((bodyArg as Record<string, unknown>).assignee_ids).toBeUndefined();
-      expect((bodyArg as Record<string, unknown>).due_date).toBeUndefined();
+      expect(bodyArg.state_id).toBeUndefined();
+      expect(bodyArg.assignee_ids).toBeUndefined();
+      expect(bodyArg.due_date).toBeUndefined();
     });
 
     it('success: create with full fields', async () => {
       const createdItem = { id: 'w2', name: 'Feature' };
       const postSpy = mock(async () => createdItem);
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_work_item',
@@ -322,7 +305,7 @@ describe('work-items', () => {
     it('success: normalization (state_id→state)', async () => {
       const updatedItem = { id: 'w1', name: 'Updated' };
       const patchSpy = mock(async () => updatedItem);
-      const client = makeClient({ patch: patchSpy });
+      const client = stubClient({ patch: patchSpy });
 
       const res = await toolHandler(
         'update_work_item',
@@ -348,13 +331,13 @@ describe('work-items', () => {
       const bodyArg = callArgs[1] as Record<string, unknown>;
       expect(bodyArg.state).toBe('st2');
       expect(bodyArg.priority).toBe('urgent');
-      expect((bodyArg as Record<string, unknown>).state_id).toBeUndefined();
+      expect(bodyArg.state_id).toBeUndefined();
     });
 
     it('success: partial update with labels', async () => {
       const updatedItem = { id: 'w1' };
       const patchSpy = mock(async () => updatedItem);
-      const client = makeClient({ patch: patchSpy });
+      const client = stubClient({ patch: patchSpy });
 
       const res = await toolHandler(
         'update_work_item',
@@ -377,7 +360,7 @@ describe('work-items', () => {
   describe('delete_work_item', () => {
     it('success: returns deleted: true', async () => {
       const deleteSpy = mock(async () => undefined);
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'delete_work_item',
@@ -404,7 +387,7 @@ describe('work-items', () => {
       const deleteSpy = mock(async () => {
         throw new PlaneApiError(404, 'work item not found');
       });
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'delete_work_item',
@@ -426,7 +409,7 @@ describe('work-items', () => {
     it('success: query mapped to q parameter', async () => {
       const results = { results: [{ id: 'w1' }], count: 1 };
       const getSpy = mock(async () => results);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'search_work_items',
@@ -456,7 +439,7 @@ describe('work-items', () => {
       const getSpy = mock(async () => {
         throw new Error('timeout');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'search_work_items',

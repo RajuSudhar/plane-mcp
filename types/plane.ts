@@ -57,6 +57,24 @@ export type WorkItemWriteBody = {
   external_source?: string;
 };
 
+// Normalized input shape for tools — maps from read-shape naming (camelCase, e.g. stateId, dueDate)
+// to write-shape body (see normalize.ts for mapping logic).
+export type WorkItemWriteInput = {
+  name?: string;
+  descriptionHtml?: string;
+  priority?: WorkItemWriteBody['priority'];
+  stateId?: string;
+  assigneeIds?: string[];
+  labelIds?: string[];
+  typeId?: string;
+  parentId?: string | null;
+  startDate?: string;
+  dueDate?: string;
+  estimatePoint?: string;
+  externalId?: string;
+  externalSource?: string;
+};
+
 export type Project = {
   id: string;
   name: string;

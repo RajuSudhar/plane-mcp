@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { PaginationEnvelope, Comment, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -33,7 +33,7 @@ const deleteWorkItemCommentSchema = z.object({
 type DeleteWorkItemCommentArgs = z.infer<typeof deleteWorkItemCommentSchema>;
 
 export async function listWorkItemComments(
-  client: PlaneClient,
+  client: PlaneApi,
   args: ListWorkItemCommentsArgs
 ): Promise<ToolResult> {
   const data = await client.get<PaginationEnvelope<Comment>>(
@@ -41,12 +41,12 @@ export async function listWorkItemComments(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: data as Record<string, unknown>,
+    structuredContent: data,
   };
 }
 
 export async function createWorkItemComment(
-  client: PlaneClient,
+  client: PlaneApi,
   args: CreateWorkItemCommentArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, comment_html } = args;
@@ -57,12 +57,12 @@ export async function createWorkItemComment(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(comment) }],
-    structuredContent: comment as Record<string, unknown>,
+    structuredContent: comment,
   };
 }
 
 export async function updateWorkItemComment(
-  client: PlaneClient,
+  client: PlaneApi,
   args: UpdateWorkItemCommentArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, comment_id, comment_html } = args;
@@ -75,12 +75,12 @@ export async function updateWorkItemComment(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(comment) }],
-    structuredContent: comment as Record<string, unknown>,
+    structuredContent: comment,
   };
 }
 
 export async function deleteWorkItemComment(
-  client: PlaneClient,
+  client: PlaneApi,
   args: DeleteWorkItemCommentArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, comment_id } = args;
@@ -95,7 +95,7 @@ export async function deleteWorkItemComment(
   };
 }
 
-export function registerCommentTools(server: McpServer, client: PlaneClient): void {
+export function registerCommentTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'list_work_item_comments',
     {

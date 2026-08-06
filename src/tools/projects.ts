@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { PaginationEnvelope, Project, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -19,10 +19,7 @@ const retrieveProjectSchema = z.object({
 });
 type RetrieveProjectArgs = z.infer<typeof retrieveProjectSchema>;
 
-export async function listProjects(
-  client: PlaneClient,
-  args: ListProjectsArgs
-): Promise<ToolResult> {
+export async function listProjects(client: PlaneApi, args: ListProjectsArgs): Promise<ToolResult> {
   const data = await client.get<PaginationEnvelope<Project>>(client.workspacePath('projects/'), {
     cursor: args.cursor as string | number | boolean | undefined,
     per_page: args.per_page as string | number | boolean | undefined,
@@ -31,26 +28,23 @@ export async function listProjects(
   });
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: data as Record<string, unknown>,
+    structuredContent: data,
   };
 }
 
 export async function retrieveProject(
-  client: PlaneClient,
+  client: PlaneApi,
   args: RetrieveProjectArgs
 ): Promise<ToolResult> {
   const { project_id, ...query } = args;
-  const project = await client.get<Project>(
-    client.workspacePath(`projects/${project_id}/`),
-    query as Record<string, string | number | boolean | undefined>
-  );
+  const project = await client.get<Project>(client.workspacePath(`projects/${project_id}/`), query);
   return {
     content: [{ type: 'text', text: JSON.stringify(project) }],
-    structuredContent: project as Record<string, unknown>,
+    structuredContent: project,
   };
 }
 
-export function registerProjectTools(server: McpServer, client: PlaneClient): void {
+export function registerProjectTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'list_projects',
     {

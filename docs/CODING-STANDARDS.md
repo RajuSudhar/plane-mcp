@@ -365,6 +365,54 @@ import type { PlaneIssue } from '@types/plane';
 
 - UPPER_SNAKE_CASE: `DEFAULT_CACHE_TTL`, `MAX_RETRIES`
 
+### Type Assertions & Test Mocking
+
+**Architecture for Type Safety**:
+
+Type-safe API contracts without casts are achieved through explicit interface adoption:
+
+1. **PlaneApi Interface** (`types/client.ts`):
+   - Defines the contract all client implementations must satisfy
+   - Methods: `get<T>`, `post<T>`, `patch<T>`, `delete`, `workspacePath`, `apiPath`
+   - Generic type parameter `<T>` ensures strongly-typed API responses
+
+2. **FetchLike Type** (`types/client.ts`):
+   - Explicit function signature for network fetch
+   - Enables dependency injection for testing
+   - `type FetchLike = (input: URL | string, init?: RequestInit) => Promise<Response>`
+
+3. **RequestOptions Type** (`types/client.ts`):
+   - Internal request structure for all HTTP operations
+   - Separates concerns: routing/auth/retry logic from tool code
+
+4. **Tool Implementation Pattern**:
+   - Tools receive `client: PlaneApi` (NOT PlaneClient directly)
+   - This allows seamless test stubbing without type casts
+   - Example: `export async function listIssues(client: PlaneApi, args: ...): Promise<ToolResult>`
+
+5. **Test Mocking with stubClient Helper** (`src/tools/client-stub.ts`):
+   - `stubClient()` creates a minimal `PlaneApi` implementation
+   - Overridable methods: `get`, `post`, `patch`, `delete`
+   - NO type assertions needed in test code: `as PlaneApi` is a logic error (refactor instead)
+   - Example: `const client = stubClient({ get: () => Promise.resolve([...]) })`
+
+**Forbidden Patterns**:
+
+- **NO** `as unknown as T` — this defeats type safety entirely
+- **NO** `@ts-expect-error` or `@ts-ignore` — suppress symptoms, not root causes
+- **NO** unnecessary casts like `x as Record<string, unknown>` when API return type is already correct
+
+**Correct Approach When Type Mismatch Occurs**:
+
+1. Identify the actual type returned by the API
+2. Update the generic type parameter: `client.post<Record<string, unknown>>(...)`
+3. Let TypeScript infer the rest — no cast required
+4. Example: If `client.post<unknown>` returns `unknown`, change to `client.post<Record<string, unknown>>` and assign directly to a typed variable
+
+**Impact on oxlint**:
+
+The `no-unnecessary-type-assertion` rule (enabled in phase 12) flags casts that add no value. All API response handling must derive type safety from method signatures, not assertions.
+
 ### No Emojis
 
 **CRITICAL REQUIREMENT**: No emojis in any code, scripts, or output.

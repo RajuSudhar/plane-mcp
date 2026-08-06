@@ -1,32 +1,15 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import { getProjectMembers, getWorkspaceMembers } from './members';
 import { toolHandler } from './register';
-
-type Spies = {
-  get?: (...a: unknown[]) => Promise<unknown>;
-  post?: (...a: unknown[]) => Promise<unknown>;
-  patch?: (...a: unknown[]) => Promise<unknown>;
-  delete?: (...a: unknown[]) => Promise<unknown>;
-};
-
-const makeClient = (spies: Spies) =>
-  ({
-    get: spies.get ?? mock(async () => ({})),
-    post: spies.post ?? mock(async () => ({})),
-    patch: spies.patch ?? mock(async () => ({})),
-    delete: spies.delete ?? mock(async () => undefined),
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('members', () => {
   describe('get_project_members', () => {
     it('success: lists project members and wraps array in structuredContent', async () => {
       const data = [{ id: 'm1', member_id: 'u1', role: 20 }];
       const getSpy = mock(async () => data);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'get_project_members',
@@ -57,7 +40,7 @@ describe('members', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(404, 'not found');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'get_project_members',
@@ -77,7 +60,7 @@ describe('members', () => {
       const getSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'get_project_members',
@@ -98,7 +81,7 @@ describe('members', () => {
     it('success: lists workspace members and wraps array in structuredContent', async () => {
       const data = [{ id: 'm1', member_id: 'u1', role: 20 }];
       const getSpy = mock(async () => data);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler('get_workspace_members', client, getWorkspaceMembers)({});
 
@@ -125,7 +108,7 @@ describe('members', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(403, 'forbidden');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler('get_workspace_members', client, getWorkspaceMembers)({});
 
@@ -139,7 +122,7 @@ describe('members', () => {
       const getSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler('get_workspace_members', client, getWorkspaceMembers)({});
 

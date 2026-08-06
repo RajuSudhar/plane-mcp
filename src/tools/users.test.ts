@@ -1,24 +1,14 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import { getMe } from './users';
 import { toolHandler } from './register';
-
-const makeClient = (getImpl: (...a: unknown[]) => Promise<unknown>) =>
-  ({
-    get: getImpl,
-    post: async () => undefined,
-    patch: async () => undefined,
-    delete: async () => undefined,
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('get_me', () => {
   it('success: resolves user data', async () => {
     const data = { id: 'u1', email: 'a@b.c' };
     const getSpy = mock(async () => data);
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler('get_me', client, getMe)({});
 
@@ -37,7 +27,7 @@ describe('get_me', () => {
     const getSpy = mock(async () => {
       throw new PlaneApiError(404, 'Not found');
     });
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler('get_me', client, getMe)({});
 
@@ -52,7 +42,7 @@ describe('get_me', () => {
     const getSpy = mock(async () => {
       throw new Error('boom');
     });
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler('get_me', client, getMe)({});
 

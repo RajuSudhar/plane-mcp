@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { Relation, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -34,7 +34,7 @@ const removeWorkItemRelationSchema = z.object({
 type RemoveWorkItemRelationArgs = z.infer<typeof removeWorkItemRelationSchema>;
 
 export async function listWorkItemRelations(
-  client: PlaneClient,
+  client: PlaneApi,
   args: ListWorkItemRelationsArgs
 ): Promise<ToolResult> {
   const data = await client.get<Relation[]>(
@@ -42,12 +42,12 @@ export async function listWorkItemRelations(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: { relations: data } as Record<string, unknown>,
+    structuredContent: { relations: data },
   };
 }
 
 export async function createWorkItemRelation(
-  client: PlaneClient,
+  client: PlaneApi,
   args: CreateWorkItemRelationArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, related_work_item_id, relation_type } = args;
@@ -58,12 +58,12 @@ export async function createWorkItemRelation(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(relation) }],
-    structuredContent: relation as Record<string, unknown>,
+    structuredContent: relation,
   };
 }
 
 export async function removeWorkItemRelation(
-  client: PlaneClient,
+  client: PlaneApi,
   args: RemoveWorkItemRelationArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, relation_id } = args;
@@ -78,7 +78,7 @@ export async function removeWorkItemRelation(
   };
 }
 
-export function registerRelationTools(server: McpServer, client: PlaneClient): void {
+export function registerRelationTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'list_work_item_relations',
     {

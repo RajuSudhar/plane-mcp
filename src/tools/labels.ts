@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { Label, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -19,17 +19,17 @@ export const createLabelSchema = z.object({
 });
 type CreateLabelArgs = z.infer<typeof createLabelSchema>;
 
-export async function listLabels(client: PlaneClient, args: ListLabelsArgs): Promise<ToolResult> {
+export async function listLabels(client: PlaneApi, args: ListLabelsArgs): Promise<ToolResult> {
   const data = await client.get<Label[]>(
     client.workspacePath(`projects/${args.project_id}/labels/`)
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: { labels: data } as Record<string, unknown>,
+    structuredContent: { labels: data },
   };
 }
 
-export async function createLabel(client: PlaneClient, args: CreateLabelArgs): Promise<ToolResult> {
+export async function createLabel(client: PlaneApi, args: CreateLabelArgs): Promise<ToolResult> {
   const { project_id, name, color, parent } = args;
   const body = {
     name,
@@ -42,11 +42,11 @@ export async function createLabel(client: PlaneClient, args: CreateLabelArgs): P
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(label) }],
-    structuredContent: label as Record<string, unknown>,
+    structuredContent: label,
   };
 }
 
-export function registerLabelTools(server: McpServer, client: PlaneClient): void {
+export function registerLabelTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'list_labels',
     {

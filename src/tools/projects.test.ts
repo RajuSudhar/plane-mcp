@@ -1,24 +1,14 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import { listProjects, retrieveProject } from './projects';
 import { toolHandler } from './register';
-
-const makeClient = (getImpl: (...a: unknown[]) => Promise<unknown>) =>
-  ({
-    get: getImpl,
-    post: async () => undefined,
-    patch: async () => undefined,
-    delete: async () => undefined,
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('list_projects', () => {
   it('success with pagination passthrough', async () => {
     const envelope = { results: [{ id: 'p1' }], count: 1 };
     const getSpy = mock(async () => envelope);
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler(
       'list_projects',
@@ -46,7 +36,7 @@ describe('list_projects', () => {
     const getSpy = mock(async () => {
       throw new PlaneApiError(500, 'boom');
     });
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler('list_projects', client, listProjects)({});
 
@@ -61,7 +51,7 @@ describe('list_projects', () => {
     const getSpy = mock(async () => {
       throw new Error('boom');
     });
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler('list_projects', client, listProjects)({});
 
@@ -77,7 +67,7 @@ describe('retrieve_project', () => {
   it('success: resolves project data', async () => {
     const data = { id: 'p1', name: 'Eng' };
     const getSpy = mock(async () => data);
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler(
       'retrieve_project',
@@ -96,7 +86,7 @@ describe('retrieve_project', () => {
 
     const callArgs = getSpy.mock.calls[0] as unknown[] | undefined;
     if (callArgs && callArgs.length > 0) {
-      const pathArg = callArgs[0] as unknown as string;
+      const pathArg = callArgs[0] as string;
       expect(pathArg).toContain('projects/p1/');
     }
   });
@@ -105,7 +95,7 @@ describe('retrieve_project', () => {
     const getSpy = mock(async () => {
       throw new PlaneApiError(404, 'nope');
     });
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler(
       'retrieve_project',
@@ -126,7 +116,7 @@ describe('retrieve_project', () => {
     const getSpy = mock(async () => {
       throw new Error('kaboom');
     });
-    const client = makeClient(getSpy);
+    const client = stubClient({ get: getSpy });
 
     const res = await toolHandler(
       'retrieve_project',

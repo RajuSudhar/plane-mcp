@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { State, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -21,17 +21,17 @@ export const createStateSchema = z.object({
 });
 type CreateStateArgs = z.infer<typeof createStateSchema>;
 
-export async function listStates(client: PlaneClient, args: ListStatesArgs): Promise<ToolResult> {
+export async function listStates(client: PlaneApi, args: ListStatesArgs): Promise<ToolResult> {
   const data = await client.get<State[]>(
     client.workspacePath(`projects/${args.project_id}/states/`)
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: { states: data } as Record<string, unknown>,
+    structuredContent: { states: data },
   };
 }
 
-export async function createState(client: PlaneClient, args: CreateStateArgs): Promise<ToolResult> {
+export async function createState(client: PlaneApi, args: CreateStateArgs): Promise<ToolResult> {
   const { project_id, name, color, group, description } = args;
   const body = {
     name,
@@ -45,11 +45,11 @@ export async function createState(client: PlaneClient, args: CreateStateArgs): P
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(state) }],
-    structuredContent: state as Record<string, unknown>,
+    structuredContent: state,
   };
 }
 
-export function registerStateTools(server: McpServer, client: PlaneClient): void {
+export function registerStateTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'list_states',
     {

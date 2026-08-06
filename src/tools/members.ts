@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { Member, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -13,7 +13,7 @@ const getWorkspaceMembersSchema = z.object({});
 type GetWorkspaceMembersArgs = z.infer<typeof getWorkspaceMembersSchema>;
 
 export async function getProjectMembers(
-  client: PlaneClient,
+  client: PlaneApi,
   args: GetProjectMembersArgs
 ): Promise<ToolResult> {
   const data = await client.get<Member[]>(
@@ -21,22 +21,22 @@ export async function getProjectMembers(
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: { members: data } as Record<string, unknown>,
+    structuredContent: { members: data },
   };
 }
 
 export async function getWorkspaceMembers(
-  client: PlaneClient,
+  client: PlaneApi,
   _args: GetWorkspaceMembersArgs
 ): Promise<ToolResult> {
   const data = await client.get<Member[]>(client.workspacePath('members/'));
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: { members: data } as Record<string, unknown>,
+    structuredContent: { members: data },
   };
 }
 
-export function registerMemberTools(server: McpServer, client: PlaneClient): void {
+export function registerMemberTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'get_project_members',
     {

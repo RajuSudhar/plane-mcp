@@ -1,32 +1,15 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import { listLabels, createLabel, createLabelSchema } from './labels';
 import { toolHandler } from './register';
-
-type Spies = {
-  get?: (...a: unknown[]) => Promise<unknown>;
-  post?: (...a: unknown[]) => Promise<unknown>;
-  patch?: (...a: unknown[]) => Promise<unknown>;
-  delete?: (...a: unknown[]) => Promise<unknown>;
-};
-
-const makeClient = (spies: Spies) =>
-  ({
-    get: spies.get ?? mock(async () => ({})),
-    post: spies.post ?? mock(async () => ({})),
-    patch: spies.patch ?? mock(async () => ({})),
-    delete: spies.delete ?? mock(async () => undefined),
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('labels', () => {
   describe('list_labels', () => {
     it('success: lists labels and wraps array in structuredContent', async () => {
       const data = [{ id: 'l1', name: 'bug', color: '#FF0000' }];
       const getSpy = mock(async () => data);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_labels',
@@ -57,7 +40,7 @@ describe('labels', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(500, 'boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_labels',
@@ -77,7 +60,7 @@ describe('labels', () => {
       const getSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_labels',
@@ -98,7 +81,7 @@ describe('labels', () => {
     it('success: creates label with valid color', async () => {
       const label = { id: 'l1', name: 'bug', color: '#FF0000' };
       const postSpy = mock(async () => label);
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_label',
@@ -126,14 +109,14 @@ describe('labels', () => {
         name: 'bug',
         color: '#FF0000',
       });
-      expect((bodyArg as Record<string, unknown>).project_id).toBeUndefined();
+      expect(bodyArg.project_id).toBeUndefined();
     });
 
     it('error path: PlaneApiError', async () => {
       const postSpy = mock(async () => {
         throw new PlaneApiError(409, 'conflict');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_label',
@@ -155,7 +138,7 @@ describe('labels', () => {
       const postSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_label',

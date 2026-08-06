@@ -1,4 +1,4 @@
-import type { PlaneClient } from '../src/plane/client';
+import type { PlaneApi } from './client';
 
 export type ToolResult = {
   content: Array<{ type: 'text'; text: string }>;
@@ -6,4 +6,4 @@ export type ToolResult = {
   isError?: boolean;
 };
 
-export type ToolHandler<TArgs> = (client: PlaneClient, args: TArgs) => Promise<ToolResult>;
+export type ToolHandler<TArgs> = (client: PlaneApi, args: TArgs) => Promise<ToolResult>;

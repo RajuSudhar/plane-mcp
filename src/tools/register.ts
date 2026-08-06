@@ -1,4 +1,4 @@
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { ToolResult, ToolHandler } from '@types';
 import type { CallToolResult } from '@modelcontextprotocol/server';
 import { PlaneApiError } from '../plane/errors';
@@ -6,7 +6,7 @@ import { log } from '../logger';
 
 export function toolHandler<TArgs extends Record<string, unknown>>(
   toolName: string,
-  client: PlaneClient,
+  client: PlaneApi,
   fn: ToolHandler<TArgs>
 ): (args: unknown) => Promise<CallToolResult> {
   return async (args: unknown): Promise<CallToolResult> => {
@@ -19,7 +19,7 @@ export function toolHandler<TArgs extends Record<string, unknown>>(
         toolName,
         durationMs: Date.now() - startedAt,
       });
-      return result as CallToolResult;
+      return result;
     } catch (err) {
       let errorMessage: string;
       let errorDetail: string;
@@ -40,7 +40,7 @@ export function toolHandler<TArgs extends Record<string, unknown>>(
       return {
         content: [{ type: 'text', text: errorMessage }],
         isError: true,
-      } as CallToolResult;
+      };
     }
   };
 }

@@ -1,21 +1,16 @@
-import type { AuthContext } from '@types';
+import type { AuthContext, FetchLike, PlaneApi, RequestOptions } from '@types';
 import { PlaneApiError, PlaneRateLimitError } from './errors';
 import { log } from '../logger';
 
 const MAX_RETRIES = 3;
 
-type RequestOptions = {
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
-  path: string;
-  query?: Record<string, string | number | boolean | undefined>;
-  body?: unknown;
-};
-
-export class PlaneClient {
+export class PlaneClient implements PlaneApi {
   private readonly auth: AuthContext;
+  private readonly fetchFn: FetchLike;
 
-  constructor(auth: AuthContext) {
+  constructor(auth: AuthContext, fetchFn: FetchLike = fetch) {
     this.auth = auth;
+    this.fetchFn = fetchFn;
   }
 
   workspacePath(sub: string): string {
@@ -63,7 +58,7 @@ export class PlaneClient {
       method: options.method,
     });
 
-    const response = await fetch(url.toString(), {
+    const response = await this.fetchFn(url.toString(), {
       method: options.method,
       headers: {
         'X-API-Key': this.auth.apiKey,

@@ -1,70 +1,61 @@
-import { describe, expect, it, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
 import { PlaneClient } from './client';
 import { PlaneApiError, PlaneRateLimitError } from './errors';
 import { toWorkItemWriteBody } from './normalize';
-import type { Priority } from '@types';
+import type { FetchLike, Priority } from '@types';
 
 const AUTH = { apiKey: 'test-key', workspaceSlug: 'acme', baseUrl: 'https://api.plane.so' };
 
 describe('PlaneClient', () => {
-  let originalFetch: typeof fetch;
-
-  beforeEach(() => {
-    originalFetch = globalThis.fetch;
-  });
-
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-  });
-
   it('should build the correct URL and inject X-API-Key header', async () => {
-    const fetchMock = mock(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://api.plane.so/api/v1/workspaces/acme/projects/');
-      expect((init.headers as Record<string, string>)['X-API-Key']).toBe('test-key');
-      return new Response(JSON.stringify({ results: [] }), { status: 200 });
-    });
-    globalThis.fetch = fetchMock as unknown as typeof fetch;
+    const mockFetch = mock<FetchLike>(
+      async (input: URL | string, init?: RequestInit): Promise<Response> => {
+        expect(input).toBe('https://api.plane.so/api/v1/workspaces/acme/projects/');
+        const apiKey = new Headers(init?.headers).get('X-API-Key');
+        expect(apiKey).toBe('test-key');
+        return new Response(JSON.stringify({ results: [] }), { status: 200 });
+      }
+    );
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     await client.get(client.workspacePath('projects/'));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it('should pass the pagination envelope through untouched', async () => {
     const envelope = { next_cursor: '20:1:0', results: [{ id: '1' }] };
-    globalThis.fetch = mock(
-      async () => new Response(JSON.stringify(envelope), { status: 200 })
-    ) as unknown as typeof fetch;
+    const mockFetch = mock<FetchLike>(
+      async (): Promise<Response> => new Response(JSON.stringify(envelope), { status: 200 })
+    );
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     const result = await client.get('/api/v1/workspaces/acme/projects/');
     expect(result).toEqual(envelope);
   });
 
   it('should retry on 429 and eventually throw PlaneRateLimitError after MAX_RETRIES', async () => {
-    const fetchMock = mock(
-      async () =>
+    const mockFetch = mock<FetchLike>(
+      async (): Promise<Response> =>
         new Response('rate limited', {
           status: 429,
           headers: { 'X-RateLimit-Reset': String(Math.floor(Date.now() / 1000)) },
         })
-    ) as unknown as typeof fetch;
-    globalThis.fetch = fetchMock;
+    );
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     // oxlint-disable-next-line typescript/await-thenable - expect().rejects returns a Promise; Bun test types not recognized
     await expect(client.get('/api/v1/workspaces/acme/projects/')).rejects.toBeInstanceOf(
       PlaneRateLimitError
     );
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
   });
 
   it('should throw PlaneApiError for 4xx/5xx responses', async () => {
-    globalThis.fetch = mock(
-      async () => new Response('not found', { status: 404 })
-    ) as unknown as typeof fetch;
+    const mockFetch = mock<FetchLike>(
+      async (): Promise<Response> => new Response('not found', { status: 404 })
+    );
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     // oxlint-disable-next-line typescript/await-thenable - expect().rejects returns a Promise; Bun test types not recognized
     await expect(client.get('/api/v1/workspaces/acme/projects/missing/')).rejects.toBeInstanceOf(
       PlaneApiError
@@ -73,35 +64,38 @@ describe('PlaneClient', () => {
 
   it('should handle POST requests with body', async () => {
     const requestBody = { name: 'test' };
-    globalThis.fetch = mock(async (url: string, init: RequestInit) => {
-      expect(init.method).toBe('POST');
-      expect(init.body).toBe(JSON.stringify(requestBody));
-      return new Response(JSON.stringify({ id: '1' }), { status: 201 });
-    }) as unknown as typeof fetch;
+    const mockFetch = mock<FetchLike>(
+      async (_input: URL | string, _init?: RequestInit): Promise<Response> => {
+        expect(_init?.method).toBe('POST');
+        expect(_init?.body).toBe(JSON.stringify(requestBody));
+        return new Response(JSON.stringify({ id: '1' }), { status: 201 });
+      }
+    );
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     const result = await client.post('/api/v1/workspaces/acme/projects/', requestBody);
     expect(result).toEqual({ id: '1' });
   });
 
   it('should handle 204 No Content responses', async () => {
-    globalThis.fetch = mock(
-      async () => new Response('', { status: 204 })
-    ) as unknown as typeof fetch;
+    const mockFetch = mock<FetchLike>(
+      async (): Promise<Response> => new Response('', { status: 204 })
+    );
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     const result = await client.delete('/api/v1/workspaces/acme/projects/1');
     expect(result).toBeUndefined();
   });
 
   it('should pass query parameters through URL search params', async () => {
-    globalThis.fetch = mock(async (url: string) => {
-      expect(url).toContain('cursor=20%3A1%3A0');
-      expect(url).toContain('per_page=10');
+    const mockFetch = mock<FetchLike>(async (input: URL | string): Promise<Response> => {
+      const urlStr = input instanceof URL ? input.href : input;
+      expect(urlStr).toContain('cursor=20%3A1%3A0');
+      expect(urlStr).toContain('per_page=10');
       return new Response(JSON.stringify({ results: [] }), { status: 200 });
-    }) as unknown as typeof fetch;
+    });
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     await client.get('/api/v1/workspaces/acme/projects/', {
       cursor: '20:1:0',
       per_page: 10,
@@ -109,13 +103,14 @@ describe('PlaneClient', () => {
   });
 
   it('should skip undefined query parameters', async () => {
-    globalThis.fetch = mock(async (url: string) => {
-      expect(url).not.toContain('undefined');
-      expect(url).toContain('per_page=10');
+    const mockFetch = mock<FetchLike>(async (input: URL | string): Promise<Response> => {
+      const urlStr = input instanceof URL ? input.href : input;
+      expect(urlStr).not.toContain('undefined');
+      expect(urlStr).toContain('per_page=10');
       return new Response(JSON.stringify({ results: [] }), { status: 200 });
-    }) as unknown as typeof fetch;
+    });
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     await client.get('/api/v1/workspaces/acme/projects/', {
       cursor: undefined,
       per_page: 10,
@@ -123,12 +118,11 @@ describe('PlaneClient', () => {
   });
 
   it('should return undefined for empty response body with 200 status', async () => {
-    const fetchMock = mock(
-      async () => new Response('', { status: 200 })
-    ) as unknown as typeof fetch;
-    globalThis.fetch = fetchMock;
+    const mockFetch = mock<FetchLike>(
+      async (): Promise<Response> => new Response('', { status: 200 })
+    );
 
-    const client = new PlaneClient(AUTH);
+    const client = new PlaneClient(AUTH, mockFetch);
     const result = await client.get('/api/v1/workspaces/acme/projects/');
     expect(result).toBeUndefined();
   });

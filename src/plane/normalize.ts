@@ -1,20 +1,4 @@
-import type { WorkItemWriteBody } from '@types';
-
-export type WorkItemWriteInput = {
-  name?: string;
-  descriptionHtml?: string;
-  priority?: WorkItemWriteBody['priority'];
-  stateId?: string;
-  assigneeIds?: string[];
-  labelIds?: string[];
-  typeId?: string;
-  parentId?: string | null;
-  startDate?: string;
-  dueDate?: string;
-  estimatePoint?: string;
-  externalId?: string;
-  externalSource?: string;
-};
+import type { WorkItemWriteInput, WorkItemWriteBody } from '@types';
 
 /**
  * Maps the MCP tool's read-shape-named arguments (state_id, assignee_ids,

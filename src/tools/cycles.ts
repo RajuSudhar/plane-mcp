@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneClient } from '../plane/client';
+import type { PlaneApi } from '@types';
 import type { Cycle, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -32,17 +32,17 @@ const removeWorkItemFromCycleSchema = z.object({
 });
 type RemoveWorkItemFromCycleArgs = z.infer<typeof removeWorkItemFromCycleSchema>;
 
-export async function listCycles(client: PlaneClient, args: ListCyclesArgs): Promise<ToolResult> {
+export async function listCycles(client: PlaneApi, args: ListCyclesArgs): Promise<ToolResult> {
   const data = await client.get<Cycle[]>(
     client.workspacePath(`projects/${args.project_id}/cycles/`)
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
-    structuredContent: { cycles: data } as Record<string, unknown>,
+    structuredContent: { cycles: data },
   };
 }
 
-export async function createCycle(client: PlaneClient, args: CreateCycleArgs): Promise<ToolResult> {
+export async function createCycle(client: PlaneApi, args: CreateCycleArgs): Promise<ToolResult> {
   const { project_id, name, description, start_date, end_date } = args;
   const body = {
     name,
@@ -56,28 +56,28 @@ export async function createCycle(client: PlaneClient, args: CreateCycleArgs): P
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(cycle) }],
-    structuredContent: cycle as Record<string, unknown>,
+    structuredContent: cycle,
   };
 }
 
 export async function addWorkItemsToCycle(
-  client: PlaneClient,
+  client: PlaneApi,
   args: AddWorkItemsToCycleArgs
 ): Promise<ToolResult> {
   const { project_id, cycle_id, work_item_ids } = args;
   const body = { work_item_ids };
-  const result = await client.post<unknown>(
+  const result = await client.post<Record<string, unknown>>(
     client.workspacePath(`projects/${project_id}/cycles/${cycle_id}/work-items/`),
     body
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(result) }],
-    structuredContent: (result ?? {}) as Record<string, unknown>,
+    structuredContent: result,
   };
 }
 
 export async function removeWorkItemFromCycle(
-  client: PlaneClient,
+  client: PlaneApi,
   args: RemoveWorkItemFromCycleArgs
 ): Promise<ToolResult> {
   const { project_id, cycle_id, work_item_id } = args;
@@ -86,11 +86,11 @@ export async function removeWorkItemFromCycle(
   );
   return {
     content: [{ type: 'text', text: 'Work item removed from cycle' }],
-    structuredContent: { removed: true } as Record<string, unknown>,
+    structuredContent: { removed: true },
   };
 }
 
-export function registerCycleTools(server: McpServer, client: PlaneClient): void {
+export function registerCycleTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'list_cycles',
     {

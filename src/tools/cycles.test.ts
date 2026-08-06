@@ -1,6 +1,5 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import {
   listCycles,
   createCycle,
@@ -9,23 +8,7 @@ import {
   removeWorkItemFromCycle,
 } from './cycles';
 import { toolHandler } from './register';
-
-type Spies = {
-  get?: (...a: unknown[]) => Promise<unknown>;
-  post?: (...a: unknown[]) => Promise<unknown>;
-  patch?: (...a: unknown[]) => Promise<unknown>;
-  delete?: (...a: unknown[]) => Promise<unknown>;
-};
-
-const makeClient = (spies: Spies) =>
-  ({
-    get: spies.get ?? mock(async () => ({})),
-    post: spies.post ?? mock(async () => ({})),
-    patch: spies.patch ?? mock(async () => ({})),
-    delete: spies.delete ?? mock(async () => undefined),
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('cycles', () => {
   describe('list_cycles', () => {
@@ -44,7 +27,7 @@ describe('cycles', () => {
         },
       ];
       const getSpy = mock(async () => data);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_cycles',
@@ -75,7 +58,7 @@ describe('cycles', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(404, 'nope');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_cycles',
@@ -95,7 +78,7 @@ describe('cycles', () => {
       const getSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_cycles',
@@ -126,7 +109,7 @@ describe('cycles', () => {
         updated_at: '2026-01-01T00:00:00Z',
       };
       const postSpy = mock(async () => cycle);
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_cycle',
@@ -156,14 +139,14 @@ describe('cycles', () => {
         start_date: '2026-01-01',
         end_date: '2026-01-14',
       });
-      expect((bodyArg as Record<string, unknown>).project_id).toBeUndefined();
+      expect(bodyArg.project_id).toBeUndefined();
     });
 
     it('error path: PlaneApiError', async () => {
       const postSpy = mock(async () => {
         throw new PlaneApiError(409, 'conflict');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_cycle',
@@ -186,7 +169,7 @@ describe('cycles', () => {
       const postSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_cycle',
@@ -209,7 +192,7 @@ describe('cycles', () => {
   describe('add_work_items_to_cycle', () => {
     it('success: adds work items to cycle', async () => {
       const postSpy = mock(async () => ({}));
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'add_work_items_to_cycle',
@@ -239,7 +222,7 @@ describe('cycles', () => {
       const postSpy = mock(async () => {
         throw new PlaneApiError(404, 'not found');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'add_work_items_to_cycle',
@@ -261,7 +244,7 @@ describe('cycles', () => {
       const postSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'add_work_items_to_cycle',
@@ -283,7 +266,7 @@ describe('cycles', () => {
   describe('remove_work_item_from_cycle', () => {
     it('success: removes work item from cycle', async () => {
       const deleteSpy = mock(async () => undefined);
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'remove_work_item_from_cycle',
@@ -315,7 +298,7 @@ describe('cycles', () => {
       const deleteSpy = mock(async () => {
         throw new PlaneApiError(404, 'work item not found');
       });
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'remove_work_item_from_cycle',
@@ -337,7 +320,7 @@ describe('cycles', () => {
       const deleteSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'remove_work_item_from_cycle',

@@ -1,6 +1,5 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import {
   listWorkItemComments,
   createWorkItemComment,
@@ -8,30 +7,14 @@ import {
   deleteWorkItemComment,
 } from './comments';
 import { toolHandler } from './register';
-
-type Spies = {
-  get?: (...a: unknown[]) => Promise<unknown>;
-  post?: (...a: unknown[]) => Promise<unknown>;
-  patch?: (...a: unknown[]) => Promise<unknown>;
-  delete?: (...a: unknown[]) => Promise<unknown>;
-};
-
-const makeClient = (spies: Spies) =>
-  ({
-    get: spies.get ?? mock(async () => ({})),
-    post: spies.post ?? mock(async () => ({})),
-    patch: spies.patch ?? mock(async () => ({})),
-    delete: spies.delete ?? mock(async () => undefined),
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('comments', () => {
   describe('list_work_item_comments', () => {
     it('success: lists comments with pagination envelope', async () => {
       const envelope = { results: [{ id: 'c1' }], count: 1 };
       const getSpy = mock(async () => envelope);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_item_comments',
@@ -58,7 +41,7 @@ describe('comments', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(404, 'nope');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_item_comments',
@@ -79,7 +62,7 @@ describe('comments', () => {
       const getSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_item_comments',
@@ -101,7 +84,7 @@ describe('comments', () => {
     it('success: creates comment and returns it', async () => {
       const comment = { id: 'c1', comment_html: '<p>hi</p>' };
       const postSpy = mock(async () => comment);
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_work_item_comment',
@@ -132,7 +115,7 @@ describe('comments', () => {
       const postSpy = mock(async () => {
         throw new PlaneApiError(400, 'bad comment');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_work_item_comment',
@@ -155,7 +138,7 @@ describe('comments', () => {
     it('success: updates comment', async () => {
       const comment = { id: 'c1', comment_html: '<p>edit</p>' };
       const patchSpy = mock(async () => comment);
-      const client = makeClient({ patch: patchSpy });
+      const client = stubClient({ patch: patchSpy });
 
       const res = await toolHandler(
         'update_work_item_comment',
@@ -187,7 +170,7 @@ describe('comments', () => {
       const patchSpy = mock(async () => {
         throw new PlaneApiError(404, 'no comment');
       });
-      const client = makeClient({ patch: patchSpy });
+      const client = stubClient({ patch: patchSpy });
 
       const res = await toolHandler(
         'update_work_item_comment',
@@ -210,7 +193,7 @@ describe('comments', () => {
   describe('delete_work_item_comment', () => {
     it('success: deletes comment', async () => {
       const deleteSpy = mock(async () => undefined);
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'delete_work_item_comment',
@@ -238,7 +221,7 @@ describe('comments', () => {
       const deleteSpy = mock(async () => {
         throw new PlaneApiError(403, 'forbidden');
       });
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'delete_work_item_comment',

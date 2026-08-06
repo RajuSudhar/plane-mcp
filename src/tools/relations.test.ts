@@ -1,6 +1,5 @@
 import { describe, it, expect, mock } from 'bun:test';
 import { PlaneApiError } from '../plane/errors';
-import type { PlaneClient } from '../plane/client';
 import {
   listWorkItemRelations,
   createWorkItemRelation,
@@ -8,30 +7,14 @@ import {
   createWorkItemRelationSchema,
 } from './relations';
 import { toolHandler } from './register';
-
-type Spies = {
-  get?: (...a: unknown[]) => Promise<unknown>;
-  post?: (...a: unknown[]) => Promise<unknown>;
-  patch?: (...a: unknown[]) => Promise<unknown>;
-  delete?: (...a: unknown[]) => Promise<unknown>;
-};
-
-const makeClient = (spies: Spies) =>
-  ({
-    get: spies.get ?? mock(async () => ({})),
-    post: spies.post ?? mock(async () => ({})),
-    patch: spies.patch ?? mock(async () => ({})),
-    delete: spies.delete ?? mock(async () => undefined),
-    apiPath: (s: string) => '/api/v1/' + s.replace(/^\//, ''),
-    workspacePath: (s: string) => '/api/v1/workspaces/ws/' + s.replace(/^\//, ''),
-  }) as unknown as PlaneClient;
+import { stubClient } from './client-stub';
 
 describe('relations', () => {
   describe('list_work_item_relations', () => {
     it('success: lists relations and wraps array in structuredContent', async () => {
       const data = [{ id: 'r1', related_work_item_id: 'w2', relation_type: 'blocking' as const }];
       const getSpy = mock(async () => data);
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_item_relations',
@@ -63,7 +46,7 @@ describe('relations', () => {
       const getSpy = mock(async () => {
         throw new PlaneApiError(404, 'not found');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_item_relations',
@@ -84,7 +67,7 @@ describe('relations', () => {
       const getSpy = mock(async () => {
         throw new Error('boom');
       });
-      const client = makeClient({ get: getSpy });
+      const client = stubClient({ get: getSpy });
 
       const res = await toolHandler(
         'list_work_item_relations',
@@ -110,7 +93,7 @@ describe('relations', () => {
         relation_type: 'blocking' as const,
       };
       const postSpy = mock(async () => relation);
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_work_item_relation',
@@ -145,7 +128,7 @@ describe('relations', () => {
       const postSpy = mock(async () => {
         throw new PlaneApiError(409, 'conflict');
       });
-      const client = makeClient({ post: postSpy });
+      const client = stubClient({ post: postSpy });
 
       const res = await toolHandler(
         'create_work_item_relation',
@@ -168,7 +151,7 @@ describe('relations', () => {
   describe('remove_work_item_relation', () => {
     it('success: removes relation', async () => {
       const deleteSpy = mock(async () => undefined);
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'remove_work_item_relation',
@@ -196,7 +179,7 @@ describe('relations', () => {
       const deleteSpy = mock(async () => {
         throw new PlaneApiError(404, 'no relation');
       });
-      const client = makeClient({ delete: deleteSpy });
+      const client = stubClient({ delete: deleteSpy });
 
       const res = await toolHandler(
         'remove_work_item_relation',
