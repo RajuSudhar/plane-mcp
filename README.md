@@ -12,6 +12,44 @@ bun install
 
 This project uses Bun exclusively — no npm, pnpm, or yarn. The `bun.lock` file is committed to the repository.
 
+## Install from npm (Bun)
+
+To use `plane-mcp` from npm without cloning the repository, install and run it directly with Bun:
+
+```bash
+bunx plane-mcp
+```
+
+This runs the stdio MCP server. Requires Bun 1.3.14+ on your machine (plane-mcp is a Bun-native package).
+
+Alternatively, install globally and invoke as a command:
+
+```bash
+bun add -g plane-mcp
+plane-mcp
+```
+
+### MCP Client Configuration (bunx)
+
+For Claude Desktop, VS Code with MCP extension, or other MCP clients that support command-based transport, configure as:
+
+```json
+{
+  "mcpServers": {
+    "plane": {
+      "command": "bunx",
+      "args": ["plane-mcp"],
+      "env": {
+        "PLANE_API_KEY": "your-api-token",
+        "PLANE_WORKSPACE_SLUG": "your-workspace"
+      }
+    }
+  }
+}
+```
+
+The HTTP mode (`plane-mcp-http`) is also available if you need one server to serve multiple clients. This is a Bun-native package; Node-only users would need to build it separately (out of scope).
+
 ## Configure
 
 Set the following environment variables in a `.env` file (see `.env.example` for a template):

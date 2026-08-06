@@ -8,7 +8,7 @@ Last updated: 2026-08-06
 
 ## Phases
 
-Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/13-test-type-safety.md`.
+Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/14-npm-publish.md`.
 
 ### Phase 00 — RFC
 
@@ -66,6 +66,10 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/13-test-ty
 
 [x] `plans/plane-mcp/13-test-type-safety.md` — eliminate all 20 `as unknown as` double-casts from the test suite: export a structural `PlaneApi` type (`Pick<PlaneClient, 'get' | 'post' | 'patch' | 'delete' | 'workspacePath' | 'apiPath'>`) from `src/plane/client.ts`, widen the tool layer (`types/mcp.ts`, `src/tools/register.ts`, all 10 `src/tools/*.ts` files) to depend on `PlaneApi` instead of the nominal `PlaneClient` class (`src/server.ts` unchanged — a real `PlaneClient` still satisfies `PlaneApi`), replace `src/plane/client.test.ts`'s 9 cast-and-assign `fetch` mocks with `spyOn`, drop the 10 tool-test `makeClient` casts plus 1 stray `as unknown as string`, add a verified oxlint type-aware cast-redundancy rule to `.oxlintrc.json`. **Regression fix**: when oxlint's no-unnecessary-type-assertion rule flagged redundant casts, `add_work_items_to_cycle` and `add_work_items_to_module` tools had their type parameters restored to `Record<string, unknown>` to avoid fallback casts, demonstrating the correct pattern: fix type mismatches at the call site via generic type parameters, not via post-hoc casts. Docs updated: CODING-STANDARDS.md (type assertions / test mocking section) + CLAUDE.md (PlaneApi architecture + no `as unknown as` rule)
 
+### Phase 14 — npm Publish Prep
+
+[x] `plans/plane-mcp/14-npm-publish.md` — prepare package for npm publish as a Bun-native `bunx plane-mcp` command (no actual publish): remove `"private": true` from `package.json`, add publish metadata (description, license, keywords, engines, publishConfig, repository), guard `prepare` script with `|| true` for no-git environments, add `prepublishOnly` gate (typecheck + check + test), create `.npmignore` excluding test files and client-stub (verified clean with `npm pack --dry-run`), create `LICENSE` (MIT, Copyright 2026 Sudharsan), update `README.md` with "Install from npm (Bun)" section
+
 ## Done
 
 - Initial project bootstrap
@@ -85,6 +89,8 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/13-test-ty
 - All 10 phases (00-10) completed, all 31 tools shipped across 10 resource domains (users, projects, work items, comments, relations, states, labels, members, cycles, modules)
 - Phase 11 (distribution) implemented and committed: `plans/plane-mcp/11-distribution.md` authored and completed; `src/stdio.ts` stdio transport entry point added, `package.json` `bin` gains `plane-mcp` (stdio, default) + `plane-mcp-http` (HTTP), README "Install as a local MCP (stdio)" section added, `plans/plane-mcp/00-rfc.md` amended (Non-goals + Alternatives) to record stdio addition post-hardening for local single-user install
 - Phase 12 (type-aware linting) implemented and committed: `oxlint` bumped 1.76.0 → 1.77.0, `oxlint-tsgolint@7.0.2001` added (prebuilt Go binary via optional platform deps), `.oxlintrc.json` gains root `options.typeAware: true`, type-aware rules (`no-floating-promises`, `no-misused-promises`, `await-thenable`, `require-await`) added, 2 false-positive test-mock findings fixed with justified inline disables, zero `src/` findings, all tests pass, CLAUDE.md + README.md updated to reflect type-aware linting, zero CI workflow changes needed
+- Phase 13 (test type-safety) implemented and committed: PlaneApi structural interface extracted, tool layer depends on PlaneApi not PlaneClient, all 20 `as unknown as` double-casts eliminated, fetch mocks moved to constructor injection via FetchLike, shared stubClient helper in src/tools/client-stub.ts, oxlint cast-redundancy rule added, all tests passing, CODING-STANDARDS.md + CLAUDE.md updated
+- Phase 14 (npm publish prep) implemented and committed: `package.json` gains publish metadata (description, license, keywords, engines, publishConfig, files, repository), `"private": true` removed, `prepare` script guarded with `|| true`, `prepublishOnly` gate added, `.npmignore` created, `LICENSE` (MIT) created, `README.md` "Install from npm (Bun)" section added, phase doc authored, TRACK.md updated
 
 ## Decisions / deviations
 
@@ -99,6 +105,8 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/13-test-ty
 
 9. **Tool layer depends on `PlaneApi`, not `PlaneClient` (Phase 13)**: `PlaneClient` is a nominal class whose private `auth` field brands the type, preventing structural test stubs from type-checking without casts. Phase 13 eliminated all 20 `as unknown as` double-casts by defining an explicit structural `PlaneApi` type in `types/client.ts` that `PlaneClient` implements; the tool layer (`types/mcp.ts`, `src/tools/register.ts`, all `src/tools/*.ts` files) depends on `PlaneApi`, not the concrete class. Fetch mocks moved from global mutation (`globalThis.fetch = mock as unknown as typeof fetch`) to constructor injection via a `FetchLike` type (also in `types/client.ts`): `PlaneClient` takes an optional `fetchFn: FetchLike` parameter, so tests pass `new PlaneClient(auth, mock<FetchLike>(...))` with no cast. Tool tests use the shared `stubClient()` helper (in `src/tools/client-stub.ts`) whose only casts are the three necessary `as T` generics per method. `WorkItemWriteInput` moved to `types/plane.ts`, `RequestOptions`/`FetchLike` to `types/client.ts`. `typescript/no-unnecessary-type-assertion` oxlint rule added. Full spec: `plans/plane-mcp/13-test-type-safety.md`.
 
+10. **Bun-native npm publish (Phase 14)**: Phase 14 lifts `"private": true` from `package.json` and adds publish metadata (description, license, keywords, engines, publishConfig, repository) to prepare for npm distribution. The package is published as Bun-native only: bin entries are `.ts` files with `#!/usr/bin/env bun` shebangs; consumers must have Bun 1.3.14+. `prepare` script guarded with `|| true` to work in no-git CI environments. `prepublishOnly` gate runs typecheck, lint, and tests before any publish attempt. `.npmignore` (not `files` field; testing showed `files` did not suppress test files in this npm version) excludes test files and `src/tools/client-stub.ts`. `LICENSE` (MIT, Copyright 2026 Sudharsan) and updated `README.md` (with "Install from npm (Bun)" section) are shipped. `package.json` `repository` is set to `git+https://github.com/RajuSudhar/plane-mcp.git`. No Node/CommonJS build path (Path B) is provided; Node-only users would need a separate build (deferred, out of scope). No actual npm publish is performed in this phase — only gate preparation. Full spec: `plans/plane-mcp/14-npm-publish.md`.
+
 ## Blockers / decisions pending
 
-- Open (deferred, not blocking): whether `package.json`'s `private: true` is ever flipped for a future real `bunx`-without-`bun-link` npm publish. Not decided; tracked in Phase 11's Open questions.
+(None — all tracked decisions closed.)
