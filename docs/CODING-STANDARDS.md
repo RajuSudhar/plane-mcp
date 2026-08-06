@@ -299,11 +299,17 @@ Logging is REQUIRED at these critical paths:
 
 **oxlint Configuration**:
 
-oxlint (`.oxlintrc.json`) enforces the three hard-rule correctness checks for `.ts` files:
+oxlint (`.oxlintrc.json`) with type-aware linting enabled (`options.typeAware: true`) enforces seven hard-rule correctness checks for `.ts` files — the three syntactic rules plus four type-aware promise-safety rules:
 
 - `typescript/consistent-type-definitions: ["error", "type"]` — type-over-interface
 - `typescript/no-explicit-any: "error"` — no `any`
 - `typescript/consistent-type-imports: "error"` — separate type imports
+- `typescript/no-floating-promises: "error"` — Promise used as statement must be `await`-ed, returned, or explicitly `void`-ed
+- `typescript/no-misused-promises: "error"` — Promise not misused in conditional/callback contexts
+- `typescript/await-thenable: "error"` — `await` only on actual Promise values
+- `typescript/require-await: "error"` — async functions must contain `await` (overridden off for `**/*.test.ts`)
+
+Type-aware linting runs via oxlint plus oxlint-tsgolint on TypeScript 7.
 
 ### Import Organization
 

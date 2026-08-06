@@ -241,7 +241,7 @@ The server exposes 31 tools across 10 resource domains:
 | `bun test`             | Run tests                                     |
 | `bun run format`       | Format code and docs with Prettier            |
 | `bun run format:check` | Check formatting with Prettier                |
-| `bun run lint`         | Lint TypeScript files with oxlint             |
+| `bun run lint`         | Lint TypeScript files with type-aware oxlint  |
 | `bun run lint:fix`     | Fix linting issues with oxlint                |
 | `bun run check`        | Run formatting and linting checks             |
 
@@ -249,6 +249,12 @@ The server exposes 31 tools across 10 resource domains:
 
 This project uses TypeScript 7 with `noEmit: true` in `tsconfig.json`. Bun runs TypeScript natively, so no JavaScript
 files are emitted or committed. Type-checking is performed via `bun run typecheck` which runs `tsc --noEmit`.
+
+### Linting
+
+Linting is performed via `bun run lint`, which uses oxlint with type-aware linting enabled (via the oxlint-tsgolint
+integration). Type-aware linting catches promise-safety issues: floating promises, misused promises, stray awaits, and
+async functions that don't actually await.
 
 ### Architecture
 

@@ -52,6 +52,7 @@ describe('PlaneClient', () => {
     globalThis.fetch = fetchMock;
 
     const client = new PlaneClient(AUTH);
+    // oxlint-disable-next-line typescript/await-thenable - expect().rejects returns a Promise; Bun test types not recognized
     await expect(client.get('/api/v1/workspaces/acme/projects/')).rejects.toBeInstanceOf(
       PlaneRateLimitError
     );
@@ -64,6 +65,7 @@ describe('PlaneClient', () => {
     ) as unknown as typeof fetch;
 
     const client = new PlaneClient(AUTH);
+    // oxlint-disable-next-line typescript/await-thenable - expect().rejects returns a Promise; Bun test types not recognized
     await expect(client.get('/api/v1/workspaces/acme/projects/missing/')).rejects.toBeInstanceOf(
       PlaneApiError
     );
