@@ -8,7 +8,7 @@ Last updated: 2026-08-03
 
 ## Phases
 
-Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardening.md`.
+Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/11-distribution.md`.
 
 ### Phase 00 — RFC
 
@@ -54,6 +54,10 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 
 [x] `plans/plane-mcp/10-hardening.md` — README.md, docs/ARCHITECTURE.md, final review, zero-.js verification, full tool inventory check
 
+### Phase 11 — Distribution
+
+[x] `plans/plane-mcp/11-distribution.md` — `src/stdio.ts` stdio transport entry point (reuses `createServer`/`loadAuthContext`), `package.json` `bin` gains `plane-mcp` (stdio, default) + `plane-mcp-http` (HTTP), `bun link` local-install flow, README "Install as a local MCP (stdio)" section, stdio smoke test (in-process preferred), RFC amended (stdio Non-goal superseded for the local-install case; HTTP unchanged)
+
 ## Done
 
 - Initial project bootstrap
@@ -71,6 +75,7 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 - Phase 01 (scaffold) implemented and committed
 - Tooling phase inserted as the new Phase 02 (formatting/linting baseline via Prettier + oxlint); every downstream phase (former 02-09) renumbered to 03-10; all internal cross-references and `Depends on:` chains updated to match
 - All 10 phases (00-10) completed, all 31 tools shipped across 10 resource domains (users, projects, work items, comments, relations, states, labels, members, cycles, modules)
+- Phase 11 (distribution) planned: `plans/plane-mcp/11-distribution.md` authored; `plans/plane-mcp/00-rfc.md` amended (Non-goals + Alternatives) to record that stdio transport was added post-hardening for local single-user install, alongside — not replacing — HTTP
 
 ## Decisions / deviations
 
@@ -80,7 +85,8 @@ Plan docs: `plans/plane-mcp/00-rfc.md` (RFC) through `plans/plane-mcp/10-hardeni
 4. **Rejected alternatives**: stdio-only transport, full 100+ tool scope (mirroring the official Python server), MCP SDK v1 (`@modelcontextprotocol/sdk`) — rationale in `plans/plane-mcp/00-rfc.md` Alternatives section
 5. **Architecture laws**: tools are pure functions `(authContext, args) -> result`; one `PlaneClient` class is the sole Plane API boundary; `list_*` tools return the raw pagination envelope (no auto-paging); 429s surfaced as tool errors, never swallowed; field-name asymmetry (`state`/`state_id`, `assignees`/`assignee_ids`, `target_date`/`due_date`) normalized centrally in `src/plane/normalize.ts`
 6. **Tooling stack (Phase 02)**: Prettier is the single formatter for every file type (`.ts`, `.json`, `.md`) with per-language overrides — no Biome. oxlint (`.oxlintrc.json`) owns `.ts` correctness/linting, enforcing the three hard-rule mappings: `typescript/consistent-type-definitions` (type-over-interface), `typescript/no-explicit-any`, `typescript/consistent-type-imports`. typescript-eslint was rejected because it lacks TypeScript 7 support; oxlint is a Rust-based linter with zero TypeScript compiler coupling, so the TS7 pin cannot break it. A committed, zero-dependency `.githooks/pre-commit` script (wired via `git config core.hooksPath .githooks`) runs Prettier then oxlint before every commit; `--no-verify` is never used. Phase 02 runs immediately after scaffold, before any feature code, so the one-time full-repo baseline reformat never collides with a later feature commit.
+7. **stdio transport added (Phase 11, post-hardening)**: `plans/plane-mcp/00-rfc.md`'s Non-goals originally listed "stdio transport. HTTP-only." This is amended, not reversed: stdio is added as a second, additive transport (`src/stdio.ts`, reusing `createServer()`/`loadAuthContext()` unmodified) for local single-user install via `bun link` and command-launched MCP client configs (`mcpServers.<name>.command`). HTTP (`src/index.ts`) remains the transport for the "one server, multiple clients" shape the RFC locked in and is unchanged by this phase. `package.json` `bin.plane-mcp` now points at the stdio entry (the default local-MCP command); a new `bin["plane-mcp-http"]` covers the HTTP entry explicitly. `private: true` unchanged — no npm publish; `bun link` needs no registry. Full rationale: `plans/plane-mcp/00-rfc.md` Non-goals + Alternatives amendments; full spec: `plans/plane-mcp/11-distribution.md`.
 
 ## Blockers / decisions pending
 
-- None — project complete. All phases (00 RFC through 10 hardening) sealed. Full 31-tool server shipped (users, projects, work items, comments, relations, states, labels, members, cycles, modules).
+- Open (deferred, not blocking): whether `package.json`'s `private: true` is ever flipped for a future real `bunx`-without-`bun-link` npm publish. Not decided; tracked in Phase 11's Open questions.

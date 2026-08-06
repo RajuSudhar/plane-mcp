@@ -79,6 +79,71 @@ The client sends a JSON-RPC `initialize` request on first connection:
 }
 ```
 
+## Two ways to connect
+
+Choose your transport: run the HTTP server and point a client at its URL (above), or install the stdio command for a client that launches it directly (below).
+
+## Install as a local MCP (stdio)
+
+As an alternative to the HTTP transport, you can install `plane-mcp` as a local command-launched MCP server using Bun's `bun link`
+feature. This allows MCP clients (Claude Code, Claude Desktop, etc.) to subprocess-launch their own dedicated server instance via
+stdio instead of connecting to a long-running HTTP server.
+
+### Setup
+
+From the repo root, link the package globally:
+
+```bash
+bun link
+```
+
+This registers the `plane-mcp` command in Bun's global bin directory. To uninstall later:
+
+```bash
+bun unlink plane-mcp
+```
+
+### Configuration
+
+Environment variables are supplied by the MCP client — not by `.env` — and are never logged by the server. Secrets are protected by
+the client's own config storage (e.g., `~/.config/codeium/mcp.json` or Claude Desktop's settings).
+
+**Claude Code CLI (command form):**
+
+```bash
+claude mcp add plane \
+  --env PLANE_API_KEY=<your-token> \
+  --env PLANE_WORKSPACE_SLUG=<your-workspace> \
+  -- plane-mcp
+```
+
+**Generic `mcpServers` JSON config** (e.g., Claude Desktop, VS Code with MCP extension):
+
+```json
+{
+  "mcpServers": {
+    "plane": {
+      "command": "plane-mcp",
+      "args": [],
+      "env": {
+        "PLANE_API_KEY": "your-api-token",
+        "PLANE_WORKSPACE_SLUG": "your-workspace",
+        "PLANE_BASE_URL": "https://api.plane.so"
+      }
+    }
+  }
+}
+```
+
+The stdio server reads these env vars at startup and exposes the same 31 tools as the HTTP transport. No `PORT` env var is needed for
+stdio — the MCP client manages the process lifecycle.
+
+---
+
+**Note:** This "local MCP" install via stdio is the recommended approach for single-user, local setups. The HTTP transport (`bun run
+start` or `plane-mcp-http` bin entry) is still available if you need one server to serve multiple clients or to run long-lived in
+production.
+
 ## Tool Inventory
 
 The server exposes 31 tools across 10 resource domains:

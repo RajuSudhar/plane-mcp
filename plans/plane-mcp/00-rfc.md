@@ -49,7 +49,13 @@ We need a greenfield, Bun/TypeScript MCP server that:
 - Redis/Valkey — no session store, no token cache. Stateless transport means
   there is no server-side session to cache against.
 - Webhooks (registration, HMAC verification, dedup).
-- stdio transport. HTTP-only.
+- ~~stdio transport. HTTP-only.~~ **Amended in Phase 11** — stdio was added
+  as a second, additive transport for local single-user install
+  (`bun link` / command-launched MCP clients). This does not reopen the
+  "stdio-only" alternative rejected below: HTTP remains the transport for
+  the "one local server, multiple clients" shape this RFC locked in; stdio
+  is for "one client subprocess-launches its own server instance." See the
+  amendment note under Alternatives and `plans/plane-mcp/11-distribution.md`.
 - SSE (legacy) transport.
 - The other ~75 tools in the spec report's catalog: work item properties/
   types, worklogs, epics, milestones, initiatives, intake, pages, teamspaces,
@@ -157,6 +163,24 @@ in Phase 03; (3) streamable HTTP is the current MCP-spec-blessed transport
 (spec report §1) and the one the locked decisions specify. stdio is not ruled
 out forever, but adding it is a distinct future RFC, not a phase in this plan.
 
+**Amendment (Phase 11, added post-hardening):** the "distinct future RFC"
+condition above was resolved by decision rather than a new RFC: the user
+wants a local, single-user MCP launchable by a `bunx`/command-style client
+config (`mcpServers.<name>.command`) instead of an already-running HTTP
+server a client points a URL at. That is additive, not a reversal of this
+alternative's rejection — nothing here argued against stdio existing at
+all, only against stdio being the _sole_ transport, which would have
+broken the "one server, independently inspectable, reusable across
+multiple client processes" property this RFC locked in. Phase 11
+(`plans/plane-mcp/11-distribution.md`) adds `src/stdio.ts` as a second
+entry point that reuses the same `createServer()`/`loadAuthContext()`
+boundary the HTTP entry uses, so both transports serve an identically
+tooled `McpServer`; the HTTP entry (`src/index.ts`) is untouched and
+remains the multi-agent/multi-client transport. This closes the "revisit
+in a future RFC" note above for the local-install use case specifically;
+it does not reopen the Non-goals list beyond the one Non-goals line
+amended to point here.
+
 ### Full 100+ tool scope (mirror the official server) — rejected
 
 The spec report's catalog (§6) covers work item properties/types, worklogs,
@@ -216,6 +240,7 @@ returns `pong`) before any tool logic is built on top.
 | 08    | `08-workflow.md`         | States, labels, project/workspace members                                                                                                                                                                                                                                     |
 | 09    | `09-sprints.md`          | Cycles + modules, including work-item join/unjoin tools                                                                                                                                                                                                                       |
 | 10    | `10-hardening.md`        | README, ARCHITECTURE.md, final review pass, verify no `.js` emitted, full tool inventory check                                                                                                                                                                                |
+| 11    | `11-distribution.md`     | **Added post-hardening** (see Non-goals amendment + Alternatives amendment above): `src/stdio.ts` stdio transport entry point, `bun link`-installable `plane-mcp` bin, README local-MCP install section. HTTP transport unchanged.                                            |
 
 Each phase file follows the `docs/plans/README.md` plan.md template (Phase,
 Status, Depends on, Ref, Goal, In/Out of scope, Design, Tasks, Definition of

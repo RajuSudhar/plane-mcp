@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "bin": {
-    "plane-mcp": "./src/index.ts"
+    "plane-mcp": "./src/stdio.ts",
+    "plane-mcp-http": "./src/index.ts"
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "start": "bun run src/index.ts",
+    "start:stdio": "bun run src/stdio.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "oxlint",
