@@ -6,7 +6,7 @@ import { createServer } from './server';
 import { loadAuthContext, loadPort } from './config';
 import { log } from './logger';
 
-const auth = loadAuthContext();
+const auth = await loadAuthContext();
 const port = loadPort();
 
 const app = createMcpHonoApp();

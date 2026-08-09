@@ -29,40 +29,88 @@ bun add -g plane-mcp
 plane-mcp
 ```
 
-### MCP Client Configuration (bunx)
+## Setup (recommended)
 
-For Claude Desktop, VS Code with MCP extension, or other MCP clients that support command-based transport, configure as:
+The recommended way to set up `plane-mcp` is via `plane-mcp init`, which securely stores your API key in the OS keychain
+and prints a ready-to-use MCP client configuration. This setup supports multiple independent workspaces on the same
+machine with zero manual config file editing.
+
+### Step 1: Store your API key
+
+Run the init command once per Plane workspace or deployment:
+
+```bash
+plane-mcp init <name> --workspace <slug> [--base-url <url>] [--register]
+```
+
+Example:
+
+```bash
+plane-mcp init my-workspace --workspace my-workspace-slug --base-url https://api.plane.so
+```
+
+Where:
+
+- `<name>`: A local label for this instance (e.g., `my-workspace`, `client-a`). Used as the keychain key and instance
+  identifier; must be unique per machine if you're setting up multiple workspaces.
+- `<slug>`: Your Plane workspace slug (e.g., `my-workspace-slug`).
+- `--base-url` (optional): Your Plane instance URL; defaults to `https://api.plane.so`. Must use `https`.
+- `--register` (optional): Automatically register the server with `claude mcp add` (requires the `claude` CLI).
+
+The command will:
+
+1. Prompt you (hidden input) for your Plane API key (Personal or Workspace Access Token).
+2. Store the key securely in your OS keychain, keyed by instance `<name>`.
+3. Print a JSON config block for your MCP client.
+
+**Security note on --key flag:** The optional `--key` flag allows passing the API key as a command-line argument, which is visible in the process list (via `ps`). This flag is intended for scripted/CI use only. For interactive sessions, the default hidden-input prompt is the secure choice.
+
+### Step 2: Add to your MCP client
+
+Copy the printed JSON config and add it to your MCP client's configuration file (e.g., Claude Desktop's `claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
-    "plane": {
-      "command": "bunx",
-      "args": ["plane-mcp"],
+    "plane-my-workspace": {
+      "command": "plane-mcp",
       "env": {
-        "PLANE_API_KEY": "your-api-token",
-        "PLANE_WORKSPACE_SLUG": "your-workspace"
+        "PLANE_MCP_INSTANCE": "my-workspace",
+        "PLANE_WORKSPACE_SLUG": "my-workspace-slug",
+        "PLANE_BASE_URL": "https://api.plane.so"
       }
     }
   }
 }
 ```
 
-The HTTP mode (`plane-mcp-http`) is also available if you need one server to serve multiple clients. This is a Bun-native package; Node-only users would need to build it separately (out of scope).
+Or, if you passed `--register` to `init`, the server is already registered and you can skip this step.
 
-## Configure
+### Multiple workspaces
 
-Set the following environment variables in a `.env` file (see `.env.example` for a template):
+To set up a second workspace on the same machine, repeat `plane-mcp init` with a different `<name>`:
 
-| Variable               | Required | Default                | Description                                       |
-| ---------------------- | -------- | ---------------------- | ------------------------------------------------- |
-| `PLANE_API_KEY`        | Yes      | —                      | Personal or Workspace Access Token (never logged) |
-| `PLANE_WORKSPACE_SLUG` | Yes      | —                      | Workspace identifier (e.g., `my-workspace`)       |
-| `PLANE_BASE_URL`       | No       | `https://api.plane.so` | Plane API base URL (must be `https`)              |
-| `PORT`                 | No       | `3000`                 | Server port (valid range: 1-65535)                |
+```bash
+plane-mcp init client-b --workspace client-b-slug --base-url https://api.plane.so
+```
 
-To generate `PLANE_API_KEY`, go to Plane → Profile Settings → Personal Access Tokens, or Workspace Settings → Access
-Tokens for a bot token. None of these values are logged by the server.
+This creates a second keychain entry and a second MCP server config (`plane-client-b`), both accessible to your MCP
+client simultaneously with no conflict.
+
+### Auth resolution order
+
+At runtime, the server resolves the API key in this order:
+
+1. `PLANE_API_KEY` environment variable (if set; used for CI/dev fallback, skips keychain).
+2. `PLANE_MCP_INSTANCE` keychain lookup (if set; recommended for local use).
+3. Error: neither env var nor instance provided.
+
+### Windows note
+
+On Windows, the OS credential store is not directly accessible via the CLI. `plane-mcp init` uses a file-based fallback
+(`~/.config/plane-mcp/credentials.json`, mode `0600`) instead. **This is less secure than the native OS keychain on
+macOS/Linux** — keep your local machine secure and consider using a headless CI/deployment service or the `PLANE_API_KEY`
+env-var path for production servers.
 
 ## Run
 
@@ -83,10 +131,10 @@ The server binds to `127.0.0.1` on the configured port (default 3000). It expose
 - `GET /health` → `{"status":"ok"}`
 - `POST /mcp` → MCP endpoint (stateless streamable HTTP transport)
 
-## Connect an MCP Client
+## Connect an MCP Client (HTTP mode)
 
-Point any streamable-HTTP MCP client at `http://127.0.0.1:3000/mcp`. Example client configuration (e.g., for Claude
-Desktop or VS Code):
+If you're running the HTTP server (`bun run start` or `plane-mcp-http` bin), point any streamable-HTTP MCP client at
+`http://127.0.0.1:3000/mcp`. Example client configuration (e.g., for Claude Desktop or VS Code):
 
 ```json
 {
@@ -117,15 +165,51 @@ The client sends a JSON-RPC `initialize` request on first connection:
 }
 ```
 
-## Two ways to connect
+## Configure via environment variables (advanced)
 
-Choose your transport: run the HTTP server and point a client at its URL (above), or install the stdio command for a client that launches it directly (below).
+For CI/dev/scripting scenarios where interactive prompts are not practical, you can set credentials directly as
+environment variables:
 
-## Install as a local MCP (stdio)
+Set the following environment variables in a `.env` file (see `.env.example` for a template):
 
-As an alternative to the HTTP transport, you can install `plane-mcp` as a local command-launched MCP server using Bun's `bun link`
-feature. This allows MCP clients (Claude Code, Claude Desktop, etc.) to subprocess-launch their own dedicated server instance via
-stdio instead of connecting to a long-running HTTP server.
+| Variable               | Required | Default                | Description                                       |
+| ---------------------- | -------- | ---------------------- | ------------------------------------------------- |
+| `PLANE_API_KEY`        | Yes      | —                      | Personal or Workspace Access Token (never logged) |
+| `PLANE_WORKSPACE_SLUG` | Yes      | —                      | Workspace identifier (e.g., `my-workspace`)       |
+| `PLANE_BASE_URL`       | No       | `https://api.plane.so` | Plane API base URL (must be `https`)              |
+| `PORT`                 | No       | `3000`                 | Server port (valid range: 1-65535)                |
+
+To generate `PLANE_API_KEY`, go to Plane → Profile Settings → Personal Access Tokens, or Workspace Settings → Access
+Tokens for a bot token. None of these values are logged by the server.
+
+### MCP Client Configuration (bunx)
+
+For Claude Desktop, VS Code with MCP extension, or other MCP clients that support command-based transport, configure as:
+
+```json
+{
+  "mcpServers": {
+    "plane": {
+      "command": "bunx",
+      "args": ["plane-mcp"],
+      "env": {
+        "PLANE_API_KEY": "your-api-token",
+        "PLANE_WORKSPACE_SLUG": "your-workspace"
+      }
+    }
+  }
+}
+```
+
+The HTTP mode (`plane-mcp-http`) is also available if you need one server to serve multiple clients. This is a Bun-native
+package; Node-only users would need to build it separately (out of scope).
+
+## Install as a local MCP (stdio) — Alternative
+
+As an alternative to the HTTP transport or the recommended `plane-mcp init` setup, you can install `plane-mcp` as a
+local command-launched MCP server using Bun's `bun link` feature. This allows MCP clients (Claude Code, Claude Desktop,
+etc.) to subprocess-launch their own dedicated server instance via stdio instead of connecting to a long-running HTTP
+server.
 
 ### Setup
 
@@ -143,8 +227,8 @@ bun unlink plane-mcp
 
 ### Configuration
 
-Environment variables are supplied by the MCP client — not by `.env` — and are never logged by the server. Secrets are protected by
-the client's own config storage (e.g., `~/.config/codeium/mcp.json` or Claude Desktop's settings).
+Environment variables are supplied by the MCP client — not by `.env` — and are never logged by the server. Secrets are
+protected by the client's own config storage (e.g., `~/.config/codeium/mcp.json` or Claude Desktop's settings).
 
 **Claude Code CLI (command form):**
 
@@ -152,6 +236,7 @@ the client's own config storage (e.g., `~/.config/codeium/mcp.json` or Claude De
 claude mcp add plane \
   --env PLANE_API_KEY=<your-token> \
   --env PLANE_WORKSPACE_SLUG=<your-workspace> \
+  --env PLANE_BASE_URL=https://plane.breezehq.dev \
   -- plane-mcp
 ```
 
@@ -166,21 +251,32 @@ claude mcp add plane \
       "env": {
         "PLANE_API_KEY": "your-api-token",
         "PLANE_WORKSPACE_SLUG": "your-workspace",
-        "PLANE_BASE_URL": "https://api.plane.so"
+        "PLANE_BASE_URL": "https://plane.breezehq.dev"
       }
     }
   }
 }
 ```
 
-The stdio server reads these env vars at startup and exposes the same 31 tools as the HTTP transport. No `PORT` env var is needed for
-stdio — the MCP client manages the process lifecycle.
+The stdio server reads these env vars at startup and exposes the same 31 tools as the HTTP transport. No `PORT` env var
+is needed for stdio — the MCP client manages the process lifecycle.
 
 ---
 
-**Note:** This "local MCP" install via stdio is the recommended approach for single-user, local setups. The HTTP transport (`bun run
-start` or `plane-mcp-http` bin entry) is still available if you need one server to serve multiple clients or to run long-lived in
+**Note:** This "local MCP" install via stdio is an alternative approach for single-user, local setups. The recommended
+approach is to use `plane-mcp init` (above), which manages your secrets securely. The HTTP transport (`bun run start` or
+`plane-mcp-http` bin entry) is still available if you need one server to serve multiple clients or to run long-lived in
 production.
+
+## Optional: Run as a persistent macOS launchd service
+
+If you want the plane-mcp HTTP server to persist in the background on macOS after login, you can use launchd. This is
+**entirely optional** — most users should use the `plane-mcp init` setup above.
+
+For a persistent macOS service, see `examples/macos-launchd/README.md`. This example demonstrates how to configure a
+LaunchAgent to keep the server running in the background, with logs in `~/Library/Logs/plane-mcp.*.log`.
+
+**Prerequisite:** You must first run `plane-mcp init <name>` to store your API key in the keychain.
 
 ## Tool Inventory
 

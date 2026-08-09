@@ -5,6 +5,7 @@ plans/
 docs/
 deploy/
 scripts/
+examples/
 node_modules/
 bunfig.toml
 bun.lock

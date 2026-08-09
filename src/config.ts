@@ -1,20 +1,49 @@
 import type { AuthContext } from '@types';
 import { log } from './logger';
+import { getSecret } from './secrets';
 
 const DEFAULT_BASE_URL = 'https://api.plane.so';
 const DEFAULT_PORT = 3000;
 
-export function loadAuthContext(): AuthContext {
-  const apiKey = process.env.PLANE_API_KEY;
+export async function loadAuthContext(
+  getSecretFn?: (name: string) => Promise<string | null>
+): Promise<AuthContext> {
+  const secret = getSecretFn ?? getSecret;
+  let apiKey: string | null | undefined = process.env.PLANE_API_KEY;
+
+  // Step (a): Check PLANE_API_KEY env var first
+  if (apiKey) {
+    // apiKey is set and non-empty; use it
+  } else {
+    // Step (b): Check PLANE_MCP_INSTANCE and resolve via keychain
+    const instance = process.env.PLANE_MCP_INSTANCE;
+    if (instance) {
+      const key = await secret(instance);
+      if (!key) {
+        log('error', 'No stored credential for instance', {
+          operation: 'config_load',
+          instance,
+          error: 'credential_not_found',
+        });
+        throw new Error(
+          `No stored credential for instance "${instance}". Run: plane-mcp init ${instance}`
+        );
+      }
+      apiKey = key;
+    } else {
+      // Step (c): Neither env var nor instance provided
+      log('error', 'Missing API key configuration', {
+        operation: 'config_load',
+        error: 'no_api_key_or_instance',
+      });
+      throw new Error(
+        'PLANE_API_KEY is not set and no PLANE_MCP_INSTANCE was provided. Run "plane-mcp init <name>" to store a key, or set PLANE_API_KEY.'
+      );
+    }
+  }
+
   const workspaceSlug = process.env.PLANE_WORKSPACE_SLUG;
 
-  if (!apiKey) {
-    log('error', 'Missing required env var', {
-      operation: 'config_load',
-      error: 'PLANE_API_KEY unset',
-    });
-    throw new Error('PLANE_API_KEY is required');
-  }
   if (!workspaceSlug) {
     log('error', 'Missing required env var', {
       operation: 'config_load',

@@ -4,11 +4,19 @@ import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { createServer } from './server';
 import { loadAuthContext } from './config';
 import { log } from './logger';
+import { runInit } from './init';
 
-const auth = loadAuthContext();
-const server = createServer(auth);
-const transport = new StdioServerTransport();
+const [, , subcommand, ...rest] = process.argv;
 
-log('info', 'plane-mcp stdio server starting', { operation: 'server_init', transport: 'stdio' });
+if (subcommand === 'init') {
+  await runInit(rest);
+} else {
+  // Default: run stdio server
+  const auth = await loadAuthContext();
+  const server = createServer(auth);
+  const transport = new StdioServerTransport();
 
-await server.connect(transport);
+  log('info', 'plane-mcp stdio server starting', { operation: 'server_init', transport: 'stdio' });
+
+  await server.connect(transport);
+}

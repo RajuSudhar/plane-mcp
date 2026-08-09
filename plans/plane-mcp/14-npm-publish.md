@@ -154,7 +154,7 @@ documenting:
 ## Open questions
 
 - **Real `repository` URL**: RESOLVED — the repository URL `git+https://github.com/RajuSudhar/plane-mcp.git`
-  is set in `package.json`. No further updates needed before publish.
+  is set in `package.json`. No further updates needed before publish.zhs
 - **`files` field**: intentionally omitted from `package.json`. Testing with this npm version showed
   that including `files` did not suppress test file shipping; `.npmignore` is the effective control.
   Rely on `.npmignore` (`**/*.test.ts` + `src/tools/client-stub.ts`) to keep the tarball clean.

@@ -63,8 +63,20 @@ We need a greenfield, Bun/TypeScript MCP server that:
   attachments, links, activities. These are real Plane resources but out of
   scope for this server's ticket-workflow focus. Revisit in a future RFC if
   needed — do not silently expand scope inside a phase.
-- Multi-workspace / multi-tenant support. One `PLANE_WORKSPACE_SLUG` per
-  server process.
+- ~~Multi-workspace / multi-tenant support. One `PLANE_WORKSPACE_SLUG` per
+  server process.~~ **Amended in Phase 16 (2026-08-07).** The "one
+  `PLANE_WORKSPACE_SLUG` per server process" constraint is unchanged — a
+  single running server still binds to exactly one workspace via one
+  `AuthContext`. What is relaxed is the framing of "single locally-hosted
+  server" as necessarily meaning one server _installation_ per machine:
+  a user now runs `plane-mcp init <name>` once per workspace to create
+  multiple independent, named local installs (`plane-<name>` in the MCP
+  client config, each with its own `PLANE_MCP_INSTANCE`), each still a
+  single-workspace, single-token, locally-hosted process per the original
+  design. This is not multi-tenant HTTP (no per-request header-based auth
+  is added — see Proposed design's AuthContext section, unchanged); it is
+  N independent single-tenant installs coexisting on one machine. See the
+  amendment note under Alternatives and `plans/plane-mcp/16-secure-setup.md`.
 - Auto-pagination inside `list_*` tools. Tools return the raw pagination
   envelope; the calling model drives cursor iteration (spec report §2.4).
 
@@ -110,6 +122,17 @@ is separate from `/mcp` and does not go through MCP framing.
 header-based auth (no multi-tenant HTTP+PAT header path from the spec report —
 that pattern is for the official server's remote multi-user mode; this server
 is single-workspace, single-token, locally hosted).
+
+**Amended in Phase 16 (2026-08-07):** `PLANE_API_KEY` gains a second source.
+Resolution order is now (1) `process.env.PLANE_API_KEY` if set — unchanged,
+kept as the env/CI/dev-fallback path; else (2) if `process.env.PLANE_MCP_INSTANCE`
+is set, the key is read from the OS-native credential store (macOS Keychain /
+Linux Secret Service / Windows Credential Manager or file fallback), namespaced
+`plane-mcp/<instance-name>`, written once by `plane-mcp init <name>`; else (3)
+a clear startup error directing the user to `plane-mcp init <name>`. This does
+not add a per-request auth path or change the "assembled once at process
+startup" property — the key is still resolved once, before the first request,
+into the same `AuthContext` shape. Full design: `plans/plane-mcp/16-secure-setup.md`.
 
 **PlaneClient** — one class, constructed once from `AuthContext`, passed into
 every tool call. Owns: base URL join, `X-API-Key` header injection, cursor
@@ -181,6 +204,17 @@ in a future RFC" note above for the local-install use case specifically;
 it does not reopen the Non-goals list beyond the one Non-goals line
 amended to point here.
 
+**Amendment (Phase 16, 2026-08-07):** the single-workspace, env-var-only auth
+model this alternatives entry and the "Multi-workspace / multi-tenant
+support" Non-goal both assumed is extended, not reversed, for secret storage
+and multi-workspace local use: `plane-mcp init <name>` writes the API key to
+an OS-native credential store once per named instance instead of requiring
+it to live in the MCP client's env config, and multiple `init` runs produce
+multiple independent single-workspace installs on one machine. Env-var auth
+(`PLANE_API_KEY` set directly) remains fully supported as the CI/dev
+fallback — nothing here removes it. No per-request or multi-tenant HTTP path
+is added. Full design: `plans/plane-mcp/16-secure-setup.md`.
+
 ### Full 100+ tool scope (mirror the official server) — rejected
 
 The spec report's catalog (§6) covers work item properties/types, worklogs,
@@ -228,19 +262,20 @@ returns `pong`) before any tool logic is built on top.
 
 ## Phase sketch
 
-| Phase | File                     | Goal                                                                                                                                                                                                                                                                          |
-| ----- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01    | `01-scaffold.md`         | Bun/TypeScript project skeleton, pinned deps, CI, empty-but-valid typecheck pass                                                                                                                                                                                              |
-| 02    | `02-tooling.md`          | Formatting/linting baseline: Prettier as the single formatter for `.ts`/`.json`/`.md` (per-language overrides), oxlint linter for `.ts` correctness (`.oxlintrc.json`), committed pre-commit hook wired via `core.hooksPath`, CI gating, one-time full-repo baseline reformat |
-| 03    | `03-transport.md`        | Stateless streamable-HTTP server on `/mcp`, health endpoint, `AuthContext` loader, temporary `ping` tool                                                                                                                                                                      |
-| 04    | `04-plane-client.md`     | `PlaneClient` class: headers, pagination passthrough, 429 handling, typed errors, normalization helpers                                                                                                                                                                       |
-| 05    | `05-tools-foundation.md` | Tool-registration pattern, zod v4 schemas, first vertical slice (`get_me`, `list_projects`, `retrieve_project`)                                                                                                                                                               |
-| 06    | `06-work-items.md`       | Work item CRUD + search + identifier lookup, field normalization                                                                                                                                                                                                              |
-| 07    | `07-collaboration.md`    | Comments CRUD, relations CRUD                                                                                                                                                                                                                                                 |
-| 08    | `08-workflow.md`         | States, labels, project/workspace members                                                                                                                                                                                                                                     |
-| 09    | `09-sprints.md`          | Cycles + modules, including work-item join/unjoin tools                                                                                                                                                                                                                       |
-| 10    | `10-hardening.md`        | README, ARCHITECTURE.md, final review pass, verify no `.js` emitted, full tool inventory check                                                                                                                                                                                |
-| 11    | `11-distribution.md`     | **Added post-hardening** (see Non-goals amendment + Alternatives amendment above): `src/stdio.ts` stdio transport entry point, `bun link`-installable `plane-mcp` bin, README local-MCP install section. HTTP transport unchanged.                                            |
+| Phase | File                     | Goal                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01    | `01-scaffold.md`         | Bun/TypeScript project skeleton, pinned deps, CI, empty-but-valid typecheck pass                                                                                                                                                                                                                                                                                                                                                                                          |
+| 02    | `02-tooling.md`          | Formatting/linting baseline: Prettier as the single formatter for `.ts`/`.json`/`.md` (per-language overrides), oxlint linter for `.ts` correctness (`.oxlintrc.json`), committed pre-commit hook wired via `core.hooksPath`, CI gating, one-time full-repo baseline reformat                                                                                                                                                                                             |
+| 03    | `03-transport.md`        | Stateless streamable-HTTP server on `/mcp`, health endpoint, `AuthContext` loader, temporary `ping` tool                                                                                                                                                                                                                                                                                                                                                                  |
+| 04    | `04-plane-client.md`     | `PlaneClient` class: headers, pagination passthrough, 429 handling, typed errors, normalization helpers                                                                                                                                                                                                                                                                                                                                                                   |
+| 05    | `05-tools-foundation.md` | Tool-registration pattern, zod v4 schemas, first vertical slice (`get_me`, `list_projects`, `retrieve_project`)                                                                                                                                                                                                                                                                                                                                                           |
+| 06    | `06-work-items.md`       | Work item CRUD + search + identifier lookup, field normalization                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 07    | `07-collaboration.md`    | Comments CRUD, relations CRUD                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 08    | `08-workflow.md`         | States, labels, project/workspace members                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 09    | `09-sprints.md`          | Cycles + modules, including work-item join/unjoin tools                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 10    | `10-hardening.md`        | README, ARCHITECTURE.md, final review pass, verify no `.js` emitted, full tool inventory check                                                                                                                                                                                                                                                                                                                                                                            |
+| 11    | `11-distribution.md`     | **Added post-hardening** (see Non-goals amendment + Alternatives amendment above): `src/stdio.ts` stdio transport entry point, `bun link`-installable `plane-mcp` bin, README local-MCP install section. HTTP transport unchanged.                                                                                                                                                                                                                                        |
+| 16    | `16-secure-setup.md`     | **Added post-Phase-15** (see Non-goals amendment + AuthContext amendment above): cross-platform OS-keychain secrets module (`src/secrets.ts`), `plane-mcp init <name>` CLI + `bin` dispatcher, `loadAuthContext` gains a keychain-backed resolution path keyed by `PLANE_MCP_INSTANCE`, multiple named local installs per workspace, Phase 15's macOS launchd artifacts relocated from repo-root `scripts/`/`deploy/` to `examples/macos-launchd/` as an optional add-on. |
 
 Each phase file follows the `docs/plans/README.md` plan.md template (Phase,
 Status, Depends on, Ref, Goal, In/Out of scope, Design, Tasks, Definition of
