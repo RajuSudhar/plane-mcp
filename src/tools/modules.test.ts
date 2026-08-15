@@ -212,10 +212,10 @@ describe('modules', () => {
       expect(postSpy).toHaveBeenCalledTimes(1);
       const callArgs = postSpy.mock.calls[0] as unknown[];
       const pathArg = callArgs[0] as string;
-      expect(pathArg).toContain('modules/m1/work-items/');
+      expect(pathArg).toContain('modules/m1/module-issues/');
 
       const bodyArg = callArgs[1] as Record<string, unknown>;
-      expect(bodyArg).toEqual({ work_item_ids: ['w1'] });
+      expect(bodyArg).toEqual({ issues: ['w1'] });
     });
 
     it('error path: PlaneApiError', async () => {
@@ -291,7 +291,7 @@ describe('modules', () => {
       expect(deleteSpy).toHaveBeenCalledTimes(1);
       const callArgs = deleteSpy.mock.calls[0] as unknown[];
       const pathArg = callArgs[0] as string;
-      expect(pathArg).toContain('modules/m1/work-items/w1/');
+      expect(pathArg).toContain('modules/m1/module-issues/w1/');
     });
 
     it('error path: PlaneApiError', async () => {

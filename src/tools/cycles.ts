@@ -65,9 +65,9 @@ export async function addWorkItemsToCycle(
   args: AddWorkItemsToCycleArgs
 ): Promise<ToolResult> {
   const { project_id, cycle_id, work_item_ids } = args;
-  const body = { work_item_ids };
+  const body = { issues: work_item_ids };
   const result = await client.post<Record<string, unknown>>(
-    client.workspacePath(`projects/${project_id}/cycles/${cycle_id}/work-items/`),
+    client.workspacePath(`projects/${project_id}/cycles/${cycle_id}/cycle-issues/`),
     body
   );
   return {
@@ -82,7 +82,7 @@ export async function removeWorkItemFromCycle(
 ): Promise<ToolResult> {
   const { project_id, cycle_id, work_item_id } = args;
   await client.delete(
-    client.workspacePath(`projects/${project_id}/cycles/${cycle_id}/work-items/${work_item_id}/`)
+    client.workspacePath(`projects/${project_id}/cycles/${cycle_id}/cycle-issues/${work_item_id}/`)
   );
   return {
     content: [{ type: 'text', text: 'Work item removed from cycle' }],

@@ -69,9 +69,9 @@ export async function addWorkItemsToModule(
   args: AddWorkItemsToModuleArgs
 ): Promise<ToolResult> {
   const { project_id, module_id, work_item_ids } = args;
-  const body = { work_item_ids };
+  const body = { issues: work_item_ids };
   const result = await client.post<Record<string, unknown>>(
-    client.workspacePath(`projects/${project_id}/modules/${module_id}/work-items/`),
+    client.workspacePath(`projects/${project_id}/modules/${module_id}/module-issues/`),
     body
   );
   return {
@@ -86,7 +86,9 @@ export async function removeWorkItemFromModule(
 ): Promise<ToolResult> {
   const { project_id, module_id, work_item_id } = args;
   await client.delete(
-    client.workspacePath(`projects/${project_id}/modules/${module_id}/work-items/${work_item_id}/`)
+    client.workspacePath(
+      `projects/${project_id}/modules/${module_id}/module-issues/${work_item_id}/`
+    )
   );
   return {
     content: [{ type: 'text', text: 'Work item removed from module' }],
