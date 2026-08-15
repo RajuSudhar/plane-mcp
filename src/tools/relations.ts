@@ -51,7 +51,7 @@ export async function createWorkItemRelation(
   args: CreateWorkItemRelationArgs
 ): Promise<ToolResult> {
   const { project_id, work_item_id, related_work_item_id, relation_type } = args;
-  const body = { related_work_item_id, relation_type };
+  const body = { relation_type, issues: [related_work_item_id] };
   const relation = await client.post<Relation>(
     client.workspacePath(`projects/${project_id}/work-items/${work_item_id}/relations/`),
     body

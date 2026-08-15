@@ -119,8 +119,8 @@ describe('relations', () => {
 
       const bodyArg = callArgs[1] as Record<string, unknown>;
       expect(bodyArg).toMatchObject({
-        related_work_item_id: 'w2',
         relation_type: 'blocking',
+        issues: ['w2'],
       });
     });
 
