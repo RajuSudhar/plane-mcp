@@ -2,6 +2,11 @@ import { spawn } from 'bun';
 import type { InitDeps } from '@types';
 import { setSecret } from './secrets';
 import { log } from './logger';
+import { getConfigDir } from './paths';
+import * as path from 'node:path';
+import { mkdir, writeFile, access } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { DEFAULT_MAX_OUTPUT_TOKENS } from './config';
 
 type ParsedArgs = {
   name: string | null;
@@ -10,6 +15,9 @@ type ParsedArgs = {
   port: number | null;
   key: string | null;
   register: boolean;
+  yes: boolean;
+  configPath: string | null;
+  maxOutputTokens: number | null;
 };
 
 function parseArgs(args: string[]): ParsedArgs {
@@ -20,6 +28,9 @@ function parseArgs(args: string[]): ParsedArgs {
     port: null,
     key: null,
     register: false,
+    yes: false,
+    configPath: null,
+    maxOutputTokens: null,
   };
 
   let i = 0;
@@ -55,6 +66,24 @@ function parseArgs(args: string[]): ParsedArgs {
       i += 1;
     } else if (arg === '--register') {
       result.register = true;
+      i += 1;
+    } else if (arg === '-y') {
+      result.yes = true;
+      i += 1;
+    } else if (arg === '--config-path') {
+      i += 1;
+      if (i < args.length) {
+        result.configPath = args[i];
+      }
+      i += 1;
+    } else if (arg === '--max-output-tokens') {
+      i += 1;
+      if (i < args.length) {
+        const parsed = Number.parseInt(args[i], 10);
+        if (!Number.isNaN(parsed)) {
+          result.maxOutputTokens = parsed;
+        }
+      }
       i += 1;
     } else if (!arg.startsWith('-')) {
       if (!result.name) {
@@ -234,6 +263,61 @@ async function defaultRunCommand(cmd: string[]): Promise<{ exitCode: number }> {
   return { exitCode: proc.exitCode ?? 1 };
 }
 
+const CONFIG_SCHEMA_URL =
+  'https://raw.githubusercontent.com/RajuSudhar/plane-mcp/master/plane-mcp.config.schema.json';
+
+function buildConfigScaffold(maxOutputTokens: number): string {
+  const scaffold = {
+    $schema: CONFIG_SCHEMA_URL,
+    defaults: { maxOutputTokens },
+    tools: {},
+  };
+  return JSON.stringify(scaffold, null, 2) + '\n';
+}
+
+async function defaultConfigFileExists(targetPath: string): Promise<boolean> {
+  try {
+    await access(targetPath, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function defaultWriteConfig(targetPath: string, contents: string): Promise<void> {
+  await mkdir(path.dirname(targetPath), { recursive: true, mode: 0o700 });
+  await writeFile(targetPath, contents, { mode: 0o600 });
+}
+
+async function scaffoldConfig(
+  parsed: ParsedArgs,
+  deps: InitDeps
+): Promise<{ path: string; created: boolean; existed: boolean }> {
+  const defaultPath = path.join(getConfigDir(), 'config.json');
+  const configFileExists = deps.configFileExistsFn ?? defaultConfigFileExists;
+  const writeConfig = deps.writeConfigFn ?? defaultWriteConfig;
+  const isTTYFn = deps.isTTYFn ?? (() => process.stdin.isTTY ?? false);
+
+  const targetPath = parsed.configPath ?? defaultPath;
+
+  const fileExisted = await configFileExists(targetPath);
+
+  if (!parsed.yes && isTTYFn() && deps.confirmFn) {
+    const proceed = await deps.confirmFn(`Create a starter config file at ${targetPath}? [Y/n] `);
+    if (!proceed) {
+      return { path: targetPath, created: false, existed: fileExisted };
+    }
+  }
+
+  if (fileExisted) {
+    return { path: targetPath, created: false, existed: true };
+  }
+
+  const maxOutputTokens = parsed.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS;
+  await writeConfig(targetPath, buildConfigScaffold(maxOutputTokens));
+  return { path: targetPath, created: true, existed: false };
+}
+
 export async function runInit(args: string[], deps?: InitDeps): Promise<void> {
   const parsed = parseArgs(args);
 
@@ -274,6 +358,9 @@ export async function runInit(args: string[], deps?: InitDeps): Promise<void> {
     instance: parsed.name,
   });
 
+  // Scaffold config file
+  const scaffold = await scaffoldConfig(parsed, deps ?? {});
+
   // Build the MCP server definition
   const serverName = `plane-${parsed.name}`;
   const env: Record<string, string> = {
@@ -281,6 +368,11 @@ export async function runInit(args: string[], deps?: InitDeps): Promise<void> {
     PLANE_WORKSPACE_SLUG: parsed.workspace,
     PLANE_BASE_URL: parsed.baseUrl,
   };
+
+  // Only set PLANE_MCP_CONFIG if the file exists (was created or already present)
+  if (scaffold.created || scaffold.existed) {
+    env.PLANE_MCP_CONFIG = scaffold.path;
+  }
 
   if (parsed.port !== null) {
     env.PORT = String(parsed.port);
@@ -304,6 +396,37 @@ export async function runInit(args: string[], deps?: InitDeps): Promise<void> {
   // Note about keychain storage
   process.stderr.write('API key stored in OS keychain (instance: ' + parsed.name + ')\n');
 
+  if (scaffold.created) {
+    process.stderr.write(`Starter config written to ${scaffold.path}\n`);
+  } else if (scaffold.existed) {
+    process.stderr.write(`Config already present at ${scaffold.path} (left unchanged)\n`);
+  } else {
+    process.stderr.write(`Config creation skipped at ${scaffold.path}.\n`);
+    process.stderr.write(
+      'Run "plane-mcp init" again with -y flag, or create a config file manually at the path above.\n'
+    );
+  }
+
+  if (scaffold.created || scaffold.existed) {
+    process.stderr.write(
+      '\nBehavior config (plane-mcp.config.json):\n' +
+        `  Location: ${scaffold.path}\n` +
+        '  Discovery order: PLANE_MCP_CONFIG env (absolute path) > ' +
+        './plane-mcp.config.json (cwd) > ~/.config/plane-mcp/config.json\n' +
+        '  Add a per-tool limit: {"tools": {"list_work_items": {"maxOutputTokens": 10000}}}\n' +
+        `  $schema is set to ${CONFIG_SCHEMA_URL} for editor validation\n` +
+        '  Run "plane-mcp help" for the full command/env reference.\n'
+    );
+  } else {
+    process.stderr.write(
+      '\nBehavior config (plane-mcp.config.json):\n' +
+        '  Discovery order: PLANE_MCP_CONFIG env (absolute path) > ' +
+        './plane-mcp.config.json (cwd) > ~/.config/plane-mcp/config.json\n' +
+        '  No config file is currently in place.\n' +
+        '  Run "plane-mcp help" for the full command/env reference.\n'
+    );
+  }
+
   // If --register, run claude mcp add
   if (parsed.register) {
     try {
@@ -321,6 +444,10 @@ export async function runInit(args: string[], deps?: InitDeps): Promise<void> {
         '--env',
         `PLANE_BASE_URL=${parsed.baseUrl}`,
       ];
+
+      if (env.PLANE_MCP_CONFIG) {
+        claudeArgs.push('--env', `PLANE_MCP_CONFIG=${env.PLANE_MCP_CONFIG}`);
+      }
 
       if (parsed.port !== null) {
         claudeArgs.push('--env', `PORT=${String(parsed.port)}`);
