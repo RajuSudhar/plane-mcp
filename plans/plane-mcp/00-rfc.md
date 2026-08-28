@@ -211,10 +211,54 @@ unchanged. Full design: `plans/plane-mcp/18-work-item-endpoints.md`. This
 inserts a new Phase 18 ahead of the original Phase 18-20 (now 19-21) — see
 the amended Phase sketch below.
 
+**Amended in Phases 22-25 (2026-08-28):** a validated, file-based
+`ServerConfig` is added alongside `AuthContext`, deliberately separate
+from it — `AuthContext` remains env-var-only (secrets/deploy values:
+`PLANE_API_KEY`, `PLANE_WORKSPACE_SLUG`, `PLANE_BASE_URL`, `PORT`);
+`ServerConfig` is a JSON file (behavior/tuning values: v1 ships exactly
+one, `defaults.maxOutputTokens` plus an optional per-tool
+`tools.<name>.maxOutputTokens` override), resolved by `loadServerConfig()`
+(`src/config.ts`) via a fixed discovery order (`PLANE_MCP_CONFIG` absolute
+path → `./plane-mcp.config.json` → `~/.config/plane-mcp/config.json` →
+built-in defaults, zero config required) and validated with a Zod v4
+`.strict()` schema so an unknown/misspelled key is a startup error, not a
+silently-ignored no-op. Both entry points (`src/stdio.ts`, `src/index.ts`)
+load it once at startup, exactly like `AuthContext`, and
+`createServer(auth, config)` threads it into every `registerXTools` call
+and into `toolHandler`, which now enforces the resolved limit:
+`gpt-tokenizer@4.0.0` (pure-JS, o200k_base encoding, ×1.2 conservatism
+multiplier for Claude's undercounted token ratio) counts the actual
+outgoing payload (`content` text plus `structuredContent`, since both are
+sent to the client) after a tool function returns a non-error result; a
+breach discards the result entirely and returns a guidance error naming
+the tool, the estimated count, the limit, and concrete narrowing options
+— never a truncated payload. `plane-mcp init` gains a config-scaffold step
+(never overwriting an existing file, never writing the API key into it), a
+non-interactive `-y` flag, and the server gains a `plane-mcp help`
+subcommand. This does not reopen any existing Non-goal — no OAuth, no
+Redis, no per-request auth path is added; `ServerConfig` carries no
+secret. It does flag, without fixing, a pre-existing property of every
+tool's return statement (Phases 05-09): `content`/`structuredContent`
+duplicate the same object into the outgoing payload, which the new token
+counter must measure honestly rather than under-count; collapsing that
+duplication is left to Phases 19-20 (which already touch every tool's
+return statement) or a later phase, not this one. **Recommended build
+order**: Phase 22 (pure addition, no existing call site touched) can land
+independently at any time; Phase 23 changes the signature of
+`createServer`, every `registerXTools`, and `toolHandler` — the same
+seam Phases 17/19/20 (response shaping) converge on from a different
+angle (return-statement shape, not signature) — so the two feature
+lines should not be implemented concurrently against those files, though
+either can go first; Phase 24 depends only on Phase 22's `getConfigDir`/
+config shape; Phase 25 is documentation-only and lands last. Full design:
+`plans/plane-mcp/22-server-config.md` through
+`plans/plane-mcp/25-config-docs.md`.
+
 **types/** — root-level shared types per `docs/CODING-STANDARDS.md`:
 `types/plane.ts` (wire shapes: WorkItem, Project, Cycle, Module, State, Label,
 Comment, Relation, Member, PaginationEnvelope<T>), `types/mcp.ts` (ToolResult,
-ToolContext), `types/config.ts` (AuthContext, EnvConfig), `types/logger.ts`
+ToolContext), `types/config.ts` (AuthContext, EnvConfig, ToolSettings,
+ServerConfig — the latter two added in Phase 22), `types/logger.ts`
 (LogLevel, LogContext), `types/common.ts` (shared utility types), re-exported
 from `types/index.ts`. Imported via the `@types` path alias.
 
@@ -341,6 +385,10 @@ returns `pong`) before any tool logic is built on top.
 | 19    | `19-list-projections.md`    | **Renumbered from the original Phase 18** (see Phase 18 amendment above). Apply minimal default per-item projections to every `list_*`/bulk/search tool (`list_projects`, `list_work_items`, `search_work_items`, `list_work_item_comments`, `get_project_members`, `get_workspace_members`, `list_states`, `list_labels`, `list_cycles`, `list_modules`); envelope/array wrapper untouched (including Phase 18's new scanned-result shape for `list_work_items`/`search_work_items`), `fields`/`full` opt-outs added.                                                                                                                    |
 | 20    | `20-retrieve-shaping.md`    | **Renumbered from the original Phase 19**, otherwise unchanged. Apply fuller default projections + long-text truncation (`max_description_chars`) to `retrieve_work_item`, `retrieve_project`, `retrieve_work_item_by_identifier` (the last of which gains `fields`/`full`/`max_description_chars` params it previously lacked entirely).                                                                                                                                                                                                                                                                                                 |
 | 21    | `21-context-docs.md`        | **Renumbered from the original Phase 20**, scope extended: update every touched tool's `description` string plus `README.md`/`docs/CODING-STANDARDS.md`/`CLAUDE.md` to document both the default-projection behavior (Phases 17, 19-20) and Phase 18's client-side filtering/search behavior + scan cap.                                                                                                                                                                                                                                                                                                                                  |
+| 22    | `22-server-config.md`       | **Added post-Phase-21** (see Proposed design amendment above): file-based `ServerConfig` (`types/config.ts`), Zod v4 `.strict()` schema + discovery-order loader + JSON-Schema generator (`src/config.ts`, `scripts/generate-config-schema.ts`), `resolveMaxOutputTokens`, shared `getConfigDir` (`src/paths.ts`, extracted from `src/secrets.ts`). Pure foundation — no existing call site changes.                                                                                                                                                                                                                                      |
+| 23    | `23-token-enforcement.md`   | **Added post-Phase-22**: `gpt-tokenizer@4.0.0` dependency, `src/tools/token-count.ts`, `ServerConfig` threaded through `createServer`/every `registerXTools`/`toolHandler`, reject-and-guide enforcement in `toolHandler` (discard-and-explain on breach, pass through unmodified under the limit or already-error). Flags, does not fix, the `content`/`structuredContent` double-representation for a future phase alongside 19-20.                                                                                                                                                                                                     |
+| 24    | `24-cli-config-help.md`     | **Added post-Phase-23**: `plane-mcp init` gains a config-scaffold step (never overwrites, never writes secrets), `-y` non-interactive flag, `--config-path`/`--max-output-tokens` flags; new `plane-mcp help`/`--help`/`-h` subcommand (`src/help.ts`); `src/stdio.ts` dispatcher decision logic extracted into a testable `resolveCommand`.                                                                                                                                                                                                                                                                                              |
+| 25    | `25-config-docs.md`         | **Added post-Phase-24**: `README.md` config section + example, `.env.example` additions, `CLAUDE.md` routing rows, repo-root example `plane-mcp.config.json`. Documentation only — `docs/SECURITY.md`'s `gpt-tokenizer` entry was already recorded in Phase 23.                                                                                                                                                                                                                                                                                                                                                                           |
 
 Each phase file follows the `docs/plans/README.md` plan.md template (Phase,
 Status, Depends on, Ref, Goal, In/Out of scope, Design, Tasks, Definition of

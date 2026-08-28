@@ -2,37 +2,39 @@
 
 ## Baseline SHA
 
-- **Full**: `d13168addd6538fee9ba1b84160e41f45d17cab3`
-- **Short**: `d13168a`
+- **Full**: `d4eaff2e9879122a57967965696d466dff79a67a`
+- **Short**: `d4eaff2`
 - **Branch**: `master`
-- **Latest commit**: `d13168a auth: keychain-backed setup with multi-instance`
+- **Latest commit**: `d4eaff2 tools: resolve work items by human identifier`
 
 ## Plan Tier
 
-`feature` — consumer-facing tool changes (response shaping, list projections, retrieve filters, context docs).
+`feature` — upcoming configurable-token-limit / server-config phases.
 
 ## Working-tree Drift
 
-Modified files:
+Working tree is clean at HEAD (d4eaff2) apart from this baseline file edit.
 
-- `docs/plans/TRACK.md` — tracking document updated with new phases
-- `examples/macos-launchd/com.plane-mcp.server.plist` — user's local launchd configuration
-- `examples/macos-launchd/plane-mcp-serve.sh` — user's local launchd script
-- `plans/plane-mcp/00-rfc.md` — amended RFC with phase resequencing
+**Config-feature relevant files** — the following files are **UNMODIFIED** at HEAD (confirmed via `git status --short`):
 
-Untracked files:
+- `src/config.ts`
+- `types/config.ts`
+- `src/server.ts`
+- `src/tools/register.ts`
+- `src/stdio.ts`
+- `src/index.ts`
+- `src/init.ts`
+- `package.json`
+- `docs/SECURITY.md`
+- `src/logger.ts`
 
-- `plans/plane-mcp/17-response-shaping.md` — new feature plan (response shaping)
-- `plans/plane-mcp/18-list-projections.md` — new feature plan (list projections)
-- `plans/plane-mcp/19-retrieve-shaping.md` — new feature plan (retrieve shaping)
-- `plans/plane-mcp/20-context-docs.md` — new feature plan (context docs)
-
-**Tool source files status**: The tool source files this feature will touch — `src/tools/work-items.ts`, `src/tools/modules.ts`, `src/tools/cycles.ts`, `src/plane/client.ts`, `types/client.ts` — are **UNMODIFIED** at the baseline SHA (none appear in `git status --short`).
+These are the surfaces the upcoming configurable-token-limit feature will touch.
 
 ## Sibling Plans
 
 All phase plans present in `plans/plane-mcp/`:
 
+- `00-baseline.md` — This baseline (tracking current HEAD)
 - `00-rfc.md` — Initial RFC and roadmap
 - `01-scaffold.md` — Project setup, TypeScript config, MCP SDK
 - `02-tooling.md` — Linting, formatting, type-check
@@ -50,11 +52,14 @@ All phase plans present in `plans/plane-mcp/`:
 - `14-npm-publish.md` — NPM package publishing
 - `15-local-service.md` — Local stdio entry, service scripts
 - `16-secure-setup.md` — Keychain-backed init CLI
-- `17-response-shaping.md` — Response shaping (new, untracked)
-- `18-list-projections.md` — List projections (new, untracked)
-- `19-retrieve-shaping.md` — Retrieve shaping (new, untracked)
-- `20-context-docs.md` — Context docs (new, untracked)
+- `17-response-shaping.md` — Response shaping
+- `18-work-item-endpoints.md` — Work item endpoints correctness
+- `19-list-projections.md` — List projections
+- `20-retrieve-shaping.md` — Retrieve shaping
+- `21-context-docs.md` — Context docs
+
+**No MOVED stub files present** — all phase plans are canonical documents.
 
 ## Note
 
-Baseline pinned by builder before spec-planner amendment adding the work-item-endpoints correctness phase and resequencing 17–21.
+Baseline refreshed by builder before spec-planner adds the configurable output-token-limit / server-config phases (22+). New dep planned: gpt-tokenizer@4.0.0 (pure-JS, MIT), pending docs/SECURITY.md check.
