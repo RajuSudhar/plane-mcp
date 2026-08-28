@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/server';
-import type { AuthContext } from '@types';
+import type { AuthContext, ServerConfig } from '@types';
 import { PlaneClient } from './plane/client';
 import { registerUserTools } from './tools/users';
 import { registerProjectTools } from './tools/projects';
@@ -12,7 +12,7 @@ import { registerMemberTools } from './tools/members';
 import { registerCycleTools } from './tools/cycles';
 import { registerModuleTools } from './tools/modules';
 
-export function createServer(auth: AuthContext): McpServer {
+export function createServer(auth: AuthContext, config: ServerConfig): McpServer {
   const server = new McpServer({
     name: 'plane-mcp',
     version: '0.1.0',
@@ -20,16 +20,16 @@ export function createServer(auth: AuthContext): McpServer {
 
   const client = new PlaneClient(auth);
 
-  registerUserTools(server, client);
-  registerProjectTools(server, client);
-  registerWorkItemTools(server, client);
-  registerCommentTools(server, client);
-  registerRelationTools(server, client);
-  registerStateTools(server, client);
-  registerLabelTools(server, client);
-  registerMemberTools(server, client);
-  registerCycleTools(server, client);
-  registerModuleTools(server, client);
+  registerUserTools(server, client, config);
+  registerProjectTools(server, client, config);
+  registerWorkItemTools(server, client, config);
+  registerCommentTools(server, client, config);
+  registerRelationTools(server, client, config);
+  registerStateTools(server, client, config);
+  registerLabelTools(server, client, config);
+  registerMemberTools(server, client, config);
+  registerCycleTools(server, client, config);
+  registerModuleTools(server, client, config);
 
   return server;
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { Label, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -46,14 +46,18 @@ export async function createLabel(client: PlaneApi, args: CreateLabelArgs): Prom
   };
 }
 
-export function registerLabelTools(server: McpServer, client: PlaneApi): void {
+export function registerLabelTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_labels',
     {
       description: 'List all labels for a project.',
       inputSchema: listLabelsSchema,
     },
-    toolHandler('list_labels', client, listLabels)
+    toolHandler('list_labels', client, listLabels, config)
   );
 
   server.registerTool(
@@ -62,6 +66,6 @@ export function registerLabelTools(server: McpServer, client: PlaneApi): void {
       description: 'Create a new label for a project.',
       inputSchema: createLabelSchema,
     },
-    toolHandler('create_label', client, createLabel)
+    toolHandler('create_label', client, createLabel, config)
   );
 }

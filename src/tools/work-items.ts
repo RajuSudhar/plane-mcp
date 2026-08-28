@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { PaginationEnvelope, WorkItem, ToolResult } from '@types';
 import { toolHandler } from './register';
 import { toWorkItemWriteBody } from '../plane/normalize';
@@ -232,7 +232,11 @@ export async function searchWorkItems(
   };
 }
 
-export function registerWorkItemTools(server: McpServer, client: PlaneApi): void {
+export function registerWorkItemTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_work_items',
     {
@@ -240,7 +244,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
         'List work items in a project with optional filtering by assignee, state, priority, labels, cycles, and modules.',
       inputSchema: listWorkItemsSchema,
     },
-    toolHandler('list_work_items', client, listWorkItems)
+    toolHandler('list_work_items', client, listWorkItems, config)
   );
 
   server.registerTool(
@@ -250,7 +254,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
         'Retrieve a single work item by its UUID. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: retrieveWorkItemSchema,
     },
-    toolHandler('retrieve_work_item', client, retrieveWorkItem)
+    toolHandler('retrieve_work_item', client, retrieveWorkItem, config)
   );
 
   server.registerTool(
@@ -260,7 +264,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
         'Retrieve a work item by its human-readable identifier such as BZ-5777 (format PROJECT-SEQUENCE). The workspace is taken from configuration; no UUID or project id is needed. Returns the full work item, including its UUID (the `id` field) for use with other tools that require a work item UUID.',
       inputSchema: retrieveWorkItemByIdentifierSchema,
     },
-    toolHandler('retrieve_work_item_by_identifier', client, retrieveWorkItemByIdentifier)
+    toolHandler('retrieve_work_item_by_identifier', client, retrieveWorkItemByIdentifier, config)
   );
 
   server.registerTool(
@@ -269,7 +273,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
       description: 'Create a new work item in a project.',
       inputSchema: createWorkItemSchema,
     },
-    toolHandler('create_work_item', client, createWorkItem)
+    toolHandler('create_work_item', client, createWorkItem, config)
   );
 
   server.registerTool(
@@ -279,7 +283,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
         'Update an existing work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: updateWorkItemSchema,
     },
-    toolHandler('update_work_item', client, updateWorkItem)
+    toolHandler('update_work_item', client, updateWorkItem, config)
   );
 
   server.registerTool(
@@ -289,7 +293,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
         'Delete a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: deleteWorkItemSchema,
     },
-    toolHandler('delete_work_item', client, deleteWorkItem)
+    toolHandler('delete_work_item', client, deleteWorkItem, config)
   );
 
   server.registerTool(
@@ -298,6 +302,6 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
       description: 'Search for work items in a project by query string.',
       inputSchema: searchWorkItemsSchema,
     },
-    toolHandler('search_work_items', client, searchWorkItems)
+    toolHandler('search_work_items', client, searchWorkItems, config)
   );
 }

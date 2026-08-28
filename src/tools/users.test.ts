@@ -3,6 +3,7 @@ import { PlaneApiError } from '../plane/errors';
 import { getMe } from './users';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('get_me', () => {
   it('success: resolves user data', async () => {
@@ -10,7 +11,7 @@ describe('get_me', () => {
     const getSpy = mock(async () => data);
     const client = stubClient({ get: getSpy });
 
-    const res = await toolHandler('get_me', client, getMe)({});
+    const res = await toolHandler('get_me', client, getMe, testConfig)({});
 
     expect(res.isError).toBeFalsy();
     const content = res.content[0];
@@ -29,7 +30,7 @@ describe('get_me', () => {
     });
     const client = stubClient({ get: getSpy });
 
-    const res = await toolHandler('get_me', client, getMe)({});
+    const res = await toolHandler('get_me', client, getMe, testConfig)({});
 
     expect(res.isError).toBe(true);
     const content = res.content[0];
@@ -44,7 +45,7 @@ describe('get_me', () => {
     });
     const client = stubClient({ get: getSpy });
 
-    const res = await toolHandler('get_me', client, getMe)({});
+    const res = await toolHandler('get_me', client, getMe, testConfig)({});
 
     expect(res.isError).toBe(true);
     const content = res.content[0];

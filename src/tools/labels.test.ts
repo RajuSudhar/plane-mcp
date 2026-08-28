@@ -3,6 +3,7 @@ import { PlaneApiError } from '../plane/errors';
 import { listLabels, createLabel, createLabelSchema } from './labels';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('labels', () => {
   describe('list_labels', () => {
@@ -14,7 +15,8 @@ describe('labels', () => {
       const res = await toolHandler(
         'list_labels',
         client,
-        listLabels
+        listLabels,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -45,7 +47,8 @@ describe('labels', () => {
       const res = await toolHandler(
         'list_labels',
         client,
-        listLabels
+        listLabels,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -65,7 +68,8 @@ describe('labels', () => {
       const res = await toolHandler(
         'list_labels',
         client,
-        listLabels
+        listLabels,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -86,7 +90,8 @@ describe('labels', () => {
       const res = await toolHandler(
         'create_label',
         client,
-        createLabel
+        createLabel,
+        testConfig
       )({
         project_id: 'p1',
         name: 'bug',
@@ -121,7 +126,8 @@ describe('labels', () => {
       const res = await toolHandler(
         'create_label',
         client,
-        createLabel
+        createLabel,
+        testConfig
       )({
         project_id: 'p1',
         name: 'bug',
@@ -143,7 +149,8 @@ describe('labels', () => {
       const res = await toolHandler(
         'create_label',
         client,
-        createLabel
+        createLabel,
+        testConfig
       )({
         project_id: 'p1',
         name: 'bug',

@@ -32,6 +32,23 @@ If you discover a security vulnerability, please email [your-email] instead of u
 - Minimal dependency footprint to reduce attack surface
 - Exact version pinning in `package.json`
 
+### Security-Reviewed Dependencies
+
+#### gpt-tokenizer@4.0.0
+
+- **Purpose**: Local token counting to enforce per-tool output-token limits (reject-and-guide guard). Avoids the network round-trip and API key requirement of Anthropic's `count_tokens` endpoint.
+- **Version**: Exactly pinned to `4.0.0` (no caret/tilde); `bun.lock` committed.
+- **License**: MIT
+- **Security Profile**:
+  - Pure TypeScript/JavaScript
+  - Zero runtime dependencies
+  - No native addons, no WASM binary
+  - No postinstall/lifecycle scripts
+  - No network calls, no telemetry
+  - Uses o200k_base BPE encoding
+- **Accuracy Note**: tiktoken-family encoders undercount Claude tokens by ~15-20%. Code applies a 1.2x safety multiplier for conservative approximation (acceptable for budget guard, not billing).
+- **Security Check**: Reviewed against compromised-package list, npm registry, and GitHub source. Actively maintained (release Aug 2026). Clean profile.
+
 ## Token Handling
 
 **CRITICAL**: Plane API credentials must be protected at all times.

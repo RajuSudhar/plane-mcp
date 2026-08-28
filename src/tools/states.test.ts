@@ -3,6 +3,7 @@ import { PlaneApiError } from '../plane/errors';
 import { listStates, createState, createStateSchema } from './states';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('states', () => {
   describe('list_states', () => {
@@ -14,7 +15,8 @@ describe('states', () => {
       const res = await toolHandler(
         'list_states',
         client,
-        listStates
+        listStates,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -45,7 +47,8 @@ describe('states', () => {
       const res = await toolHandler(
         'list_states',
         client,
-        listStates
+        listStates,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -65,7 +68,8 @@ describe('states', () => {
       const res = await toolHandler(
         'list_states',
         client,
-        listStates
+        listStates,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -86,7 +90,8 @@ describe('states', () => {
       const res = await toolHandler(
         'create_state',
         client,
-        createState
+        createState,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Todo',
@@ -123,7 +128,8 @@ describe('states', () => {
       const res = await toolHandler(
         'create_state',
         client,
-        createState
+        createState,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Todo',
@@ -146,7 +152,8 @@ describe('states', () => {
       const res = await toolHandler(
         'create_state',
         client,
-        createState
+        createState,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Todo',

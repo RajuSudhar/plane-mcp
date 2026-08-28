@@ -8,6 +8,7 @@ import {
 } from './comments';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('comments', () => {
   describe('list_work_item_comments', () => {
@@ -19,7 +20,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'list_work_item_comments',
         client,
-        listWorkItemComments
+        listWorkItemComments,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -46,7 +48,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'list_work_item_comments',
         client,
-        listWorkItemComments
+        listWorkItemComments,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -67,7 +70,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'list_work_item_comments',
         client,
-        listWorkItemComments
+        listWorkItemComments,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -89,7 +93,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'create_work_item_comment',
         client,
-        createWorkItemComment
+        createWorkItemComment,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -120,7 +125,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'create_work_item_comment',
         client,
-        createWorkItemComment
+        createWorkItemComment,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -143,7 +149,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'update_work_item_comment',
         client,
-        updateWorkItemComment
+        updateWorkItemComment,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -175,7 +182,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'update_work_item_comment',
         client,
-        updateWorkItemComment
+        updateWorkItemComment,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -198,7 +206,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'delete_work_item_comment',
         client,
-        deleteWorkItemComment
+        deleteWorkItemComment,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -226,7 +235,8 @@ describe('comments', () => {
       const res = await toolHandler(
         'delete_work_item_comment',
         client,
-        deleteWorkItemComment
+        deleteWorkItemComment,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',

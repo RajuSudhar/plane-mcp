@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { Module, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -96,14 +96,18 @@ export async function removeWorkItemFromModule(
   };
 }
 
-export function registerModuleTools(server: McpServer, client: PlaneApi): void {
+export function registerModuleTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_modules',
     {
       description: 'List all modules for a project.',
       inputSchema: listModulesSchema,
     },
-    toolHandler('list_modules', client, listModules)
+    toolHandler('list_modules', client, listModules, config)
   );
 
   server.registerTool(
@@ -112,7 +116,7 @@ export function registerModuleTools(server: McpServer, client: PlaneApi): void {
       description: 'Create a new module for a project.',
       inputSchema: createModuleSchema,
     },
-    toolHandler('create_module', client, createModule)
+    toolHandler('create_module', client, createModule, config)
   );
 
   server.registerTool(
@@ -122,7 +126,7 @@ export function registerModuleTools(server: McpServer, client: PlaneApi): void {
         'Add work items to a module. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: addWorkItemsToModuleSchema,
     },
-    toolHandler('add_work_items_to_module', client, addWorkItemsToModule)
+    toolHandler('add_work_items_to_module', client, addWorkItemsToModule, config)
   );
 
   server.registerTool(
@@ -132,6 +136,6 @@ export function registerModuleTools(server: McpServer, client: PlaneApi): void {
         'Remove a work item from a module. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: removeWorkItemFromModuleSchema,
     },
-    toolHandler('remove_work_item_from_module', client, removeWorkItemFromModule)
+    toolHandler('remove_work_item_from_module', client, removeWorkItemFromModule, config)
   );
 }

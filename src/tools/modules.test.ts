@@ -9,6 +9,7 @@ import {
 } from './modules';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('modules', () => {
   describe('list_modules', () => {
@@ -32,7 +33,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'list_modules',
         client,
-        listModules
+        listModules,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -63,7 +65,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'list_modules',
         client,
-        listModules
+        listModules,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -83,7 +86,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'list_modules',
         client,
-        listModules
+        listModules,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -114,7 +118,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'create_module',
         client,
-        createModule
+        createModule,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Auth',
@@ -151,7 +156,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'create_module',
         client,
-        createModule
+        createModule,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Auth',
@@ -174,7 +180,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'create_module',
         client,
-        createModule
+        createModule,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Auth',
@@ -197,7 +204,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'add_work_items_to_module',
         client,
-        addWorkItemsToModule
+        addWorkItemsToModule,
+        testConfig
       )({
         project_id: 'p1',
         module_id: 'm1',
@@ -227,7 +235,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'add_work_items_to_module',
         client,
-        addWorkItemsToModule
+        addWorkItemsToModule,
+        testConfig
       )({
         project_id: 'p1',
         module_id: 'm1',
@@ -249,7 +258,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'add_work_items_to_module',
         client,
-        addWorkItemsToModule
+        addWorkItemsToModule,
+        testConfig
       )({
         project_id: 'p1',
         module_id: 'm1',
@@ -271,7 +281,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'remove_work_item_from_module',
         client,
-        removeWorkItemFromModule
+        removeWorkItemFromModule,
+        testConfig
       )({
         project_id: 'p1',
         module_id: 'm1',
@@ -303,7 +314,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'remove_work_item_from_module',
         client,
-        removeWorkItemFromModule
+        removeWorkItemFromModule,
+        testConfig
       )({
         project_id: 'p1',
         module_id: 'm1',
@@ -325,7 +337,8 @@ describe('modules', () => {
       const res = await toolHandler(
         'remove_work_item_from_module',
         client,
-        removeWorkItemFromModule
+        removeWorkItemFromModule,
+        testConfig
       )({
         project_id: 'p1',
         module_id: 'm1',

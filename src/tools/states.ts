@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { State, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -49,14 +49,18 @@ export async function createState(client: PlaneApi, args: CreateStateArgs): Prom
   };
 }
 
-export function registerStateTools(server: McpServer, client: PlaneApi): void {
+export function registerStateTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_states',
     {
       description: 'List all states for a project.',
       inputSchema: listStatesSchema,
     },
-    toolHandler('list_states', client, listStates)
+    toolHandler('list_states', client, listStates, config)
   );
 
   server.registerTool(
@@ -65,6 +69,6 @@ export function registerStateTools(server: McpServer, client: PlaneApi): void {
       description: 'Create a new state for a project.',
       inputSchema: createStateSchema,
     },
-    toolHandler('create_state', client, createState)
+    toolHandler('create_state', client, createState, config)
   );
 }

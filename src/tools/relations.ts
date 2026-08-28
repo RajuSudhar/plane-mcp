@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { Relation, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -78,7 +78,11 @@ export async function removeWorkItemRelation(
   };
 }
 
-export function registerRelationTools(server: McpServer, client: PlaneApi): void {
+export function registerRelationTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_work_item_relations',
     {
@@ -86,7 +90,7 @@ export function registerRelationTools(server: McpServer, client: PlaneApi): void
         'List relations for a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: listWorkItemRelationsSchema,
     },
-    toolHandler('list_work_item_relations', client, listWorkItemRelations)
+    toolHandler('list_work_item_relations', client, listWorkItemRelations, config)
   );
 
   server.registerTool(
@@ -96,7 +100,7 @@ export function registerRelationTools(server: McpServer, client: PlaneApi): void
         'Create a relation between work items. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: createWorkItemRelationSchema,
     },
-    toolHandler('create_work_item_relation', client, createWorkItemRelation)
+    toolHandler('create_work_item_relation', client, createWorkItemRelation, config)
   );
 
   server.registerTool(
@@ -106,6 +110,6 @@ export function registerRelationTools(server: McpServer, client: PlaneApi): void
         'Remove a relation between work items. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: removeWorkItemRelationSchema,
     },
-    toolHandler('remove_work_item_relation', client, removeWorkItemRelation)
+    toolHandler('remove_work_item_relation', client, removeWorkItemRelation, config)
   );
 }

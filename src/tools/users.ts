@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -15,10 +15,10 @@ export async function getMe(client: PlaneApi, _args: GetMeArgs): Promise<ToolRes
   };
 }
 
-export function registerUserTools(server: McpServer, client: PlaneApi): void {
+export function registerUserTools(server: McpServer, client: PlaneApi, config: ServerConfig): void {
   server.registerTool(
     'get_me',
     { description: "Return the authenticated user's profile.", inputSchema: getMeSchema },
-    toolHandler('get_me', client, getMe)
+    toolHandler('get_me', client, getMe, config)
   );
 }

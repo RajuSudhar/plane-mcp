@@ -11,6 +11,7 @@ import {
 } from './work-items';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('work-items', () => {
   describe('list_work_items', () => {
@@ -22,7 +23,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'list_work_items',
         client,
-        listWorkItems
+        listWorkItems,
+        testConfig
       )({
         project_id: 'p1',
         state_ids: ['s1', 's2'],
@@ -58,7 +60,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'list_work_items',
         client,
-        listWorkItems
+        listWorkItems,
+        testConfig
       )({
         project_id: 'p1',
         assignee_ids: ['a1', 'a2'],
@@ -104,7 +107,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'list_work_items',
         client,
-        listWorkItems
+        listWorkItems,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -124,7 +128,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'list_work_items',
         client,
-        listWorkItems
+        listWorkItems,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -145,7 +150,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'retrieve_work_item',
         client,
-        retrieveWorkItem
+        retrieveWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -172,7 +178,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'retrieve_work_item',
         client,
-        retrieveWorkItem
+        retrieveWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -194,7 +201,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'retrieve_work_item_by_identifier',
         client,
-        retrieveWorkItemByIdentifier
+        retrieveWorkItemByIdentifier,
+        testConfig
       )({
         identifier: 'BZ-5777',
       });
@@ -219,7 +227,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'retrieve_work_item_by_identifier',
         client,
-        retrieveWorkItemByIdentifier
+        retrieveWorkItemByIdentifier,
+        testConfig
       )({
         identifier: '  BZ-5777  ',
       });
@@ -244,7 +253,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'retrieve_work_item_by_identifier',
         client,
-        retrieveWorkItemByIdentifier
+        retrieveWorkItemByIdentifier,
+        testConfig
       )({
         identifier: 'BZ-5777',
       });
@@ -266,7 +276,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'create_work_item',
         client,
-        createWorkItem
+        createWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Bug',
@@ -304,7 +315,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'create_work_item',
         client,
-        createWorkItem
+        createWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Feature',
@@ -353,7 +365,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'update_work_item',
         client,
-        updateWorkItem
+        updateWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -385,7 +398,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'update_work_item',
         client,
-        updateWorkItem
+        updateWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -408,7 +422,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'delete_work_item',
         client,
-        deleteWorkItem
+        deleteWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -435,7 +450,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'delete_work_item',
         client,
-        deleteWorkItem
+        deleteWorkItem,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -457,7 +473,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'search_work_items',
         client,
-        searchWorkItems
+        searchWorkItems,
+        testConfig
       )({
         project_id: 'p1',
         query: 'login bug',
@@ -487,7 +504,8 @@ describe('work-items', () => {
       const res = await toolHandler(
         'search_work_items',
         client,
-        searchWorkItems
+        searchWorkItems,
+        testConfig
       )({
         project_id: 'p1',
         query: 'test',

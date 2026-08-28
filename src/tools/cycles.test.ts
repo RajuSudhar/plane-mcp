@@ -9,6 +9,7 @@ import {
 } from './cycles';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('cycles', () => {
   describe('list_cycles', () => {
@@ -32,7 +33,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'list_cycles',
         client,
-        listCycles
+        listCycles,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -63,7 +65,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'list_cycles',
         client,
-        listCycles
+        listCycles,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -83,7 +86,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'list_cycles',
         client,
-        listCycles
+        listCycles,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -114,7 +118,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'create_cycle',
         client,
-        createCycle
+        createCycle,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Sprint 1',
@@ -151,7 +156,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'create_cycle',
         client,
-        createCycle
+        createCycle,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Sprint 1',
@@ -174,7 +180,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'create_cycle',
         client,
-        createCycle
+        createCycle,
+        testConfig
       )({
         project_id: 'p1',
         name: 'Sprint 1',
@@ -197,7 +204,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'add_work_items_to_cycle',
         client,
-        addWorkItemsToCycle
+        addWorkItemsToCycle,
+        testConfig
       )({
         project_id: 'p1',
         cycle_id: 'cy1',
@@ -227,7 +235,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'add_work_items_to_cycle',
         client,
-        addWorkItemsToCycle
+        addWorkItemsToCycle,
+        testConfig
       )({
         project_id: 'p1',
         cycle_id: 'cy1',
@@ -249,7 +258,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'add_work_items_to_cycle',
         client,
-        addWorkItemsToCycle
+        addWorkItemsToCycle,
+        testConfig
       )({
         project_id: 'p1',
         cycle_id: 'cy1',
@@ -271,7 +281,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'remove_work_item_from_cycle',
         client,
-        removeWorkItemFromCycle
+        removeWorkItemFromCycle,
+        testConfig
       )({
         project_id: 'p1',
         cycle_id: 'cy1',
@@ -303,7 +314,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'remove_work_item_from_cycle',
         client,
-        removeWorkItemFromCycle
+        removeWorkItemFromCycle,
+        testConfig
       )({
         project_id: 'p1',
         cycle_id: 'cy1',
@@ -325,7 +337,8 @@ describe('cycles', () => {
       const res = await toolHandler(
         'remove_work_item_from_cycle',
         client,
-        removeWorkItemFromCycle
+        removeWorkItemFromCycle,
+        testConfig
       )({
         project_id: 'p1',
         cycle_id: 'cy1',

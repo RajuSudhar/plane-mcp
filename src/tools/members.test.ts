@@ -3,6 +3,7 @@ import { PlaneApiError } from '../plane/errors';
 import { getProjectMembers, getWorkspaceMembers } from './members';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('members', () => {
   describe('get_project_members', () => {
@@ -14,7 +15,8 @@ describe('members', () => {
       const res = await toolHandler(
         'get_project_members',
         client,
-        getProjectMembers
+        getProjectMembers,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -45,7 +47,8 @@ describe('members', () => {
       const res = await toolHandler(
         'get_project_members',
         client,
-        getProjectMembers
+        getProjectMembers,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -65,7 +68,8 @@ describe('members', () => {
       const res = await toolHandler(
         'get_project_members',
         client,
-        getProjectMembers
+        getProjectMembers,
+        testConfig
       )({
         project_id: 'p1',
       });
@@ -83,7 +87,12 @@ describe('members', () => {
       const getSpy = mock(async () => data);
       const client = stubClient({ get: getSpy });
 
-      const res = await toolHandler('get_workspace_members', client, getWorkspaceMembers)({});
+      const res = await toolHandler(
+        'get_workspace_members',
+        client,
+        getWorkspaceMembers,
+        testConfig
+      )({});
 
       expect(res.isError).toBeFalsy();
       const content = res.content[0] as { type: 'text'; text: string };
@@ -110,7 +119,12 @@ describe('members', () => {
       });
       const client = stubClient({ get: getSpy });
 
-      const res = await toolHandler('get_workspace_members', client, getWorkspaceMembers)({});
+      const res = await toolHandler(
+        'get_workspace_members',
+        client,
+        getWorkspaceMembers,
+        testConfig
+      )({});
 
       expect(res.isError).toBe(true);
       const content = res.content[0] as { type: 'text'; text: string };
@@ -124,7 +138,12 @@ describe('members', () => {
       });
       const client = stubClient({ get: getSpy });
 
-      const res = await toolHandler('get_workspace_members', client, getWorkspaceMembers)({});
+      const res = await toolHandler(
+        'get_workspace_members',
+        client,
+        getWorkspaceMembers,
+        testConfig
+      )({});
 
       expect(res.isError).toBe(true);
       const content = res.content[0] as { type: 'text'; text: string };

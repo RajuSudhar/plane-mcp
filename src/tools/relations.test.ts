@@ -8,6 +8,7 @@ import {
 } from './relations';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('relations', () => {
   describe('list_work_item_relations', () => {
@@ -19,7 +20,8 @@ describe('relations', () => {
       const res = await toolHandler(
         'list_work_item_relations',
         client,
-        listWorkItemRelations
+        listWorkItemRelations,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -51,7 +53,8 @@ describe('relations', () => {
       const res = await toolHandler(
         'list_work_item_relations',
         client,
-        listWorkItemRelations
+        listWorkItemRelations,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -72,7 +75,8 @@ describe('relations', () => {
       const res = await toolHandler(
         'list_work_item_relations',
         client,
-        listWorkItemRelations
+        listWorkItemRelations,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -98,7 +102,8 @@ describe('relations', () => {
       const res = await toolHandler(
         'create_work_item_relation',
         client,
-        createWorkItemRelation
+        createWorkItemRelation,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -133,7 +138,8 @@ describe('relations', () => {
       const res = await toolHandler(
         'create_work_item_relation',
         client,
-        createWorkItemRelation
+        createWorkItemRelation,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -156,7 +162,8 @@ describe('relations', () => {
       const res = await toolHandler(
         'remove_work_item_relation',
         client,
-        removeWorkItemRelation
+        removeWorkItemRelation,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',
@@ -184,7 +191,8 @@ describe('relations', () => {
       const res = await toolHandler(
         'remove_work_item_relation',
         client,
-        removeWorkItemRelation
+        removeWorkItemRelation,
+        testConfig
       )({
         project_id: 'p1',
         work_item_id: 'w1',

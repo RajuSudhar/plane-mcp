@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { PaginationEnvelope, Project, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -44,7 +44,11 @@ export async function retrieveProject(
   };
 }
 
-export function registerProjectTools(server: McpServer, client: PlaneApi): void {
+export function registerProjectTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_projects',
     {
@@ -52,12 +56,12 @@ export function registerProjectTools(server: McpServer, client: PlaneApi): void 
         'List projects in the configured workspace. Returns the raw pagination envelope.',
       inputSchema: listProjectsSchema,
     },
-    toolHandler('list_projects', client, listProjects)
+    toolHandler('list_projects', client, listProjects, config)
   );
 
   server.registerTool(
     'retrieve_project',
     { description: 'Retrieve a single project by UUID.', inputSchema: retrieveProjectSchema },
-    toolHandler('retrieve_project', client, retrieveProject)
+    toolHandler('retrieve_project', client, retrieveProject, config)
   );
 }

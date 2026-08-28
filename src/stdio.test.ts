@@ -2,7 +2,7 @@ import { describe, it, expect } from 'bun:test';
 import { PassThrough } from 'node:stream';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { createServer } from './server';
-import type { AuthContext } from '@types';
+import type { AuthContext, ServerConfig } from '@types';
 
 describe('stdio transport', () => {
   it('should handle JSON-RPC initialize request', async () => {
@@ -11,8 +11,12 @@ describe('stdio transport', () => {
       workspaceSlug: 'test-workspace',
       baseUrl: 'https://api.plane.so',
     };
+    const config: ServerConfig = {
+      defaults: { maxOutputTokens: 1_000_000 },
+      tools: {},
+    };
 
-    const server = createServer(auth);
+    const server = createServer(auth, config);
     const input = new PassThrough();
     const output = new PassThrough();
 

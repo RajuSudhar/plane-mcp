@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { PaginationEnvelope, Comment, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -95,7 +95,11 @@ export async function deleteWorkItemComment(
   };
 }
 
-export function registerCommentTools(server: McpServer, client: PlaneApi): void {
+export function registerCommentTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_work_item_comments',
     {
@@ -103,7 +107,7 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
         'List comments for a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: listWorkItemCommentsSchema,
     },
-    toolHandler('list_work_item_comments', client, listWorkItemComments)
+    toolHandler('list_work_item_comments', client, listWorkItemComments, config)
   );
 
   server.registerTool(
@@ -113,7 +117,7 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
         'Create a comment on a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: createWorkItemCommentSchema,
     },
-    toolHandler('create_work_item_comment', client, createWorkItemComment)
+    toolHandler('create_work_item_comment', client, createWorkItemComment, config)
   );
 
   server.registerTool(
@@ -123,7 +127,7 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
         'Update a comment on a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: updateWorkItemCommentSchema,
     },
-    toolHandler('update_work_item_comment', client, updateWorkItemComment)
+    toolHandler('update_work_item_comment', client, updateWorkItemComment, config)
   );
 
   server.registerTool(
@@ -133,6 +137,6 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
         'Delete a comment from a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: deleteWorkItemCommentSchema,
     },
-    toolHandler('delete_work_item_comment', client, deleteWorkItemComment)
+    toolHandler('delete_work_item_comment', client, deleteWorkItemComment, config)
   );
 }

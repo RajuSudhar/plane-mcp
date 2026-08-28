@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { Member, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -36,14 +36,18 @@ export async function getWorkspaceMembers(
   };
 }
 
-export function registerMemberTools(server: McpServer, client: PlaneApi): void {
+export function registerMemberTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'get_project_members',
     {
       description: 'Get all members of a project.',
       inputSchema: getProjectMembersSchema,
     },
-    toolHandler('get_project_members', client, getProjectMembers)
+    toolHandler('get_project_members', client, getProjectMembers, config)
   );
 
   server.registerTool(
@@ -52,6 +56,6 @@ export function registerMemberTools(server: McpServer, client: PlaneApi): void {
       description: 'Get all members of the workspace.',
       inputSchema: getWorkspaceMembersSchema,
     },
-    toolHandler('get_workspace_members', client, getWorkspaceMembers)
+    toolHandler('get_workspace_members', client, getWorkspaceMembers, config)
   );
 }

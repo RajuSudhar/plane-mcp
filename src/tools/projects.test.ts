@@ -3,6 +3,7 @@ import { PlaneApiError } from '../plane/errors';
 import { listProjects, retrieveProject } from './projects';
 import { toolHandler } from './register';
 import { stubClient } from './client-stub';
+import { testConfig } from './test-config';
 
 describe('list_projects', () => {
   it('success with pagination passthrough', async () => {
@@ -13,7 +14,8 @@ describe('list_projects', () => {
     const res = await toolHandler(
       'list_projects',
       client,
-      listProjects
+      listProjects,
+      testConfig
     )({
       cursor: 'c1',
       per_page: 10,
@@ -38,7 +40,7 @@ describe('list_projects', () => {
     });
     const client = stubClient({ get: getSpy });
 
-    const res = await toolHandler('list_projects', client, listProjects)({});
+    const res = await toolHandler('list_projects', client, listProjects, testConfig)({});
 
     expect(res.isError).toBe(true);
     const content = res.content[0];
@@ -53,7 +55,7 @@ describe('list_projects', () => {
     });
     const client = stubClient({ get: getSpy });
 
-    const res = await toolHandler('list_projects', client, listProjects)({});
+    const res = await toolHandler('list_projects', client, listProjects, testConfig)({});
 
     expect(res.isError).toBe(true);
     const content = res.content[0];
@@ -72,7 +74,8 @@ describe('retrieve_project', () => {
     const res = await toolHandler(
       'retrieve_project',
       client,
-      retrieveProject
+      retrieveProject,
+      testConfig
     )({
       project_id: 'p1',
     });
@@ -100,7 +103,8 @@ describe('retrieve_project', () => {
     const res = await toolHandler(
       'retrieve_project',
       client,
-      retrieveProject
+      retrieveProject,
+      testConfig
     )({
       project_id: 'p1',
     });
@@ -121,7 +125,8 @@ describe('retrieve_project', () => {
     const res = await toolHandler(
       'retrieve_project',
       client,
-      retrieveProject
+      retrieveProject,
+      testConfig
     )({
       project_id: 'p1',
     });

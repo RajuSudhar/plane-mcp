@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/server';
-import type { PlaneApi } from '@types';
+import type { PlaneApi, ServerConfig } from '@types';
 import type { Cycle, ToolResult } from '@types';
 import { toolHandler } from './register';
 
@@ -90,14 +90,18 @@ export async function removeWorkItemFromCycle(
   };
 }
 
-export function registerCycleTools(server: McpServer, client: PlaneApi): void {
+export function registerCycleTools(
+  server: McpServer,
+  client: PlaneApi,
+  config: ServerConfig
+): void {
   server.registerTool(
     'list_cycles',
     {
       description: 'List all cycles for a project.',
       inputSchema: listCyclesSchema,
     },
-    toolHandler('list_cycles', client, listCycles)
+    toolHandler('list_cycles', client, listCycles, config)
   );
 
   server.registerTool(
@@ -106,7 +110,7 @@ export function registerCycleTools(server: McpServer, client: PlaneApi): void {
       description: 'Create a new cycle for a project.',
       inputSchema: createCycleSchema,
     },
-    toolHandler('create_cycle', client, createCycle)
+    toolHandler('create_cycle', client, createCycle, config)
   );
 
   server.registerTool(
@@ -116,7 +120,7 @@ export function registerCycleTools(server: McpServer, client: PlaneApi): void {
         'Add work items to a cycle. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: addWorkItemsToCycleSchema,
     },
-    toolHandler('add_work_items_to_cycle', client, addWorkItemsToCycle)
+    toolHandler('add_work_items_to_cycle', client, addWorkItemsToCycle, config)
   );
 
   server.registerTool(
@@ -126,6 +130,6 @@ export function registerCycleTools(server: McpServer, client: PlaneApi): void {
         'Remove a work item from a cycle. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: removeWorkItemFromCycleSchema,
     },
-    toolHandler('remove_work_item_from_cycle', client, removeWorkItemFromCycle)
+    toolHandler('remove_work_item_from_cycle', client, removeWorkItemFromCycle, config)
   );
 }

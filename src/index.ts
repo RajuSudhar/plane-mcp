@@ -3,14 +3,15 @@
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createMcpHonoApp } from '@modelcontextprotocol/hono';
 import { createServer } from './server';
-import { loadAuthContext, loadPort } from './config';
+import { loadAuthContext, loadPort, loadServerConfig } from './config';
 import { log } from './logger';
 
 const auth = await loadAuthContext();
 const port = loadPort();
+const config = await loadServerConfig();
 
 const app = createMcpHonoApp();
-const mcpHandler = createMcpHandler((_ctx) => createServer(auth), {
+const mcpHandler = createMcpHandler((_ctx) => createServer(auth, config), {
   legacy: 'stateless',
 });
 
