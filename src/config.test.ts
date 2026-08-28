@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'bun:test';
-import { loadAuthContext, loadPort } from './config';
+import { loadAuthContext, loadPort, loadServerConfig, resolveMaxOutputTokens } from './config';
+import type { ServerConfig } from '@types';
 
 // Save and restore process.env to avoid test pollution
 function withEnv(fn: () => Promise<void> | void): () => Promise<void> {
@@ -307,6 +308,340 @@ describe('config module', () => {
           const port = loadPort();
 
           expect(port).toBe(9000);
+        })
+      );
+    });
+  });
+
+  describe('loadServerConfig', () => {
+    describe('discovery and defaults', () => {
+      it(
+        'no config file anywhere → returns built-in defaults',
+        withEnv(async () => {
+          delete process.env.PLANE_MCP_CONFIG;
+          delete process.env.PLANE_MCP_MAX_OUTPUT_TOKENS;
+
+          const mockFileExists = async () => false;
+          const config = await loadServerConfig({ fileExists: mockFileExists });
+
+          expect(config.defaults.maxOutputTokens).toBe(25000);
+          expect(config.tools).toEqual({});
+        })
+      );
+
+      it(
+        'PLANE_MCP_CONFIG (absolute, injected deps) is read and validated',
+        withEnv(async () => {
+          delete process.env.PLANE_MCP_MAX_OUTPUT_TOKENS;
+
+          const configJson = JSON.stringify({
+            defaults: { maxOutputTokens: 10000 },
+            tools: { list_work_items: { maxOutputTokens: 5000 } },
+          });
+
+          const mockFileExists = async (path: string) => path === '/etc/plane-mcp/config.json';
+          const mockReadFile = async (path: string) => {
+            if (path === '/etc/plane-mcp/config.json') return configJson;
+            throw new Error('Not found');
+          };
+
+          process.env.PLANE_MCP_CONFIG = '/etc/plane-mcp/config.json';
+          const config = await loadServerConfig({
+            fileExists: mockFileExists,
+            readFile: mockReadFile,
+          });
+
+          expect(config.defaults.maxOutputTokens).toBe(10000);
+          expect(config.tools['list_work_items']?.maxOutputTokens).toBe(5000);
+        })
+      );
+
+      it(
+        'PLANE_MCP_CONFIG set to non-existent path throws',
+        withEnv(async () => {
+          process.env.PLANE_MCP_CONFIG = '/nonexistent/path/config.json';
+          const mockFileExists = async () => false;
+
+          try {
+            await loadServerConfig({ fileExists: mockFileExists });
+            expect(false).toBe(true); // Should have thrown
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            expect(message).toContain('PLANE_MCP_CONFIG');
+            expect(message).toContain('does not exist');
+          }
+        })
+      );
+
+      it(
+        'PLANE_MCP_CONFIG set to relative path throws',
+        withEnv(async () => {
+          process.env.PLANE_MCP_CONFIG = 'relative/path/config.json';
+          const mockFileExists = async () => true;
+
+          try {
+            await loadServerConfig({ fileExists: mockFileExists });
+            expect(false).toBe(true); // Should have thrown
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            expect(message).toContain('PLANE_MCP_CONFIG must be an absolute path');
+          }
+        })
+      );
+
+      it(
+        'cwd plane-mcp.config.json is used when PLANE_MCP_CONFIG unset',
+        withEnv(async () => {
+          delete process.env.PLANE_MCP_CONFIG;
+          delete process.env.PLANE_MCP_MAX_OUTPUT_TOKENS;
+
+          const cwdPath = process.cwd() + '/plane-mcp.config.json';
+          const configJson = JSON.stringify({
+            defaults: { maxOutputTokens: 8000 },
+            tools: {},
+          });
+
+          const mockFileExists = async (path: string) => path === cwdPath;
+          const mockReadFile = async (path: string) => {
+            if (path === cwdPath) return configJson;
+            throw new Error('Not found');
+          };
+
+          const config = await loadServerConfig({
+            fileExists: mockFileExists,
+            readFile: mockReadFile,
+          });
+
+          expect(config.defaults.maxOutputTokens).toBe(8000);
+        })
+      );
+
+      it(
+        'XDG/~/.config/plane-mcp/config.json used when neither PLANE_MCP_CONFIG nor cwd is present',
+        withEnv(async () => {
+          delete process.env.PLANE_MCP_CONFIG;
+          delete process.env.PLANE_MCP_MAX_OUTPUT_TOKENS;
+
+          const configJson = JSON.stringify({
+            defaults: { maxOutputTokens: 12000 },
+            tools: {},
+          });
+
+          const mockFileExists = async (path: string) => {
+            if (path.includes('.config/plane-mcp/config.json')) return true;
+            return false;
+          };
+          const mockReadFile = async (path: string) => {
+            if (path.includes('.config/plane-mcp/config.json')) return configJson;
+            throw new Error('Not found');
+          };
+
+          const config = await loadServerConfig({
+            fileExists: mockFileExists,
+            readFile: mockReadFile,
+          });
+
+          expect(config.defaults.maxOutputTokens).toBe(12000);
+        })
+      );
+    });
+
+    describe('validation', () => {
+      it(
+        'unknown top-level key rejected with path-precise error',
+        withEnv(async () => {
+          const configJson = JSON.stringify({
+            unknownTopLevel: 'value',
+          });
+
+          const mockFileExists = async () => true;
+          const mockReadFile = async () => configJson;
+
+          process.env.PLANE_MCP_CONFIG = '/test/config.json';
+
+          try {
+            await loadServerConfig({ fileExists: mockFileExists, readFile: mockReadFile });
+            expect(false).toBe(true); // Should have thrown
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            expect(message).toContain('Invalid plane-mcp config');
+            expect(message).toContain('/test/config.json');
+          }
+        })
+      );
+
+      it(
+        'unknown key under tools.<name> rejected with path-precise error naming the tool',
+        withEnv(async () => {
+          const configJson = JSON.stringify({
+            tools: {
+              list_work_items: { unknownField: 'value' },
+            },
+          });
+
+          const mockFileExists = async () => true;
+          const mockReadFile = async () => configJson;
+
+          process.env.PLANE_MCP_CONFIG = '/test/config.json';
+
+          try {
+            await loadServerConfig({ fileExists: mockFileExists, readFile: mockReadFile });
+            expect(false).toBe(true); // Should have thrown
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            expect(message).toContain('Invalid plane-mcp config');
+            expect(message).toContain('list_work_items');
+          }
+        })
+      );
+
+      it(
+        '$schema key present in file does not trigger strict() rejection',
+        withEnv(async () => {
+          const configJson = JSON.stringify({
+            $schema: 'http://json-schema.org/draft-07/schema#',
+            defaults: { maxOutputTokens: 15000 },
+          });
+
+          const mockFileExists = async () => true;
+          const mockReadFile = async () => configJson;
+
+          process.env.PLANE_MCP_CONFIG = '/test/config.json';
+
+          const config = await loadServerConfig({
+            fileExists: mockFileExists,
+            readFile: mockReadFile,
+          });
+
+          expect(config.defaults.maxOutputTokens).toBe(15000);
+        })
+      );
+
+      it(
+        'invalid JSON in file throws with file path in message',
+        withEnv(async () => {
+          const invalidJson = '{ invalid json }';
+
+          const mockFileExists = async () => true;
+          const mockReadFile = async () => invalidJson;
+
+          process.env.PLANE_MCP_CONFIG = '/test/config.json';
+
+          try {
+            await loadServerConfig({ fileExists: mockFileExists, readFile: mockReadFile });
+            expect(false).toBe(true); // Should have thrown
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            expect(message).toContain('Invalid JSON');
+            expect(message).toContain('/test/config.json');
+          }
+        })
+      );
+    });
+
+    describe('env override', () => {
+      it(
+        'PLANE_MCP_MAX_OUTPUT_TOKENS env var overrides file defaults',
+        withEnv(async () => {
+          const configJson = JSON.stringify({
+            defaults: { maxOutputTokens: 10000 },
+          });
+
+          const mockFileExists = async () => true;
+          const mockReadFile = async () => configJson;
+
+          process.env.PLANE_MCP_CONFIG = '/test/config.json';
+          process.env.PLANE_MCP_MAX_OUTPUT_TOKENS = '30000';
+
+          const config = await loadServerConfig({
+            fileExists: mockFileExists,
+            readFile: mockReadFile,
+          });
+
+          expect(config.defaults.maxOutputTokens).toBe(30000);
+        })
+      );
+
+      it(
+        'PLANE_MCP_MAX_OUTPUT_TOKENS set to non-positive-integer throws',
+        withEnv(async () => {
+          delete process.env.PLANE_MCP_CONFIG;
+          process.env.PLANE_MCP_MAX_OUTPUT_TOKENS = '-100';
+
+          const mockFileExists = async () => false;
+
+          try {
+            await loadServerConfig({ fileExists: mockFileExists });
+            expect(false).toBe(true); // Should have thrown
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            expect(message).toContain('PLANE_MCP_MAX_OUTPUT_TOKENS must be a positive integer');
+          }
+        })
+      );
+
+      it(
+        'PLANE_MCP_MAX_OUTPUT_TOKENS set to non-numeric string (NaN) throws',
+        withEnv(async () => {
+          delete process.env.PLANE_MCP_CONFIG;
+          process.env.PLANE_MCP_MAX_OUTPUT_TOKENS = 'abc';
+
+          const mockFileExists = async () => false;
+
+          try {
+            await loadServerConfig({ fileExists: mockFileExists });
+            expect(false).toBe(true); // Should have thrown
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            expect(message).toContain('PLANE_MCP_MAX_OUTPUT_TOKENS must be a positive integer');
+          }
+        })
+      );
+    });
+
+    describe('resolveMaxOutputTokens', () => {
+      it(
+        'returns per-tool value when present',
+        withEnv(async () => {
+          const config: ServerConfig = {
+            defaults: { maxOutputTokens: 25000 },
+            tools: {
+              list_work_items: { maxOutputTokens: 5000 },
+              create_issue: { maxOutputTokens: 10000 },
+            },
+          };
+
+          expect(resolveMaxOutputTokens(config, 'list_work_items')).toBe(5000);
+          expect(resolveMaxOutputTokens(config, 'create_issue')).toBe(10000);
+        })
+      );
+
+      it(
+        'returns defaults.maxOutputTokens when tool not in config',
+        withEnv(async () => {
+          const config: ServerConfig = {
+            defaults: { maxOutputTokens: 25000 },
+            tools: {
+              list_work_items: { maxOutputTokens: 5000 },
+            },
+          };
+
+          expect(resolveMaxOutputTokens(config, 'unknown_tool')).toBe(25000);
+        })
+      );
+
+      it(
+        'never returns undefined (defaults is always fully resolved)',
+        withEnv(async () => {
+          const config: ServerConfig = {
+            defaults: { maxOutputTokens: 25000 },
+            tools: {},
+          };
+
+          const result = resolveMaxOutputTokens(config, 'any_tool');
+
+          expect(result).toBe(25000);
+          expect(typeof result).toBe('number');
         })
       );
     });

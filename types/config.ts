@@ -11,4 +11,18 @@ type EnvConfig = {
   PORT: number;
 };
 
-export type { AuthContext, EnvConfig };
+type ToolSettings = {
+  maxOutputTokens?: number;
+};
+
+type ServerConfig = {
+  defaults: ToolSettings;
+  tools: Record<string, ToolSettings>;
+};
+
+type LoadServerConfigDeps = {
+  readFile?: (filePath: string) => Promise<string>;
+  fileExists?: (filePath: string) => Promise<boolean>;
+};
+
+export type { AuthContext, EnvConfig, ToolSettings, ServerConfig, LoadServerConfigDeps };

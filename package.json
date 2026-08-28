@@ -37,7 +37,8 @@
     "lint:fix": "oxlint --fix",
     "check": "bun run format:check && bun run lint",
     "prepare": "git config core.hooksPath .githooks || true",
-    "prepublishOnly": "bun run typecheck && bun run check && bun test"
+    "prepublishOnly": "bun run typecheck && bun run check && bun test",
+    "generate:config-schema": "bun run scripts/generate-config-schema.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/hono": "2.0.0",

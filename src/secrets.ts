@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { mkdir, readFile, writeFile, chmod } from 'node:fs/promises';
 import type { CommandRunner, CommandResult } from '@types';
 import { log } from './logger';
+import { getConfigDir } from './paths';
 
 const defaultRunner: CommandRunner = async (
   cmd: string[],
@@ -31,13 +32,6 @@ const defaultRunner: CommandRunner = async (
 
 function getAccountName(): string {
   return process.env.USER ?? os.userInfo().username;
-}
-
-function getConfigDir(): string {
-  const configDir =
-    process.env.PLANE_MCP_CONFIG_DIR ??
-    (process.env.XDG_CONFIG_HOME ?? path.join(os.homedir(), '.config')) + '/plane-mcp';
-  return configDir;
 }
 
 async function ensureConfigDir(): Promise<string> {
