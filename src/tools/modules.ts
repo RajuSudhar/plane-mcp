@@ -118,7 +118,8 @@ export function registerModuleTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'add_work_items_to_module',
     {
-      description: 'Add work items to a module.',
+      description:
+        'Add work items to a module. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: addWorkItemsToModuleSchema,
     },
     toolHandler('add_work_items_to_module', client, addWorkItemsToModule)
@@ -127,7 +128,8 @@ export function registerModuleTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'remove_work_item_from_module',
     {
-      description: 'Remove a work item from a module.',
+      description:
+        'Remove a work item from a module. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: removeWorkItemFromModuleSchema,
     },
     toolHandler('remove_work_item_from_module', client, removeWorkItemFromModule)

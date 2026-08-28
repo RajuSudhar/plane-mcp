@@ -186,7 +186,7 @@ describe('work-items', () => {
   });
 
   describe('retrieve_work_item_by_identifier', () => {
-    it('success: calls get with identifier path', async () => {
+    it('success: calls get with issues identifier path', async () => {
       const data = { id: 'w1', name: 'Task' };
       const getSpy = mock(async () => data);
       const client = stubClient({ get: getSpy });
@@ -196,9 +196,7 @@ describe('work-items', () => {
         client,
         retrieveWorkItemByIdentifier
       )({
-        project_id: 'p1',
-        project_identifier: 'ENG',
-        work_item_identifier: '42',
+        identifier: 'BZ-5777',
       });
 
       expect(res.isError).toBeFalsy();
@@ -210,7 +208,52 @@ describe('work-items', () => {
       expect(getSpy).toHaveBeenCalledTimes(1);
       const callArgs = getSpy.mock.calls[0] as unknown[];
       const pathArg = callArgs[0] as string;
-      expect(pathArg).toContain('work-items/identifier/ENG-42/');
+      expect(pathArg).toContain('issues/BZ-5777/');
+    });
+
+    it('success: trims padded identifier and uses trimmed version in path', async () => {
+      const data = { id: 'w1', name: 'Task' };
+      const getSpy = mock(async () => data);
+      const client = stubClient({ get: getSpy });
+
+      const res = await toolHandler(
+        'retrieve_work_item_by_identifier',
+        client,
+        retrieveWorkItemByIdentifier
+      )({
+        identifier: '  BZ-5777  ',
+      });
+
+      expect(res.isError).toBeFalsy();
+      const content = res.content[0] as { type: 'text'; text: string };
+      expect(content.type).toBe('text');
+      expect(content.text).toBe(JSON.stringify(data));
+
+      expect(getSpy).toHaveBeenCalledTimes(1);
+      const callArgs = getSpy.mock.calls[0] as unknown[];
+      const pathArg = callArgs[0] as string;
+      expect(pathArg).toEndWith('issues/BZ-5777/');
+    });
+
+    it('error path: PlaneApiError 404 does not append UUID hint (not in WORK_ITEM_ID_TOOLS)', async () => {
+      const getSpy = mock(async () => {
+        throw new PlaneApiError(404, 'Issue not found');
+      });
+      const client = stubClient({ get: getSpy });
+
+      const res = await toolHandler(
+        'retrieve_work_item_by_identifier',
+        client,
+        retrieveWorkItemByIdentifier
+      )({
+        identifier: 'BZ-5777',
+      });
+
+      expect(res.isError).toBe(true);
+      const content = res.content[0] as { type: 'text'; text: string };
+      expect(content.type).toBe('text');
+      expect(content.text).toContain('Issue not found');
+      expect(content.text).not.toContain('retrieve_work_item_by_identifier');
     });
   });
 

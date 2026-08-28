@@ -99,7 +99,8 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
   server.registerTool(
     'list_work_item_comments',
     {
-      description: 'List comments for a work item.',
+      description:
+        'List comments for a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: listWorkItemCommentsSchema,
     },
     toolHandler('list_work_item_comments', client, listWorkItemComments)
@@ -108,7 +109,8 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
   server.registerTool(
     'create_work_item_comment',
     {
-      description: 'Create a comment on a work item.',
+      description:
+        'Create a comment on a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: createWorkItemCommentSchema,
     },
     toolHandler('create_work_item_comment', client, createWorkItemComment)
@@ -117,7 +119,8 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
   server.registerTool(
     'update_work_item_comment',
     {
-      description: 'Update a comment on a work item.',
+      description:
+        'Update a comment on a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: updateWorkItemCommentSchema,
     },
     toolHandler('update_work_item_comment', client, updateWorkItemComment)
@@ -126,7 +129,8 @@ export function registerCommentTools(server: McpServer, client: PlaneApi): void 
   server.registerTool(
     'delete_work_item_comment',
     {
-      description: 'Delete a comment from a work item.',
+      description:
+        'Delete a comment from a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: deleteWorkItemCommentSchema,
     },
     toolHandler('delete_work_item_comment', client, deleteWorkItemComment)

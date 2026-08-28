@@ -34,9 +34,10 @@ const retrieveWorkItemSchema = z.object({
 type RetrieveWorkItemArgs = z.infer<typeof retrieveWorkItemSchema>;
 
 const retrieveWorkItemByIdentifierSchema = z.object({
-  project_id: z.string(),
-  project_identifier: z.string(),
-  work_item_identifier: z.string(),
+  identifier: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9]+-\d+$/, 'Expected a PROJECT-SEQUENCE identifier like BZ-5777'),
 });
 type RetrieveWorkItemByIdentifierArgs = z.infer<typeof retrieveWorkItemByIdentifierSchema>;
 
@@ -135,9 +136,8 @@ export async function retrieveWorkItemByIdentifier(
   client: PlaneApi,
   args: RetrieveWorkItemByIdentifierArgs
 ): Promise<ToolResult> {
-  const path = client.workspacePath(
-    `projects/${args.project_id}/work-items/identifier/${args.project_identifier}-${args.work_item_identifier}/`
-  );
+  // Note: the segment is 'issues' (per Plane's WorkspaceIssueAPIEndpoint routing), not 'work-items'
+  const path = client.workspacePath(`issues/${args.identifier.trim()}/`);
   const workItem = await client.get<WorkItem>(path);
   return {
     content: [{ type: 'text', text: JSON.stringify(workItem) }],
@@ -246,7 +246,8 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
   server.registerTool(
     'retrieve_work_item',
     {
-      description: 'Retrieve a single work item by its UUID.',
+      description:
+        'Retrieve a single work item by its UUID. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: retrieveWorkItemSchema,
     },
     toolHandler('retrieve_work_item', client, retrieveWorkItem)
@@ -256,7 +257,7 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
     'retrieve_work_item_by_identifier',
     {
       description:
-        'Retrieve a work item by its human-readable identifier (project_identifier-work_item_identifier).',
+        'Retrieve a work item by its human-readable identifier such as BZ-5777 (format PROJECT-SEQUENCE). The workspace is taken from configuration; no UUID or project id is needed. Returns the full work item, including its UUID (the `id` field) for use with other tools that require a work item UUID.',
       inputSchema: retrieveWorkItemByIdentifierSchema,
     },
     toolHandler('retrieve_work_item_by_identifier', client, retrieveWorkItemByIdentifier)
@@ -274,7 +275,8 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
   server.registerTool(
     'update_work_item',
     {
-      description: 'Update an existing work item.',
+      description:
+        'Update an existing work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: updateWorkItemSchema,
     },
     toolHandler('update_work_item', client, updateWorkItem)
@@ -283,7 +285,8 @@ export function registerWorkItemTools(server: McpServer, client: PlaneApi): void
   server.registerTool(
     'delete_work_item',
     {
-      description: 'Delete a work item.',
+      description:
+        'Delete a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: deleteWorkItemSchema,
     },
     toolHandler('delete_work_item', client, deleteWorkItem)

@@ -82,7 +82,8 @@ export function registerRelationTools(server: McpServer, client: PlaneApi): void
   server.registerTool(
     'list_work_item_relations',
     {
-      description: 'List relations for a work item.',
+      description:
+        'List relations for a work item. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: listWorkItemRelationsSchema,
     },
     toolHandler('list_work_item_relations', client, listWorkItemRelations)
@@ -91,7 +92,8 @@ export function registerRelationTools(server: McpServer, client: PlaneApi): void
   server.registerTool(
     'create_work_item_relation',
     {
-      description: 'Create a relation between work items.',
+      description:
+        'Create a relation between work items. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: createWorkItemRelationSchema,
     },
     toolHandler('create_work_item_relation', client, createWorkItemRelation)
@@ -100,7 +102,8 @@ export function registerRelationTools(server: McpServer, client: PlaneApi): void
   server.registerTool(
     'remove_work_item_relation',
     {
-      description: 'Remove a relation between work items.',
+      description:
+        'Remove a relation between work items. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: removeWorkItemRelationSchema,
     },
     toolHandler('remove_work_item_relation', client, removeWorkItemRelation)

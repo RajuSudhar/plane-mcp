@@ -112,7 +112,8 @@ export function registerCycleTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'add_work_items_to_cycle',
     {
-      description: 'Add work items to a cycle.',
+      description:
+        'Add work items to a cycle. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: addWorkItemsToCycleSchema,
     },
     toolHandler('add_work_items_to_cycle', client, addWorkItemsToCycle)
@@ -121,7 +122,8 @@ export function registerCycleTools(server: McpServer, client: PlaneApi): void {
   server.registerTool(
     'remove_work_item_from_cycle',
     {
-      description: 'Remove a work item from a cycle.',
+      description:
+        'Remove a work item from a cycle. Work item ids must be UUIDs; resolve human identifiers such as BZ-5777 via retrieve_work_item_by_identifier.',
       inputSchema: removeWorkItemFromCycleSchema,
     },
     toolHandler('remove_work_item_from_cycle', client, removeWorkItemFromCycle)

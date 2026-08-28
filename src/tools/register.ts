@@ -4,6 +4,23 @@ import type { CallToolResult } from '@modelcontextprotocol/server';
 import { PlaneApiError } from '../plane/errors';
 import { log } from '../logger';
 
+export const WORK_ITEM_ID_TOOLS = new Set([
+  'retrieve_work_item',
+  'update_work_item',
+  'delete_work_item',
+  'list_work_item_comments',
+  'create_work_item_comment',
+  'update_work_item_comment',
+  'delete_work_item_comment',
+  'list_work_item_relations',
+  'create_work_item_relation',
+  'remove_work_item_relation',
+  'add_work_items_to_cycle',
+  'remove_work_item_from_cycle',
+  'add_work_items_to_module',
+  'remove_work_item_from_module',
+]);
+
 export function toolHandler<TArgs extends Record<string, unknown>>(
   toolName: string,
   client: PlaneApi,
@@ -27,6 +44,11 @@ export function toolHandler<TArgs extends Record<string, unknown>>(
       if (err instanceof PlaneApiError) {
         errorMessage = err.message;
         errorDetail = err.message;
+        if (err.status === 404 && WORK_ITEM_ID_TOOLS.has(toolName)) {
+          errorMessage =
+            err.message +
+            ' Hint: work item ids must be UUIDs, not human identifiers like BZ-5777. Call retrieve_work_item_by_identifier to resolve a human identifier to its UUID first.';
+        }
       } else {
         errorMessage = 'Unexpected error';
         errorDetail = 'unexpected';
