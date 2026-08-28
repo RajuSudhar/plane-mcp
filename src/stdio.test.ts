@@ -2,7 +2,68 @@ import { describe, it, expect } from 'bun:test';
 import { PassThrough } from 'node:stream';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import { createServer } from './server';
+import { resolveCommand } from './stdio';
 import type { AuthContext, ServerConfig } from '@types';
+
+type JsonRpcResponse = {
+  id: number;
+  result?: Record<string, unknown>;
+};
+
+function isJsonRpcResponse(value: unknown): value is JsonRpcResponse {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof (value as Record<string, unknown>).id === 'number'
+  );
+}
+
+describe('resolveCommand', () => {
+  it('resolves help subcommand', () => {
+    const result = resolveCommand(['help']);
+    expect(result.command).toBe('help');
+  });
+
+  it('resolves --help flag', () => {
+    const result = resolveCommand(['--help']);
+    expect(result.command).toBe('help');
+  });
+
+  it('resolves -h flag', () => {
+    const result = resolveCommand(['-h']);
+    expect(result.command).toBe('help');
+  });
+
+  it('prioritizes help over init when --help is used with init', () => {
+    const result = resolveCommand(['init', '--help']);
+    expect(result.command).toBe('help');
+  });
+
+  it('resolves init subcommand', () => {
+    const result = resolveCommand(['init', 'foo']);
+    expect(result.command).toBe('init');
+    expect(result.rest).toEqual(['foo']);
+  });
+
+  it('defaults to server command with empty argv', () => {
+    const result = resolveCommand([]);
+    expect(result.command).toBe('server');
+    expect(result.rest).toEqual([]);
+  });
+
+  it('defaults to server command with no recognized subcommand', () => {
+    const result = resolveCommand(['unknown']);
+    expect(result.command).toBe('server');
+    expect(result.rest).toEqual(['unknown']);
+  });
+
+  it('passes rest arguments correctly for init', () => {
+    const result = resolveCommand(['init', 'myinstance', '--workspace', 'test-ws']);
+    expect(result.command).toBe('init');
+    expect(result.rest).toEqual(['myinstance', '--workspace', 'test-ws']);
+  });
+});
 
 describe('stdio transport', () => {
   it('should handle JSON-RPC initialize request', async () => {
@@ -51,7 +112,7 @@ describe('stdio transport', () => {
     const gotResponse = new Promise<void>((resolve, _reject) => {
       const checkResponse = () => {
         const lines = captured.trim().split('\n');
-        const responses = lines
+        const responses: unknown[] = lines
           .map((line) => {
             try {
               return JSON.parse(line) as unknown;
@@ -62,7 +123,7 @@ describe('stdio transport', () => {
           .filter(Boolean);
 
         const initResponse = responses.find(
-          (r) => typeof r === 'object' && r !== null && (r as Record<string, unknown>).id === 1
+          (r): r is JsonRpcResponse => isJsonRpcResponse(r) && r.id === 1
         );
         if (initResponse) {
           resolve();
@@ -86,7 +147,7 @@ describe('stdio transport', () => {
       expect(captured).toContain('plane-mcp');
 
       const lines = captured.trim().split('\n');
-      const responses = lines
+      const responses: unknown[] = lines
         .map((line) => {
           try {
             return JSON.parse(line) as unknown;
@@ -97,24 +158,19 @@ describe('stdio transport', () => {
         .filter(Boolean);
 
       const initResponse = responses.find(
-        (r) => typeof r === 'object' && r !== null && (r as Record<string, unknown>).id === 1
+        (r): r is JsonRpcResponse => isJsonRpcResponse(r) && r.id === 1
       );
       expect(initResponse).toBeDefined();
-      if (
-        initResponse &&
-        typeof initResponse === 'object' &&
-        initResponse !== null &&
-        'result' in initResponse &&
-        typeof (initResponse as Record<string, unknown>).result === 'object' &&
-        (initResponse as Record<string, unknown>).result !== null &&
-        'serverInfo' in ((initResponse as Record<string, unknown>).result as object) &&
-        typeof ((initResponse as Record<string, unknown>).result as Record<string, unknown>)
-          .serverInfo === 'object'
-      ) {
-        const serverInfo = (
-          (initResponse as Record<string, unknown>).result as Record<string, unknown>
-        ).serverInfo as Record<string, unknown>;
-        expect(serverInfo.name).toBe('plane-mcp');
+      if (initResponse && initResponse.result && typeof initResponse.result === 'object') {
+        const result = initResponse.result;
+        if (
+          'serverInfo' in result &&
+          typeof result.serverInfo === 'object' &&
+          result.serverInfo !== null
+        ) {
+          const serverInfo = result.serverInfo as Record<string, unknown>;
+          expect(serverInfo.name).toBe('plane-mcp');
+        }
       }
     } finally {
       await transport.close();
