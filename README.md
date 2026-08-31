@@ -56,12 +56,14 @@ Where:
 - `<slug>`: Your Plane workspace slug (e.g., `my-workspace-slug`).
 - `--base-url` (optional): Your Plane instance URL; defaults to `https://api.plane.so`. Must use `https`.
 - `--register` (optional): Automatically register the server with `claude mcp add` (requires the `claude` CLI).
+- `-y` (optional): Skip the config-scaffold confirmation prompt and use defaults (`~/.config/plane-mcp/config.json`, 25,000 tokens/tool).
 
 The command will:
 
 1. Prompt you (hidden input) for your Plane API key (Personal or Workspace Access Token).
 2. Store the key securely in your OS keychain, keyed by instance `<name>`.
 3. Print a JSON config block for your MCP client.
+4. Scaffold a starter `plane-mcp.config.json` (unless one already exists at the target path) and add `PLANE_MCP_CONFIG` to the printed config.
 
 **Security note on --key flag:** The optional `--key` flag allows passing the API key as a command-line argument, which is visible in the process list (via `ps`). This flag is intended for scripted/CI use only. For interactive sessions, the default hidden-input prompt is the secure choice.
 
@@ -172,12 +174,14 @@ environment variables:
 
 Set the following environment variables in a `.env` file (see `.env.example` for a template):
 
-| Variable               | Required | Default                | Description                                       |
-| ---------------------- | -------- | ---------------------- | ------------------------------------------------- |
-| `PLANE_API_KEY`        | Yes      | —                      | Personal or Workspace Access Token (never logged) |
-| `PLANE_WORKSPACE_SLUG` | Yes      | —                      | Workspace identifier (e.g., `my-workspace`)       |
-| `PLANE_BASE_URL`       | No       | `https://api.plane.so` | Plane API base URL (must be `https`)              |
-| `PORT`                 | No       | `3000`                 | Server port (valid range: 1-65535)                |
+| Variable                      | Required | Default                      | Description                                       |
+| ----------------------------- | -------- | ---------------------------- | ------------------------------------------------- |
+| `PLANE_API_KEY`               | Yes      | —                            | Personal or Workspace Access Token (never logged) |
+| `PLANE_WORKSPACE_SLUG`        | Yes      | —                            | Workspace identifier (e.g., `my-workspace`)       |
+| `PLANE_BASE_URL`              | No       | `https://api.plane.so`       | Plane API base URL (must be `https`)              |
+| `PORT`                        | No       | `3000`                       | Server port (valid range: 1-65535)                |
+| `PLANE_MCP_CONFIG`            | No       | (discovery order, see above) | Absolute path to a behavior config file           |
+| `PLANE_MCP_MAX_OUTPUT_TOKENS` | No       | `25000`                      | Overrides the default per-tool output-token limit |
 
 To generate `PLANE_API_KEY`, go to Plane → Profile Settings → Personal Access Tokens, or Workspace Settings → Access
 Tokens for a bot token. None of these values are logged by the server.
@@ -278,6 +282,39 @@ LaunchAgent to keep the server running in the background, with logs in `~/Librar
 
 **Prerequisite:** You must first run `plane-mcp init <name>` to store your API key in the keychain.
 
+## Configure per-tool output-token limits
+
+By default, every tool's response is capped at 25,000 estimated tokens. A response over the limit is never truncated — it is withheld entirely, and the tool returns an error explaining how to narrow the request (e.g. via `fields`, `per_page`, or `module_id`/`cycle_id` filtering).
+
+This limit is controlled by an optional JSON config file, resolved in this order:
+
+1. `PLANE_MCP_CONFIG` env var (must be an absolute path to the file)
+2. `./plane-mcp.config.json` (current working directory)
+3. `~/.config/plane-mcp/config.json` (honors `XDG_CONFIG_HOME` / `PLANE_MCP_CONFIG_DIR`, same directory `plane-mcp init` uses for credentials)
+4. None found — built-in default (25,000 tokens per tool), zero config required
+
+Example `plane-mcp.config.example.json` (copy to `./plane-mcp.config.json` or `~/.config/plane-mcp/config.json`):
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/RajuSudhar/plane-mcp/master/plane-mcp.config.schema.json",
+  "defaults": {
+    "maxOutputTokens": 25000
+  },
+  "tools": {
+    "list_work_items": {
+      "maxOutputTokens": 10000
+    }
+  }
+}
+```
+
+The `$schema` field enables editor validation/autocomplete and is ignored at runtime. Unknown or misspelled keys anywhere in the file are rejected at startup with a precise error, rather than silently ignored.
+
+`PLANE_MCP_MAX_OUTPUT_TOKENS` (an integer) overrides `defaults.maxOutputTokens` for a quick one-off change without editing the file — useful for CI or a single scripted run.
+
+`plane-mcp init` scaffolds a starter config file for you (see Setup, above) and records its location as `PLANE_MCP_CONFIG` in the printed MCP client config.
+
 ## Tool Inventory
 
 The server exposes 31 tools across 10 resource domains:
@@ -367,17 +404,18 @@ The server exposes 31 tools across 10 resource domains:
 
 ### Commands
 
-| Command                | Description                                   |
-| ---------------------- | --------------------------------------------- |
-| `bun run dev`          | Start dev server with auto-reload (`--watch`) |
-| `bun run start`        | Start the server                              |
-| `bun run typecheck`    | Type-check only (`tsc --noEmit`)              |
-| `bun test`             | Run tests                                     |
-| `bun run format`       | Format code and docs with Prettier            |
-| `bun run format:check` | Check formatting with Prettier                |
-| `bun run lint`         | Lint TypeScript files with type-aware oxlint  |
-| `bun run lint:fix`     | Fix linting issues with oxlint                |
-| `bun run check`        | Run formatting and linting checks             |
+| Command                | Description                                                    |
+| ---------------------- | -------------------------------------------------------------- |
+| `bun run dev`          | Start dev server with auto-reload (`--watch`)                  |
+| `bun run start`        | Start the server                                               |
+| `bun run typecheck`    | Type-check only (`tsc --noEmit`)                               |
+| `bun test`             | Run tests                                                      |
+| `bun run format`       | Format code and docs with Prettier                             |
+| `bun run format:check` | Check formatting with Prettier                                 |
+| `bun run lint`         | Lint TypeScript files with type-aware oxlint                   |
+| `bun run lint:fix`     | Fix linting issues with oxlint                                 |
+| `bun run check`        | Run formatting and linting checks                              |
+| `plane-mcp help`       | Print CLI usage, config discovery order, and env-var reference |
 
 ### TypeScript Configuration
 

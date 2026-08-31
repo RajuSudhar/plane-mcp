@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/RajuSudhar/plane-mcp/master/plane-mcp.config.schema.json",
+  "defaults": {
+    "maxOutputTokens": 25000
+  },
+  "tools": {
+    "list_work_items": {
+      "maxOutputTokens": 10000
+    },
+    "search_work_items": {
+      "maxOutputTokens": 10000
+    }
+  }
+}
