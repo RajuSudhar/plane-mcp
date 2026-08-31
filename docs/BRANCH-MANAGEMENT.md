@@ -86,6 +86,54 @@ This system enforces branch naming conventions based on industry best practices:
 4. **Consistency** - Standardized format across team
 5. **Automation** - Validation prevents mistakes before they reach remote
 
+## Release tagging
+
+When package.json version changes (at release boundaries), analyze and add a git tag as required.
+
+**When to tag:**
+
+- Any release published to npm (stable, prerelease, beta, rc, alpha)
+- Only on release/version-bump commits — NOT every commit
+- Before tagging, verify: release warrants a tag, tag doesn't already exist (`git tag -l v<version>`), working tree is clean, and gates pass (tsc + check + test)
+
+**Tag format:**
+
+- Annotated tags only: `git tag -a`
+- Name: `v<version>` matching package.json EXACTLY
+  - Stable: `vX.Y.Z` (e.g., `v2.0.0`)
+  - Prereleases: `vX.Y.Z-beta.N`, `vX.Y.Z-rc.N`, `vX.Y.Z-alpha.N` (e.g., `v2.0.0-beta.0`)
+- Tag the release commit (the `build: release …` commit)
+
+**Message:**
+
+- One-line summary of the release headline
+
+**Commands:**
+
+```bash
+# Create annotated tag
+git tag -a v2.0.0-beta.0 -m "Initial beta with keychain auth and core tools" <release-sha>
+
+# Verify tag
+git show v2.0.0-beta.0 -q
+
+# Push tag (separate deliberate step)
+git push origin v2.0.0-beta.0
+# or push all tags
+git push --tags
+```
+
+**npm dist-tag pairing:**
+
+- Prereleases: publish with `bun publish --tag beta` (kept off `latest`), use `-beta.N` git tag
+- Stable: publish `vX.Y.Z` (goes to `latest`), use `vX.Y.Z` git tag
+- Keep git tag and npm version in lockstep
+
+**Example:**
+
+- Tag `v2.0.0-beta.0` on commit `build: release 2.0.0-beta.0`
+- Published to npm `beta` dist-tag
+
 ## Troubleshooting
 
 ### Common Issues
