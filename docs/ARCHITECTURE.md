@@ -2,10 +2,12 @@
 
 ## Overview
 
-`plane-mcp` is a stateless streamable-HTTP MCP server for Plane (open-source Jira-like ticket tool). Built on Bun 1.3.14
-and TypeScript 7, it runs as a single local process bound to `127.0.0.1`, authenticated via environment variables
-(`PLANE_API_KEY` + `PLANE_WORKSPACE_SLUG`). The server exposes 31 core ticket-workflow tools for creating, updating,
-searching, and managing work items, projects, cycles, modules, comments, and relations.
+`plane-mcp` is a stateless MCP server for Plane (open-source Jira-like ticket tool) supporting dual transports: stdio
+(subprocess-launched by MCP clients) and streamable-HTTP (long-running server on `127.0.0.1`). Built on Bun 1.3.14 and
+TypeScript 7, authenticated via environment variables (`PLANE_API_KEY` or `PLANE_MCP_INSTANCE` keychain resolution +
+`PLANE_WORKSPACE_SLUG`), with optional per-tool output-token limits via a config file (`plane-mcp.config.json`). The
+server exposes 31 core ticket-workflow tools for creating, updating, searching, and managing work items, projects,
+cycles, modules, comments, and relations.
 
 ## System diagram
 
@@ -29,15 +31,15 @@ graph TB
 
 ## Layering table
 
-| Layer                        | Responsibility                                                                                                  | Key files                                                                                                     |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Transport                    | Bun.serve HTTP server on 127.0.0.1, Hono app with /health and /mcp endpoints                                    | `src/index.ts`                                                                                                |
-| MCP server/tool registration | Creates fresh McpServer per request (stateless), registers 31 tools with zod schemas                            | `src/server.ts`, `src/tools/register.ts`                                                                      |
-| Tools                        | Pure functions `(client, args) => ToolResult`; no process.env access, no transport coupling                     | `src/tools/*.ts` (users, projects, work-items, comments, relations, states, labels, members, cycles, modules) |
-| HTTP client                  | PlaneClient handles X-API-Key injection, workspace path prefix, 429 backoff, error mapping, field normalization | `src/plane/client.ts`, `src/plane/errors.ts`, `src/plane/normalize.ts`                                        |
-| Config/auth                  | Loads AuthContext from env vars once at startup; validates HTTPS-only base URL                                  | `src/config.ts`                                                                                               |
-| Logging                      | stderr-only JSON logs; redacts secrets by key                                                                   | `src/logger.ts`                                                                                               |
-| Types                        | Shared type definitions imported via `@types` alias                                                             | `types/` (plane.ts, mcp.ts, config.ts, logger.ts, common.ts, index.ts)                                        |
+| Layer                        | Responsibility                                                                                                                                                                    | Key files                                                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Transport                    | Dual: stdio (`src/stdio.ts`, JSON-RPC over stdin/stdout) and HTTP (`src/index.ts`, Bun.serve on 127.0.0.1 with Hono /health and /mcp endpoints)                                   | `src/stdio.ts`, `src/index.ts`, `src/init.ts` (CLI dispatcher)                                                |
+| MCP server/tool registration | Creates fresh McpServer per request (stateless), registers 31 tools with zod schemas, reject-and-guide token-limit enforcement per-tool                                           | `src/server.ts`, `src/tools/register.ts`, `src/tools/token-count.ts`                                          |
+| Tools                        | Pure functions `(client, args) => ToolResult`; no process.env access, no transport coupling                                                                                       | `src/tools/*.ts` (users, projects, work-items, comments, relations, states, labels, members, cycles, modules) |
+| HTTP client                  | PlaneClient handles X-API-Key injection, workspace path prefix, 429 backoff, error mapping, field normalization                                                                   | `src/plane/client.ts`, `src/plane/errors.ts`, `src/plane/normalize.ts`                                        |
+| Config/auth                  | AuthContext: async keychain-or-env resolution (PLANE_MCP_INSTANCE → OS keychain, else PLANE_API_KEY env fallback); ServerConfig: validated config file with per-tool token limits | `src/config.ts`, `src/secrets.ts`, `src/paths.ts`                                                             |
+| Logging                      | stderr-only JSON logs; redacts secrets by key                                                                                                                                     | `src/logger.ts`                                                                                               |
+| Types                        | Shared type definitions imported via `@types` alias                                                                                                                               | `types/` (plane.ts, mcp.ts, config.ts, logger.ts, common.ts, client.ts, secrets.ts, index.ts)                 |
 
 ## Request lifecycle
 
@@ -126,7 +128,6 @@ the error surfaces to the tool caller.
 
 The following are explicitly out of scope per the RFC (`plans/plane-mcp/00-rfc.md`):
 
-- **stdio transport**: HTTP-only. stdio may be added in a future RFC but is not part of this implementation.
 - **OAuth 2.0**: No bot-token or user-token flows, no OAuth proxy, no redirect URIs, no scope negotiation. API-Key
   (Personal/Workspace Access Token) auth only.
 - **Redis/Valkey**: No session store, no token cache. Stateless transport means there is no server-side session to

@@ -80,9 +80,10 @@ types/
 ├── plane.ts              # Plane API-related types
 ├── mcp.ts                # MCP protocol-related types
 ├── config.ts             # Configuration types
-├── cache.ts              # Cache-related types
 ├── logger.ts             # Logging-related types
-└── common.ts             # Common/utility types
+├── client.ts             # API client contracts (PlaneApi, FetchLike, RequestOptions)
+├── secrets.ts            # Secret-storage types (CommandRunner, CommandResult)
+└── init.ts               # CLI init command types
 ```
 
 **Type Exports**:
@@ -92,9 +93,10 @@ types/
 export type * from './plane';
 export type * from './mcp';
 export type * from './config';
-export type * from './cache';
 export type * from './logger';
-export type * from './common';
+export type * from './client';
+export type * from './secrets';
+export type * from './init';
 ```
 
 **Type Imports**:
@@ -107,7 +109,7 @@ import type { PlaneIssue, PlaneProject } from '@types';
 import type { PlaneIssue, PlaneProject } from '@types';
 
 // Specific type file import (when needed)
-import type { CacheEntry } from '@types/cache';
+import type { PlaneApi } from '@types/client';
 ```
 
 **Rationale for Root-Level types/**:
@@ -132,11 +134,11 @@ type PlaneIssue = { ... };
 ```typescript
 // GOOD - Descriptive, clear purpose
 type IssueState = 'backlog' | 'started' | 'completed' | 'cancelled';
-type CacheEntry<T> = { data: T; timestamp: number; ttl: number };
+type ApiResponse<T> = { data: T; status: number; timestamp: number };
 
 // BAD - Too generic, unclear
 type State = 'backlog' | 'started' | 'completed';
-type Entry<T> = { data: T; timestamp: number; ttl: number };
+type Response<T> = { data: T; status: number };
 ```
 
 ## Logging Standards
@@ -218,17 +220,6 @@ log('error', 'API request failed', {
   error: err.message,
   statusCode: 500,
 });
-
-// Cache operations
-log('debug', 'Cache hit', {
-  operation: 'cache_hit',
-  key: 'plane:issues:PROJ-123',
-});
-
-log('debug', 'Cache miss', {
-  operation: 'cache_miss',
-  key: 'plane:issues:PROJ-123',
-});
 ```
 
 ### Why No console.log
@@ -239,12 +230,13 @@ log('debug', 'Cache miss', {
 
 - `process.stderr.write()` (used by logger)
 - `console.error()` (writes to stderr)
+- `process.stdout.write()` in CLI commands (`src/init.ts`, `src/help.ts`) that intentionally produce human-readable output (never in the stdio MCP server code path)
 
 **Forbidden**:
 
 - `console.log()` (writes to stdout)
 - `console.info()` (writes to stdout)
-- `process.stdout.write()` (except for MCP protocol messages)
+- `process.stdout.write()` in stdio transport or MCP tool code (corrupts JSON-RPC stream)
 
 ### Critical Logging Paths
 
@@ -270,18 +262,12 @@ Logging is REQUIRED at these critical paths:
    - Token validation
    - Permission checks
 
-5. **Cache Operations**:
-   - Cache hits (key, data type)
-   - Cache misses (key)
-   - Cache invalidation (pattern)
-   - Cache clearing
-
-6. **Error Handling**:
+5. **Error Handling**:
    - All caught errors with context
    - Rate limit events
    - Retry attempts
 
-7. **Performance Events**:
+6. **Performance Events**:
    - Slow operations (> 1s)
    - Large responses (> 1MB)
 
@@ -332,16 +318,15 @@ import path from 'path';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 // 3. Internal modules
-import { Cache } from './cache';
 import { log } from './logger';
 
 // 4. Parent/sibling imports
 import { PlaneClient } from '../plane/client';
 
 // 5. Type imports (always separate and last)
-import type { CacheEntry } from '@types/cache';
 import type { LogContext } from '@types/logger';
 import type { PlaneIssue } from '@types/plane';
+import type { PlaneApi } from '@types/client';
 ```
 
 ### Naming Conventions
@@ -564,13 +549,6 @@ All markdown MUST follow markdownlint rules:
 - Type-check all external data
 
 ## Performance Standards
-
-### Caching
-
-- Cache static/rarely-changing data aggressively
-- Use configurable TTLs based on data volatility
-- Invalidate cache on write operations
-- Log cache hit/miss ratios
 
 ### API Optimization
 

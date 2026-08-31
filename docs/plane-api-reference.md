@@ -232,16 +232,18 @@ This is the full list of resources exposed by `/api/v1/`. Path pattern conventio
 
 ### 3.5 Work items (issues)
 
-| Method | Path                                                                                                 | Scope                       |
-| ------ | ---------------------------------------------------------------------------------------------------- | --------------------------- |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`                                               | `projects.work_items:read`  |
-| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`                                               | `projects.work_items:write` |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                                         | `projects.work_items:read`  |
-| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                                         | `projects.work_items:write` |
-| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`                                         | `projects.work_items:write` |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/identifier/{project_identifier}-{sequence_id}/` | `projects.work_items:read`  |
-| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/search/?q=…`                                    | `projects.work_items:read`  |
-| GET    | `/api/v1/workspaces/{slug}/work-items/search/` (advanced, workspace-wide with filters)               | `projects.work_items:read`  |
+| Method | Path                                                                | Scope                       |
+| ------ | ------------------------------------------------------------------- | --------------------------- |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`              | `projects.work_items:read`  |
+| POST   | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/`              | `projects.work_items:write` |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`        | `projects.work_items:read`  |
+| PATCH  | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`        | `projects.work_items:write` |
+| DELETE | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/{wid}/`        | `projects.work_items:write` |
+| GET    | `/api/v1/workspaces/{slug}/issues/{PROJECT_IDENTIFIER}-{SEQUENCE}/` | `projects.work_items:read`  |
+| GET    | `/api/v1/workspaces/{slug}/projects/{pid}/work-items/search/?q=…`   | `projects.work_items:read`  |
+
+**Retrieve by identifier**: The identifier endpoint (row 4 above) is workspace-scoped and requires only the combined identifier like `BZ-5777`, not a separate project_id. Example: `GET /api/v1/workspaces/my-workspace/issues/BZ-5777/` with `X-API-Key` header returns the full work item including its UUID (`id` field).
+| GET | `/api/v1/workspaces/{slug}/work-items/search/` (advanced, workspace-wide with filters) | `projects.work_items:read` |
 
 ### 3.6 Work item states
 
@@ -303,37 +305,43 @@ Same as §3.4.
 | Attachments              | GET/PATCH/DELETE | `…/work-items/{wid}/attachments/{aid}/`                             | `projects.work_items.attachments:*`        |
 | Relations                | GET/POST         | `…/work-items/{wid}/relations/`                                     | `projects.work_items.relations:read/write` |
 | Relations                | DELETE           | `…/work-items/{wid}/relations/{relation_id}/`                       | `projects.work_items.relations:write`      |
-| Page links               | GET/POST         | `…/work-items/{wid}/page-links/`                                    | `projects.work_items:read/write`           |
-| Page links               | GET/DELETE       | `…/work-items/{wid}/page-links/{link_id}/`                          | `projects.work_items:read/write`           |
+
+**Create relation body**: POST to `…/work-items/{wid}/relations/` requires `{"relation_type": "<enum>", "issues": ["<related_uuid>"]}` where `relation_type` is one of `blocking`, `blocked_by`, `duplicate_of`, `duplicate`, `relates_to`, and `issues` is an array (required field, even for a single relation).
+| Page links | GET/POST | `…/work-items/{wid}/page-links/` | `projects.work_items:read/write` |
+| Page links | GET/DELETE | `…/work-items/{wid}/page-links/{link_id}/` | `projects.work_items:read/write` |
 
 ### 3.11 Cycles (sprints)
 
-| Method | Path                                                              | Scope                   |
-| ------ | ----------------------------------------------------------------- | ----------------------- |
-| GET    | `…/projects/{pid}/cycles/`                                        | `projects.cycles:read`  |
-| POST   | `…/projects/{pid}/cycles/`                                        | `projects.cycles:write` |
-| GET    | `…/projects/{pid}/cycles/{cycle_id}/`                             | `projects.cycles:read`  |
-| PATCH  | `…/projects/{pid}/cycles/{cycle_id}/`                             | `projects.cycles:write` |
-| DELETE | `…/projects/{pid}/cycles/{cycle_id}/`                             | `projects.cycles:write` |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/archive/`                     | `projects.cycles:write` |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/unarchive/`                   | `projects.cycles:write` |
-| GET    | `…/projects/{pid}/cycles/archived/`                               | `projects.cycles:read`  |
-| GET    | `…/projects/{pid}/cycles/{cycle_id}/work-items/`                  | `projects.cycles:read`  |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/work-items/` (add work items) | `projects.cycles:write` |
-| DELETE | `…/projects/{pid}/cycles/{cycle_id}/work-items/{wid}/`            | `projects.cycles:write` |
-| POST   | `…/projects/{pid}/cycles/{cycle_id}/transfer-work-items/`         | `projects.cycles:write` |
+| Method | Path                                                                | Scope                   |
+| ------ | ------------------------------------------------------------------- | ----------------------- |
+| GET    | `…/projects/{pid}/cycles/`                                          | `projects.cycles:read`  |
+| POST   | `…/projects/{pid}/cycles/`                                          | `projects.cycles:write` |
+| GET    | `…/projects/{pid}/cycles/{cycle_id}/`                               | `projects.cycles:read`  |
+| PATCH  | `…/projects/{pid}/cycles/{cycle_id}/`                               | `projects.cycles:write` |
+| DELETE | `…/projects/{pid}/cycles/{cycle_id}/`                               | `projects.cycles:write` |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/archive/`                       | `projects.cycles:write` |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/unarchive/`                     | `projects.cycles:write` |
+| GET    | `…/projects/{pid}/cycles/archived/`                                 | `projects.cycles:read`  |
+| GET    | `…/projects/{pid}/cycles/{cycle_id}/cycle-issues/`                  | `projects.cycles:read`  |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/cycle-issues/` (add work items) | `projects.cycles:write` |
+| DELETE | `…/projects/{pid}/cycles/{cycle_id}/cycle-issues/{wid}/`            | `projects.cycles:write` |
+| POST   | `…/projects/{pid}/cycles/{cycle_id}/transfer-work-items/`           | `projects.cycles:write` |
+
+**Cycle membership body**: POST to add work items uses `{"issues": [uuid, uuid, ...]}` (the `issues` field is an array of work-item UUIDs).
 
 ### 3.12 Modules
 
-| Method           | Path                                                     | Scope                         |
-| ---------------- | -------------------------------------------------------- | ----------------------------- |
-| GET/POST         | `…/projects/{pid}/modules/`                              | `projects.modules:read/write` |
-| GET/PATCH/DELETE | `…/projects/{pid}/modules/{module_id}/`                  | `projects.modules:*`          |
-| POST             | `…/projects/{pid}/modules/{module_id}/archive/`          | `projects.modules:write`      |
-| POST             | `…/projects/{pid}/modules/{module_id}/unarchive/`        | `projects.modules:write`      |
-| GET              | `…/projects/{pid}/modules/archived/`                     | `projects.modules:read`       |
-| GET/POST         | `…/projects/{pid}/modules/{module_id}/work-items/`       | `projects.modules:*`          |
-| DELETE           | `…/projects/{pid}/modules/{module_id}/work-items/{wid}/` | `projects.modules:write`      |
+| Method           | Path                                                        | Scope                         |
+| ---------------- | ----------------------------------------------------------- | ----------------------------- |
+| GET/POST         | `…/projects/{pid}/modules/`                                 | `projects.modules:read/write` |
+| GET/PATCH/DELETE | `…/projects/{pid}/modules/{module_id}/`                     | `projects.modules:*`          |
+| POST             | `…/projects/{pid}/modules/{module_id}/archive/`             | `projects.modules:write`      |
+| POST             | `…/projects/{pid}/modules/{module_id}/unarchive/`           | `projects.modules:write`      |
+| GET              | `…/projects/{pid}/modules/archived/`                        | `projects.modules:read`       |
+| GET/POST         | `…/projects/{pid}/modules/{module_id}/module-issues/`       | `projects.modules:*`          |
+| DELETE           | `…/projects/{pid}/modules/{module_id}/module-issues/{wid}/` | `projects.modules:write`      |
+
+**Module membership body**: POST to add work items uses `{"issues": [uuid, uuid, ...]}` (the `issues` field is an array of work-item UUIDs).
 
 ### 3.13 Pages
 
