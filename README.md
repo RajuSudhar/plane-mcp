@@ -4,6 +4,10 @@ TypeScript MCP server for Plane, the open-source Jira-like ticketing and project
 and TypeScript 7, this server provides 31 core ticket-workflow tools via a stateless streamable-HTTP transport with
 environment-variable authentication.
 
+## Beta Release
+
+This is a **pre-1.0 beta release** published on the npm `beta` dist-tag (not `latest`). Install with `bunx plane-mcp@beta` or `bun add -g plane-mcp@beta`. Requires Bun 1.3.14 or later. This release is under active development and has not yet reached stable 1.0 maturity. Feedback and issue reports are welcome at https://github.com/RajuSudhar/plane-mcp/issues.
+
 ## Install
 
 ```bash
@@ -17,7 +21,7 @@ This project uses Bun exclusively — no npm, pnpm, or yarn. The `bun.lock` file
 To use `plane-mcp` from npm without cloning the repository, install and run it directly with Bun:
 
 ```bash
-bunx plane-mcp
+bunx plane-mcp@beta
 ```
 
 This runs the stdio MCP server. Requires Bun 1.3.14+ on your machine (plane-mcp is a Bun-native package).
@@ -25,9 +29,11 @@ This runs the stdio MCP server. Requires Bun 1.3.14+ on your machine (plane-mcp 
 Alternatively, install globally and invoke as a command:
 
 ```bash
-bun add -g plane-mcp
+bun add -g plane-mcp@beta
 plane-mcp
 ```
+
+**Note:** This beta release is published on the `beta` dist-tag, not `latest`. Always use `@beta` when installing until version 1.0 is released.
 
 ## Setup (recommended)
 
