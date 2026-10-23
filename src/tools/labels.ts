@@ -8,6 +8,9 @@ const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'color must be a #RRGGBB 
 
 const listLabelsSchema = z.object({
   project_id: z.string(),
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type ListLabelsArgs = z.infer<typeof listLabelsSchema>;
 
@@ -20,9 +23,11 @@ export const createLabelSchema = z.object({
 type CreateLabelArgs = z.infer<typeof createLabelSchema>;
 
 export async function listLabels(client: PlaneApi, args: ListLabelsArgs): Promise<ToolResult> {
-  const data = await client.get<Label[]>(
-    client.workspacePath(`projects/${args.project_id}/labels/`)
-  );
+  const { project_id, fields, expand } = args;
+  const data = await client.get<Label[]>(client.workspacePath(`projects/${project_id}/labels/`), {
+    fields,
+    expand,
+  });
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
     structuredContent: { labels: data },

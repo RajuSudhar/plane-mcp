@@ -116,10 +116,124 @@ describe('register', () => {
       expect(content.text).toContain('100');
       expect(content.text).toContain('fields');
       expect(content.text).toContain('per_page');
-      // Verify guidance includes module/cycle filtering and retrieve_work_item_by_identifier
-      expect(content.text).toContain('module_id');
-      expect(content.text).toContain('cycle_id');
       expect(content.text).toContain('retrieve_work_item_by_identifier');
+      // list_projects has no cycle/module scoping — guidance must not invent it.
+      expect(content.text).not.toContain('module_id');
+      expect(content.text).not.toContain('cycle_id');
+    });
+
+    it('guidance names cycle/module scoping only for tools that accept it', async () => {
+      const client = stubClient({ get: async () => ({}) });
+      const big = Array.from({ length: 200 }, (_, i) => ({
+        id: `w${i}`,
+        name: `Work item ${i} with a reasonably long name to burn tokens`,
+      }));
+
+      const handler = toolHandler(
+        'list_work_items',
+        client,
+        async (): Promise<ToolResult> => ({
+          content: [{ type: 'text', text: JSON.stringify(big) }],
+          structuredContent: { items: big },
+        }),
+        { defaults: { maxOutputTokens: 100 }, tools: {} }
+      );
+
+      const res = await handler({});
+      const content = res.content[0] as { type: 'text'; text: string };
+
+      expect(res.isError).toBe(true);
+      expect(content.text).toContain('cycle_id');
+      expect(content.text).toContain('module_id');
+    });
+
+    it('guidance omits fields/per_page for tools that accept neither', async () => {
+      const client = stubClient({ get: async () => ({}) });
+      const big = Array.from({ length: 200 }, (_, i) => ({ id: `c${i}`, body: 'x'.repeat(40) }));
+
+      const handler = toolHandler(
+        'create_work_item',
+        client,
+        async (): Promise<ToolResult> => ({
+          content: [{ type: 'text', text: JSON.stringify(big) }],
+          structuredContent: { items: big },
+        }),
+        { defaults: { maxOutputTokens: 100 }, tools: {} }
+      );
+
+      const res = await handler({});
+      const content = res.content[0] as { type: 'text'; text: string };
+
+      expect(res.isError).toBe(true);
+      expect(content.text).not.toContain('`fields`');
+      expect(content.text).not.toContain('`per_page`');
+      // Write tools get no max_output_tokens escape hatch either.
+      expect(content.text).not.toContain('max_output_tokens:');
+    });
+
+    it('a request max_output_tokens above the ceiling is refused without calling the API', async () => {
+      let called = false;
+      const client = stubClient({ get: async () => ({}) });
+
+      const handler = toolHandler(
+        'list_cycles',
+        client,
+        async (): Promise<ToolResult> => {
+          called = true;
+          return { content: [{ type: 'text', text: '{}' }], structuredContent: {} };
+        },
+        { defaults: { maxOutputTokens: 25000, maxOutputTokensCeiling: 50000 }, tools: {} }
+      );
+
+      const res = await handler({ project_id: 'p1', max_output_tokens: 200000 });
+      const content = res.content[0] as { type: 'text'; text: string };
+
+      expect(res.isError).toBe(true);
+      expect(called).toBe(false);
+      expect(content.text).toContain('200000');
+      expect(content.text).toContain('50000');
+      expect(content.text).toContain('maxOutputTokensCeiling');
+    });
+
+    it('a request max_output_tokens under the ceiling raises the limit for that call', async () => {
+      const client = stubClient({ get: async () => ({}) });
+      const big = Array.from({ length: 200 }, (_, i) => ({ id: `c${i}`, name: `Cycle ${i}` }));
+
+      const handler = toolHandler(
+        'list_cycles',
+        client,
+        async (): Promise<ToolResult> => ({
+          content: [{ type: 'text', text: JSON.stringify(big) }],
+          structuredContent: { cycles: big },
+        }),
+        { defaults: { maxOutputTokens: 100, maxOutputTokensCeiling: 100000 }, tools: {} }
+      );
+
+      // Without the override the same payload breaches the 100-token limit.
+      expect((await handler({ project_id: 'p1' })).isError).toBe(true);
+
+      const res = await handler({ project_id: 'p1', max_output_tokens: 90000 });
+      expect(res.isError).toBeUndefined();
+    });
+
+    it('max_output_tokens is stripped before reaching the tool function', async () => {
+      const client = stubClient({ get: async () => ({}) });
+      let seen: Record<string, unknown> = {};
+
+      const handler = toolHandler(
+        'list_cycles',
+        client,
+        async (_client, args): Promise<ToolResult> => {
+          seen = args;
+          return { content: [{ type: 'text', text: '{}' }], structuredContent: {} };
+        },
+        { defaults: { maxOutputTokens: 25000 }, tools: {} }
+      );
+
+      await handler({ project_id: 'p1', max_output_tokens: 50000 });
+
+      expect(seen).toEqual({ project_id: 'p1' });
+      expect('max_output_tokens' in seen).toBe(false);
     });
 
     it('result under token limit passes through unmodified', async () => {

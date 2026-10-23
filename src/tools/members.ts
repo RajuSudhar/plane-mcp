@@ -6,19 +6,28 @@ import { toolHandler } from './register';
 
 const getProjectMembersSchema = z.object({
   project_id: z.string(),
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type GetProjectMembersArgs = z.infer<typeof getProjectMembersSchema>;
 
-const getWorkspaceMembersSchema = z.object({});
+const getWorkspaceMembersSchema = z.object({
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
+});
 type GetWorkspaceMembersArgs = z.infer<typeof getWorkspaceMembersSchema>;
 
 export async function getProjectMembers(
   client: PlaneApi,
   args: GetProjectMembersArgs
 ): Promise<ToolResult> {
-  const data = await client.get<Member[]>(
-    client.workspacePath(`projects/${args.project_id}/members/`)
-  );
+  const { project_id, fields, expand } = args;
+  const data = await client.get<Member[]>(client.workspacePath(`projects/${project_id}/members/`), {
+    fields,
+    expand,
+  });
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
     structuredContent: { members: data },
@@ -27,9 +36,13 @@ export async function getProjectMembers(
 
 export async function getWorkspaceMembers(
   client: PlaneApi,
-  _args: GetWorkspaceMembersArgs
+  args: GetWorkspaceMembersArgs
 ): Promise<ToolResult> {
-  const data = await client.get<Member[]>(client.workspacePath('members/'));
+  const { fields, expand } = args;
+  const data = await client.get<Member[]>(client.workspacePath('members/'), {
+    fields,
+    expand,
+  });
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
     structuredContent: { members: data },

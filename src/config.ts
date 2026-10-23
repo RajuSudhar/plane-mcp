@@ -1,4 +1,11 @@
-import type { AuthContext, LoadServerConfigDeps, ServerConfig, ToolSettings } from '@types';
+import type {
+  AuthContext,
+  LoadServerConfigDeps,
+  ResolvedLimit,
+  ServerConfig,
+  ServerDefaults,
+  ToolSettings,
+} from '@types';
 import { log } from './logger';
 import { getSecret } from './secrets';
 import { z } from 'zod';
@@ -97,6 +104,13 @@ export function loadPort(): number {
 
 const DEFAULT_MAX_OUTPUT_TOKENS = 25000;
 
+// Upper bound on a caller-supplied `max_output_tokens`. 100k keeps a deliberate
+// override useful for a large-but-readable page while still refusing payloads
+// (the 463k-token label list that motivated this) that would destroy the
+// caller's own context window. Operator-set config/env limits are NOT bounded by
+// this — only what a model may ask for mid-conversation.
+const DEFAULT_MAX_OUTPUT_TOKENS_CEILING = 100000;
+
 // Mirrors types/config.ts's ToolSettings/ServerConfig shape exactly, so the
 // value returned by a successful `.parse()` is structurally assignable to
 // ServerConfig with no cast. `.strict()` on every object level means an
@@ -108,13 +122,22 @@ const toolSettingsSchema = z
   })
   .strict();
 
+// Defaults accept one extra key the per-tool blocks do not: the ceiling that
+// bounds a caller-supplied max_output_tokens argument.
+const serverDefaultsSchema = z
+  .object({
+    maxOutputTokens: z.number().int().positive().optional(),
+    maxOutputTokensCeiling: z.number().int().positive().optional(),
+  })
+  .strict();
+
 const serverConfigSchema = z
   .object({
     // Allowed so `$schema": "..."` (editor IntelliSense / JSON Schema
     // validation) can sit in a real config file without tripping .strict();
     // never read for behavior.
     $schema: z.string().optional(),
-    defaults: toolSettingsSchema.optional(),
+    defaults: serverDefaultsSchema.optional(),
     tools: z.record(z.string(), toolSettingsSchema).optional(),
   })
   .strict();
@@ -179,7 +202,7 @@ export async function loadServerConfig(deps?: LoadServerConfigDeps): Promise<Ser
 
   const configPath = await resolveConfigPath(fileExists);
 
-  let fileDefaults: ToolSettings = {};
+  let fileDefaults: ServerDefaults = {};
   let fileTools: Record<string, ToolSettings> = {};
 
   if (configPath) {
@@ -216,6 +239,8 @@ export async function loadServerConfig(deps?: LoadServerConfigDeps): Promise<Ser
   const resolved: ServerConfig = {
     defaults: {
       maxOutputTokens: envOverride ?? fileDefaults.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
+      maxOutputTokensCeiling:
+        fileDefaults.maxOutputTokensCeiling ?? DEFAULT_MAX_OUTPUT_TOKENS_CEILING,
     },
     tools: fileTools,
   };
@@ -223,12 +248,35 @@ export async function loadServerConfig(deps?: LoadServerConfigDeps): Promise<Ser
   return resolved;
 }
 
-export function resolveMaxOutputTokens(config: ServerConfig, toolName: string): number {
-  return (
-    config.tools[toolName]?.maxOutputTokens ??
-    config.defaults.maxOutputTokens ??
-    DEFAULT_MAX_OUTPUT_TOKENS
-  );
+/**
+ * Resolve the output-token limit for one call.
+ *
+ * Precedence: request override > per-tool config > merged defaults > built-in.
+ * `requestOverride` is assumed already ceiling-checked by the caller — this
+ * function applies it verbatim so the check and the error live in one place.
+ */
+export function resolveMaxOutputTokens(
+  config: ServerConfig,
+  toolName: string,
+  requestOverride?: number
+): ResolvedLimit {
+  if (requestOverride !== undefined) {
+    return { limit: requestOverride, source: 'request' };
+  }
+
+  const perTool = config.tools[toolName]?.maxOutputTokens;
+  if (perTool !== undefined) {
+    return { limit: perTool, source: 'tool-config' };
+  }
+
+  return {
+    limit: config.defaults.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
+    source: 'default',
+  };
 }
 
-export { serverConfigSchema, DEFAULT_MAX_OUTPUT_TOKENS };
+export function resolveCeiling(config: ServerConfig): number {
+  return config.defaults.maxOutputTokensCeiling ?? DEFAULT_MAX_OUTPUT_TOKENS_CEILING;
+}
+
+export { serverConfigSchema, DEFAULT_MAX_OUTPUT_TOKENS, DEFAULT_MAX_OUTPUT_TOKENS_CEILING };

@@ -9,6 +9,7 @@ const listProjectsSchema = z.object({
   per_page: z.number().int().min(1).max(100).optional(),
   fields: z.string().optional(),
   expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type ListProjectsArgs = z.infer<typeof listProjectsSchema>;
 
@@ -16,6 +17,7 @@ const retrieveProjectSchema = z.object({
   project_id: z.string(),
   fields: z.string().optional(),
   expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type RetrieveProjectArgs = z.infer<typeof retrieveProjectSchema>;
 

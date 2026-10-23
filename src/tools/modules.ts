@@ -6,6 +6,9 @@ import { toolHandler } from './register';
 
 const listModulesSchema = z.object({
   project_id: z.string(),
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type ListModulesArgs = z.infer<typeof listModulesSchema>;
 
@@ -35,9 +38,11 @@ const removeWorkItemFromModuleSchema = z.object({
 type RemoveWorkItemFromModuleArgs = z.infer<typeof removeWorkItemFromModuleSchema>;
 
 export async function listModules(client: PlaneApi, args: ListModulesArgs): Promise<ToolResult> {
-  const data = await client.get<Module[]>(
-    client.workspacePath(`projects/${args.project_id}/modules/`)
-  );
+  const { project_id, fields, expand } = args;
+  const data = await client.get<Module[]>(client.workspacePath(`projects/${project_id}/modules/`), {
+    fields,
+    expand,
+  });
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
     structuredContent: { modules: data },

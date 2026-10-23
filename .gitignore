@@ -42,3 +42,6 @@ temp/
 
 # npm pack artifacts
 *.tgz
+
+# keep project Claude context tracked (overrides global ignore)
+!.claude/

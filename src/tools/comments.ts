@@ -7,6 +7,11 @@ import { toolHandler } from './register';
 const listWorkItemCommentsSchema = z.object({
   project_id: z.string(),
   work_item_id: z.string(),
+  cursor: z.string().optional(),
+  per_page: z.number().int().min(1).max(100).optional(),
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type ListWorkItemCommentsArgs = z.infer<typeof listWorkItemCommentsSchema>;
 
@@ -36,8 +41,10 @@ export async function listWorkItemComments(
   client: PlaneApi,
   args: ListWorkItemCommentsArgs
 ): Promise<ToolResult> {
+  const { project_id, work_item_id, cursor, per_page, fields, expand } = args;
   const data = await client.get<PaginationEnvelope<Comment>>(
-    client.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/comments/`)
+    client.workspacePath(`projects/${project_id}/work-items/${work_item_id}/comments/`),
+    { cursor, per_page, fields, expand }
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],

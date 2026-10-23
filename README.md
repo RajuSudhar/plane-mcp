@@ -290,7 +290,14 @@ LaunchAgent to keep the server running in the background, with logs in `~/Librar
 
 ## Configure per-tool output-token limits
 
-By default, every tool's response is capped at 25,000 estimated tokens. A response over the limit is never truncated — it is withheld entirely, and the tool returns an error explaining how to narrow the request (e.g. via `fields`, `per_page`, or `module_id`/`cycle_id` filtering).
+By default, every tool's response is capped at 25,000 estimated tokens. A response over the limit is never truncated — it is withheld entirely, and the tool returns an error explaining how to narrow the request. The error names only the parameters the breaching tool actually accepts, so the suggested retry always validates.
+
+Two escape hatches:
+
+- **Narrow the response.** Every collection-returning tool accepts `fields` (and `expand`), forwarded to Plane as a query param. This is usually the largest reduction: on one real project, `list_cycles` returns an estimated 157,000 tokens by default and about 4,000 with `fields: "id,name"`. `list_projects`, `list_work_items`, and `list_work_item_comments` additionally accept `cursor`/`per_page`.
+- **Raise the limit for one call.** The 14 collection- and object-returning tools accept `max_output_tokens`, which overrides both the per-tool and default limits for that single request. It is bounded by `defaults.maxOutputTokensCeiling` (default 100,000): a request above the ceiling is refused before the API call, so a caller cannot pull a payload that would not fit in its own context. Config-file and env limits are not ceiling-bound — the ceiling constrains only what a caller may ask for at call time.
+
+Resolution order for the active limit: `max_output_tokens` argument → `tools.<name>.maxOutputTokens` → `PLANE_MCP_MAX_OUTPUT_TOKENS` → `defaults.maxOutputTokens` → 25,000.
 
 This limit is controlled by an optional JSON config file, resolved in this order:
 
@@ -305,7 +312,8 @@ Example `plane-mcp.config.example.json` (copy to `./plane-mcp.config.json` or `~
 {
   "$schema": "https://raw.githubusercontent.com/RajuSudhar/plane-mcp/master/plane-mcp.config.schema.json",
   "defaults": {
-    "maxOutputTokens": 25000
+    "maxOutputTokens": 25000,
+    "maxOutputTokensCeiling": 100000
   },
   "tools": {
     "list_work_items": {
