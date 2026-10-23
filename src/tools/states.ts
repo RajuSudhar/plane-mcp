@@ -9,6 +9,9 @@ const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'color must be a #RRGGBB 
 
 const listStatesSchema = z.object({
   project_id: z.string(),
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type ListStatesArgs = z.infer<typeof listStatesSchema>;
 
@@ -22,9 +25,11 @@ export const createStateSchema = z.object({
 type CreateStateArgs = z.infer<typeof createStateSchema>;
 
 export async function listStates(client: PlaneApi, args: ListStatesArgs): Promise<ToolResult> {
-  const data = await client.get<State[]>(
-    client.workspacePath(`projects/${args.project_id}/states/`)
-  );
+  const { project_id, fields, expand } = args;
+  const data = await client.get<State[]>(client.workspacePath(`projects/${project_id}/states/`), {
+    fields,
+    expand,
+  });
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],
     structuredContent: { states: data },

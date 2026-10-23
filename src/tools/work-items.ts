@@ -22,6 +22,7 @@ const listWorkItemsSchema = z.object({
   per_page: z.number().int().min(1).max(100).optional(),
   fields: z.string().optional(),
   expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type ListWorkItemsArgs = z.infer<typeof listWorkItemsSchema>;
 
@@ -30,6 +31,7 @@ const retrieveWorkItemSchema = z.object({
   work_item_id: z.string(),
   fields: z.string().optional(),
   expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type RetrieveWorkItemArgs = z.infer<typeof retrieveWorkItemSchema>;
 
@@ -38,6 +40,7 @@ const retrieveWorkItemByIdentifierSchema = z.object({
     .string()
     .trim()
     .regex(/^[A-Za-z0-9]+-\d+$/, 'Expected a PROJECT-SEQUENCE identifier like BZ-5777'),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type RetrieveWorkItemByIdentifierArgs = z.infer<typeof retrieveWorkItemByIdentifierSchema>;
 
@@ -87,6 +90,9 @@ type DeleteWorkItemArgs = z.infer<typeof deleteWorkItemSchema>;
 const searchWorkItemsSchema = z.object({
   project_id: z.string(),
   query: z.string(),
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type SearchWorkItemsArgs = z.infer<typeof searchWorkItemsSchema>;
 
@@ -221,10 +227,10 @@ export async function searchWorkItems(
   client: PlaneApi,
   args: SearchWorkItemsArgs
 ): Promise<ToolResult> {
-  const { project_id, query } = args;
+  const { project_id, query, fields, expand } = args;
   const data = await client.get<PaginationEnvelope<WorkItem>>(
     client.workspacePath(`projects/${project_id}/work-items/search/`),
-    { q: query as string | number | boolean | undefined }
+    { q: query as string | number | boolean | undefined, fields, expand }
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],

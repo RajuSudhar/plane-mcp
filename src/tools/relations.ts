@@ -15,6 +15,9 @@ const relationTypeEnum = z.enum([
 const listWorkItemRelationsSchema = z.object({
   project_id: z.string(),
   work_item_id: z.string(),
+  fields: z.string().optional(),
+  expand: z.string().optional(),
+  max_output_tokens: z.number().int().positive().optional(),
 });
 type ListWorkItemRelationsArgs = z.infer<typeof listWorkItemRelationsSchema>;
 
@@ -37,8 +40,10 @@ export async function listWorkItemRelations(
   client: PlaneApi,
   args: ListWorkItemRelationsArgs
 ): Promise<ToolResult> {
+  const { project_id, work_item_id, fields, expand } = args;
   const data = await client.get<Relation[]>(
-    client.workspacePath(`projects/${args.project_id}/work-items/${args.work_item_id}/relations/`)
+    client.workspacePath(`projects/${project_id}/work-items/${work_item_id}/relations/`),
+    { fields, expand }
   );
   return {
     content: [{ type: 'text', text: JSON.stringify(data) }],

@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'bun:test';
-import { loadAuthContext, loadPort, loadServerConfig, resolveMaxOutputTokens } from './config';
+import {
+  DEFAULT_MAX_OUTPUT_TOKENS_CEILING,
+  loadAuthContext,
+  loadPort,
+  loadServerConfig,
+  resolveCeiling,
+  resolveMaxOutputTokens,
+} from './config';
 import type { ServerConfig } from '@types';
 
 // Save and restore process.env to avoid test pollution
@@ -611,8 +618,14 @@ describe('config module', () => {
             },
           };
 
-          expect(resolveMaxOutputTokens(config, 'list_work_items')).toBe(5000);
-          expect(resolveMaxOutputTokens(config, 'create_issue')).toBe(10000);
+          expect(resolveMaxOutputTokens(config, 'list_work_items')).toEqual({
+            limit: 5000,
+            source: 'tool-config',
+          });
+          expect(resolveMaxOutputTokens(config, 'create_issue')).toEqual({
+            limit: 10000,
+            source: 'tool-config',
+          });
         })
       );
 
@@ -626,7 +639,10 @@ describe('config module', () => {
             },
           };
 
-          expect(resolveMaxOutputTokens(config, 'unknown_tool')).toBe(25000);
+          expect(resolveMaxOutputTokens(config, 'unknown_tool')).toEqual({
+            limit: 25000,
+            source: 'default',
+          });
         })
       );
 
@@ -640,8 +656,65 @@ describe('config module', () => {
 
           const result = resolveMaxOutputTokens(config, 'any_tool');
 
-          expect(result).toBe(25000);
-          expect(typeof result).toBe('number');
+          expect(result.limit).toBe(25000);
+          expect(typeof result.limit).toBe('number');
+        })
+      );
+
+      it(
+        'a request override wins over per-tool config and defaults',
+        withEnv(async () => {
+          const config: ServerConfig = {
+            defaults: { maxOutputTokens: 25000 },
+            tools: { list_cycles: { maxOutputTokens: 5000 } },
+          };
+
+          expect(resolveMaxOutputTokens(config, 'list_cycles', 60000)).toEqual({
+            limit: 60000,
+            source: 'request',
+          });
+          expect(resolveMaxOutputTokens(config, 'unknown_tool', 60000)).toEqual({
+            limit: 60000,
+            source: 'request',
+          });
+        })
+      );
+
+      it(
+        'an undefined override falls through to the normal precedence',
+        withEnv(async () => {
+          const config: ServerConfig = {
+            defaults: { maxOutputTokens: 25000 },
+            tools: { list_cycles: { maxOutputTokens: 5000 } },
+          };
+
+          expect(resolveMaxOutputTokens(config, 'list_cycles', undefined)).toEqual({
+            limit: 5000,
+            source: 'tool-config',
+          });
+        })
+      );
+    });
+
+    describe('resolveCeiling', () => {
+      it(
+        'falls back to the built-in ceiling when unset',
+        withEnv(async () => {
+          const config: ServerConfig = { defaults: { maxOutputTokens: 25000 }, tools: {} };
+
+          expect(resolveCeiling(config)).toBe(DEFAULT_MAX_OUTPUT_TOKENS_CEILING);
+        })
+      );
+
+      it(
+        'honors a configured ceiling',
+        withEnv(async () => {
+          const config: ServerConfig = {
+            defaults: { maxOutputTokens: 25000, maxOutputTokensCeiling: 40000 },
+            tools: {},
+          };
+
+          expect(resolveCeiling(config)).toBe(40000);
         })
       );
     });
